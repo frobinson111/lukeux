@@ -1,0 +1,243 @@
+# Simulated UX Research Data Set
+
+## User Interview Transcripts
+
+### Interview 1: E-commerce Checkout - Sarah, 34, Marketing Manager
+
+**Interviewer:** Thanks for joining today. Can you walk me through the last time you made an online purchase?
+
+**Sarah:** Sure. I was buying running shoes last week. I found what I wanted pretty quickly, but then the checkout process was... ugh. They made me create an account before I could even see shipping costs. I almost abandoned it.
+
+**Interviewer:** What specifically frustrated you about creating the account?
+
+**Sarah:** They wanted way too much information upfront. Like, why do you need my phone number and birthday just to buy shoes? And then there were two different password requirements on the same page that contradicted each other. One said 8 characters minimum, another said 10. I failed three times before I figured it out.
+
+**Interviewer:** How did that make you feel?
+
+**Sarah:** Honestly? Like they didn't value my time. I was ready to buy, had my credit card out, and they threw up all these barriers. If I hadn't really wanted those specific shoes, I would've left.
+
+**Interviewer:** Did you complete the purchase?
+
+**Sarah:** Eventually, yes. But I won't shop there again if I can help it.
+
+---
+
+### Interview 2: Banking App - Marcus, 28, Freelance Designer
+
+**Interviewer:** You mentioned you use your banking app daily. What's your typical use case?
+
+**Marcus:** Mostly checking balances and transferring money between accounts. I get paid irregularly, so I'm always moving money around to make sure bills get paid.
+
+**Interviewer:** Can you show me how you do that?
+
+**Marcus:** [Opens app] Okay, so first I have to get past Face ID, which fails about 30% of the time if I'm outside or wearing sunglasses. Then I'm on the home screen... and honestly, I ignore like 90% of what's here. There's ads for loans I don't want, credit score stuff I check maybe once a month, and these "insights" that are never actually insightful.
+
+**Interviewer:** What would make those insights more useful?
+
+**Marcus:** I don't know, maybe tell me something I don't already know? Like "You spent $200 more on food this month" - yeah, I know, I ordered it. What I'd actually want is like "You have a $450 bill due in 3 days and your checking account is at $380" - that's an insight.
+
+**Interviewer:** So more proactive warnings?
+
+**Marcus:** Exactly. Use the data you have to actually help me, not to show me a pretty chart.
+
+---
+
+### Interview 3: Healthcare Portal - Linda, 56, Teacher
+
+**Interviewer:** Tell me about your experience using the patient portal.
+
+**Linda:** [Sighs] Where do I start? I've been trying to message my doctor about my prescription refill for two days. The first time I sent a message, it went to the wrong department. The second time, I think it worked, but I have no idea because there's no confirmation.
+
+**Interviewer:** How did you know it went to the wrong department?
+
+**Linda:** I got a generic reply saying "please contact your pharmacy for prescription questions." But my pharmacy said I need the doctor to approve it. It's this endless loop.
+
+**Interviewer:** Is there a phone number you can call?
+
+**Linda:** There is, but the whole point of the portal is supposed to be that I don't have to call during work hours. I'm teaching. I can't just call at 2pm on a Tuesday.
+
+**Interviewer:** What would make this better for you?
+
+**Linda:** Clear categories when I send a message - like explicitly say "prescription refill" so it routes correctly. And let me see the status: received, being reviewed, responded to. Like tracking a package. I just want to know someone got my message.
+
+---
+
+## Support Tickets
+
+### Ticket #8847 - Mobile App Crash
+
+**User:** App crashes every single time I try to upload a photo. I'm on iPhone 13, iOS 16.5. I've tried deleting and reinstalling. I've restarted my phone. Nothing works. This is incredibly frustrating - I need to upload photos for work and I literally cannot use your app anymore.
+
+**Priority:** High  
+**Category:** Mobile - iOS  
+**Status:** In Progress
+
+---
+
+### Ticket #9203 - Can't Find Settings
+
+**User:** Where is the setting to turn off email notifications?? I've looked everywhere. I checked my profile, I checked account settings, I even googled it and followed the instructions but that menu doesn't exist in my version. Please just tell me where it is or better yet make it easier to find.
+
+**Priority:** Medium  
+**Category:** Account Settings  
+**Status:** Awaiting Response
+
+---
+
+### Ticket #9445 - Data Export Failure
+
+**User:** I requested a data export 5 days ago per GDPR requirements. The email said it would take 24-48 hours. I've received nothing. I've requested it 3 more times. I need my data. This is legally required functionality and it's not working.
+
+**Priority:** Urgent  
+**Category:** Privacy/Data  
+**Status:** Escalated
+
+---
+
+### Ticket #9512 - Confusing Error Message
+
+**User:** I keep getting an error that says "Error 422: Invalid input" but it doesn't tell me WHAT input is invalid. I'm filling out the same form I've filled out 20 times before. What changed? What field is wrong? Give me a real error message please.
+
+**Priority:** Medium  
+**Category:** Forms/Validation  
+**Status:** Open
+
+---
+
+### Ticket #9688 - Dark Mode Issues
+
+**User:** The dark mode is unusable. Half the text is dark gray on black background - I literally cannot read it. Some buttons disappear entirely. It looks like nobody tested this at all. I have to keep switching back to light mode which defeats the entire purpose.
+
+**Priority:** Medium  
+**Category:** UI/Visual  
+**Status:** Open
+
+---
+
+## Survey Open-Ended Responses
+
+**Question: What is your biggest frustration with our product?**
+
+**Response 1:** The search function is terrible. I search for something I KNOW exists and it returns nothing, but if I browse manually I can find it. Why have search at all if it doesn't work?
+
+**Response 2:** Too many clicks to do simple things. I should not need 5 clicks to change my password or 7 clicks to download a receipt.
+
+**Response 3:** Mobile app is years behind the desktop version in features. I do 80% of my work on mobile and feel like a second-class user.
+
+**Response 4:** No keyboard shortcuts. I use this product 8 hours a day and having to click through menus for everything slows me down significantly.
+
+**Response 5:** The tutorial that pops up EVERY TIME I log in. I've been using this for 6 months. I know how it works. Let me dismiss it permanently.
+
+---
+
+**Question: If you could change one thing about our product, what would it be?**
+
+**Response 1:** Better error recovery. When something goes wrong, let me fix it without starting completely over.
+
+**Response 2:** Undo button. Please. I've lost work so many times because there's no way to undo an accidental deletion.
+
+**Response 3:** More customization. Everyone works differently but you force us all into the same rigid workflow.
+
+**Response 4:** Offline mode. My internet isn't always reliable and I lose access to everything when it drops.
+
+**Response 5:** Let me export my data in standard formats. Right now it's locked in your proprietary format and I can't use it anywhere else.
+
+**Response 6:** Stop moving things around with every update. I finally learn where everything is and then you redesign it completely.
+
+---
+
+**Question: What do you like most about our product?**
+
+**Response 1:** When it works, it's fast. I can get through my tasks quickly.
+
+**Response 2:** The collaboration features are solid. Easy to share and work together.
+
+**Response 3:** It's reliable. I've never lost data, which I appreciate.
+
+**Response 4:** Clean interface, not cluttered like competitors.
+
+**Response 5:** Customer support actually responds and helps, which is rare these days.
+
+---
+
+## Ethnographic Field Notes
+
+### Observation Session 1: Remote Work Setup
+**Participant:** Alex, Software Developer  
+**Date:** March 15, 2024  
+**Duration:** 2 hours  
+**Context:** Home office, dual monitor setup
+
+**10:15am** - Participant opens 8 different applications at start of workday. Mentioned this is their "startup routine." Takes approximately 3 minutes. Expressed frustration that apps don't remember window positions.
+
+**10:22am** - Receives Slack notification. Glances at it but doesn't respond. "I've learned to ignore most notifications or I'd never get anything done."
+
+**10:45am** - Switches to project management tool to update task status. Clicks through 3 different pages to find the right project. "I wish there was a quicker way to jump to my active projects."
+
+**11:10am** - Uses keyboard shortcut to open app switcher (Cmd+Tab). Overshoots target app, has to cycle through again. This happens 3 more times during session. When asked, participant didn't know the app had a quick launcher feature.
+
+**11:30am** - Gets up for coffee. Laptop goes to sleep. Returns at 11:38am. Spends 2 minutes re-authenticating to various services that logged out. "This happens every time. So annoying."
+
+**Notable Quote:** "I've built my own workflow around the tools because the tools don't adapt to me."
+
+---
+
+### Observation Session 2: Grocery Shopping App
+**Participant:** Jamal, Parent of Two  
+**Date:** March 18, 2024  
+**Duration:** 45 minutes  
+**Context:** Kitchen, preparing shopping list while cooking
+
+**6:20pm** - Opens app while stirring pot on stove. Uses one hand to navigate. Struggles with buttons that are too small for thumb reach on phone. "This is always awkward."
+
+**6:25pm** - Searches for "pasta sauce." Results show 47 items. Scrolls briefly then gives up. Adds generic "pasta sauce" to list to choose in store. "I'll just figure it out when I'm there."
+
+**6:30pm** - 8-year-old asks question. Participant switches to different app to check school calendar. When returning to shopping app, list has refreshed to top of screen. "Lost my place. This happens all the time."
+
+**6:35pm** - Tries to add item that's out of stock. App shows out of stock badge but still allows adding to cart. "Wait, can I actually order this or not? I don't want to order and then get a substitution I don't want."
+
+**6:42pm** - Checks out. Confused by substitution settings which are on a different screen. Mentions wanting to set preferences per item but can only do it globally. "Like eggs - fine to substitute generic. But specific brands for other things."
+
+**Notable Behavior:** Participant interrupted 6 times during session by household needs. Each time had to reorient to where they were in the app.
+
+---
+
+### Observation Session 3: Fitness Tracking
+**Participant:** Keisha, Grad Student  
+**Date:** March 20, 2024  
+**Duration:** 1 hour (30 min gym observation, 30 min post-workout)  
+**Context:** University gym, then coffee shop
+
+**7:05am** - At gym, participant tries to start workout in app. Phone is in armband holder. Can't reach start button properly while wearing. Removes phone from armband. "Design clearly not tested with armbands."
+
+**7:08am** - App screen stays on during workout, draining battery. Participant manually locks phone between sets. "I wish it could sense when I'm resting vs. actively exercising."
+
+**7:35am** - Workout ends. Participant forgets to stop tracking. Realizes at 7:50am in coffee shop that app has logged her walk and sitting as "exercise." Has to manually edit. "This happens at least once a week."
+
+**7:55am** - Reviews workout summary. Notes that app logged weights incorrectly for several exercises. "It keeps defaulting to my last workout weights but I don't always do the same weight. I have to correct it every time."
+
+**8:10am** - Tries to compare this week to last week. Can only view one workout at a time. Takes screenshots to compare side by side. "Such a basic feature and they don't have it."
+
+**Notable Quote:** "I keep using it because I've got 3 years of data, but honestly if I were starting fresh I'd probably try something else."
+
+---
+
+### Observation Session 4: Medical Appointment Check-In
+**Participant:** Robert, Retired Veteran, 67  
+**Date:** March 22, 2024  
+**Duration:** 20 minutes  
+**Context:** Doctor's office waiting room
+
+**2:45pm** - Arrives at office. Receptionist points to QR code for digital check-in. Participant unsure how to scan. Uses camera app, which opens URL. Looks confused by browser interface.
+
+**2:47pm** - Form asks to confirm personal information. Participant squints at screen. Tries to zoom but form doesn't scale properly. Text becomes pixelated and harder to read.
+
+**2:50pm** - Question asks about medications. Lists pre-filled medications from previous visit but participant takes different ones now. Can't figure out how to edit existing entries vs. add new ones. Two buttons labeled "Update" and "Modify" - unclear difference.
+
+**2:54pm** - Form requires signature. Participant tries to sign with finger but form requires stylus-level precision. Multiple attempts, signature looks shaky. "This is harder than just signing paper."
+
+**2:56pm** - Submission button at bottom of long form. Participant didn't scroll all the way down and thought form was broken. Clicks "Submit" at top which triggers validation errors for fields below. Confused by errors for questions not visible.
+
+**2:59pm** - Finally completes form. Clicks submit. Loading screen appears with no indication of progress. After 30 seconds, participant worried it failed. Goes to receptionist to ask if it worked.
+
+**Notable Quote:** "I'm not bad with technology, I use my phone every day. But this was designed for someone else, not me."

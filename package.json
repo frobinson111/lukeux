@@ -1,0 +1,19 @@
+{
+  "name": "luke-ux",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @luke-ux/web",
+    "build": "npm run build --workspace @luke-ux/web",
+    "lint": "npm run lint --workspace @luke-ux/web",
+    "typecheck": "npm run typecheck --workspace @luke-ux/web",
+    "test": "npm run test --workspace @luke-ux/web"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "packageManager": "npm@10.9.2"
+}

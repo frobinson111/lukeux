@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERUSER
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum PlanStatus {
+  ACTIVE
+  PAUSED
+  SUSPENDED
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum UsageType {
+  GENERATION
+}
+
+enum FeatureFlagScope {
+  GLOBAL
+  USER
+  ROLE
+}
+
+model User {
+  id               String    @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String    @unique
+  passwordHash     String
+  emailVerifiedAt  DateTime?
+  role             UserRole  @default(USER)
+  plan             Plan      @default(FREE)
+  planStatus       PlanStatus @default(ACTIVE)
+  stripeCustomerId String?
+  generationLimit  Int?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sessions          Session[]
+  emailVerifications EmailVerification[]
+  passwordResets     PasswordReset[]
+  projects           Project[]
+  tasks              Task[]
+  taskTemplates      TaskTemplate[] @relation("TemplateCreator")
+  billingEvents      BillingEvent[]
+  usageLedger        UsageLedger[]
+  historyEntries     HistoryEntry[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  sortOrder   Int      @default(0)
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks Task[]
+  history HistoryEntry[]
+}
+
+model HistoryEntry {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  projectId     String?
+  project       Project?  @relation(fields: [projectId], references: [id])
+  title         String
+  content       String
+  templateIndex Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([projectId])
+}
+
+model TaskTemplate {
+  id                  String   @id @default(cuid())
+  category            String
+  subcategory         String
+  title               String
+  guidanceUseAiTo     String?
+  guidanceExample     String?
+  guidanceOutcome     String?
+  prompt              String
+  allowedModes        String[]
+  allowedModels       String[]
+  isActive            Boolean  @default(true)
+  createdById         String?
+  createdBy           User?    @relation("TemplateCreator", fields: [createdById], references: [id])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tasks Task[]
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  projectId      String?
+  project        Project?     @relation(fields: [projectId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  templateId     String?
+  template       TaskTemplate? @relation(fields: [templateId], references: [id])
+  prompt         String
+  mode           String
+  model          String
+  status         TaskStatus   @default(PENDING)
+  response       Json?
+  error          String?
+  contextThreadId String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  assets        TaskAsset[]
+  ledgerEntries UsageLedger[]
+}
+
+model TaskAsset {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id])
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  storagePath String
+  createdAt   DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model UsageLedger {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  taskId          String?
+  task            Task?     @relation(fields: [taskId], references: [id])
+  type            UsageType
+  costEstimateUsd Decimal?  @db.Decimal(10, 4)
+  tokensIn        Int?
+  tokensOut       Int?
+  model           String?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([taskId])
+}
+
+model BillingEvent {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  stripeEventId String   @unique
+  type          String
+  data          Json
+  createdAt     DateTime @default(now())
+}
+
+model FeatureFlag {
+  key       String            @id
+  scope     FeatureFlagScope
+  value     Json
+  userId    String?
+  role      UserRole?
+  createdAt DateTime          @default(now())
+}
