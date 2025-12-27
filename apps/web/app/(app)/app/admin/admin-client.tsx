@@ -8,7 +8,7 @@ import PaymentsAdmin from "./payments-client";
 import type { UserRow, TemplateRow, UsageRow, EventRow, KeyRow, CategoryRow, PaymentConfigRow, SupportRow } from "./page";
 import SupportAdmin from "./support-client";
 
-const TABS = ["overview", "users", "templates", "keys", "payments", "feedback", "usage", "events"] as const;
+const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "usage", "events"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminClient({
@@ -61,7 +61,7 @@ export default function AdminClient({
     [usersState, templates, keys, usage, events]
   );
 
-  const menu = [
+  const menu: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "users", label: "Users & Limits" },
     { id: "limits", label: "Plan Limits" },
@@ -71,7 +71,7 @@ export default function AdminClient({
     { id: "feedback", label: "Feedback & Enquirer" },
     { id: "usage", label: "Usage" },
     { id: "events", label: "Events" }
-  ] as const;
+  ];
 
   async function togglePlan(userId: string, currentPlan: string) {
     setStatus(null);
