@@ -14,15 +14,13 @@ export async function getCurrentUser() {
       tokenHash,
       expiresAt: { gt: now },
       revokedAt: null
-    },
-    include: {
-      user: true
     }
   });
 
   if (!session) return null;
 
-  return session.user;
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  return user;
 }
 
 export async function requireUser() {
