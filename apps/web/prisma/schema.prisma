@@ -96,6 +96,7 @@ model SupportRequest {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([createdAt])
 }
 
 model EmailVerification {
@@ -151,6 +152,7 @@ model HistoryEntry {
 
   @@index([userId])
   @@index([projectId])
+  @@index([createdAt])
 }
 
 model TaskTemplate {
@@ -174,6 +176,8 @@ model TaskTemplate {
   updatedAt           DateTime @updatedAt
 
   tasks Task[]
+
+  @@index([isActive, category, title])
 }
 
 model TemplateCategory {
@@ -213,6 +217,10 @@ model Task {
 
   assets        TaskAsset[]
   ledgerEntries UsageLedger[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([templateId])
 }
 
 model TaskAsset {
@@ -243,6 +251,7 @@ model UsageLedger {
 
   @@index([userId])
   @@index([taskId])
+  @@index([createdAt])
 }
 
 model BillingEvent {
@@ -253,6 +262,8 @@ model BillingEvent {
   type          String
   data          Json
   createdAt     DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model FeatureFlag {
