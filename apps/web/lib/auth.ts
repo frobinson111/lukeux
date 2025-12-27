@@ -11,6 +11,11 @@ export async function getCurrentUser() {
   }
   const tokenHash = hashToken(token);
   const now = new Date();
+  console.info("[auth] token present", {
+    tokenPreview: token.slice(0, 6),
+    tokenLength: token.length,
+    tokenHashPreview: tokenHash.slice(0, 8)
+  });
 
   const session = await prisma.session.findFirst({
     where: {
