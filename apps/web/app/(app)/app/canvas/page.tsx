@@ -67,12 +67,8 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
       />
     ),
     // Render unordered lists as ordered (numbered) for clarity
-    ul: ({ node, ordered, ...props }) => (
-      <ol className="my-2 ml-5 list-decimal space-y-1.5 text-slate-800" {...props} />
-    ),
-    ol: ({ node, ...props }) => (
-      <ol className="my-2 ml-5 list-decimal space-y-1.5 text-slate-800" {...props} />
-    ),
+    ul: (props) => <ol className="my-2 ml-5 list-decimal space-y-1.5 text-slate-800" {...(props as any)} />,
+    ol: (props) => <ol className="my-2 ml-5 list-decimal space-y-1.5 text-slate-800" {...(props as any)} />,
     li: ({ node, ...props }) => (
       <li className="leading-[1.6] text-[15px] text-slate-800" {...props} />
     ),
@@ -96,12 +92,13 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
       <td className="border-b border-slate-100 px-3 py-2 align-top text-[12px]" {...props} />
     ),
     strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
-    code: ({ inline, className, children, ...props }) => {
+    code: (p) => {
+      const { inline, className, children, ...rest } = p as any;
       if (inline) {
         return (
           <code
             className="inline-block rounded-md border border-slate-300 bg-slate-100 px-2 py-[2px] text-[12px] font-semibold uppercase tracking-wide text-slate-800"
-            {...props}
+            {...rest}
           >
             {children}
           </code>
@@ -110,7 +107,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
       return (
         <code
           className={`block overflow-x-auto rounded-lg bg-slate-900 px-3 py-2 text-[13px] leading-6 text-slate-50 ${className || ""}`}
-          {...props}
+          {...rest}
         >
           {children}
         </code>

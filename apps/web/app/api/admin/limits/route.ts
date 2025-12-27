@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { requireUser } from "@/app/lib/auth";
+import { prisma } from "../../../../lib/prisma";
+import { requireUser } from "../../../../lib/auth";
 import { z } from "zod";
 
 const schema = z.object({

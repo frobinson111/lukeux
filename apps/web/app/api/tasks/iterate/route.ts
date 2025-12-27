@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "../../../lib/auth";
-import { callLlm } from "../../../lib/llm/service";
-import { assertCanGenerate, logGenerationUsage } from "../../../lib/usage";
+import { requireUser } from "../../../../lib/auth";
+import { callLlm } from "../../../../lib/llm/service";
+import { assertCanGenerate, logGenerationUsage } from "../../../../lib/usage";
 
 export async function POST(req: Request) {
   const user = await requireUser();

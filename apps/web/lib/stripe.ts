@@ -8,6 +8,6 @@ if (!stripeSecret) {
 
 export const stripe = stripeSecret
   ? new Stripe(stripeSecret, {
-      apiVersion: "2024-10-28.acacia"
+      apiVersion: "2025-12-15.clover"
     })
   : null;
