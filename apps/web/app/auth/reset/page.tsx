@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 
-export default function ResetPage() {
+function ResetForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialToken = useMemo(() => searchParams.get("token") || "", [searchParams]);
@@ -112,11 +112,19 @@ export default function ResetPage() {
       </form>
 
       <p className="text-sm text-slate-600">
-        Back to {" "}
+        Back to{" "}
         <Link className="font-semibold text-primary-700 underline-offset-4 hover:underline" href="/auth/login">
           sign in
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function ResetPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-slate-600">Loading…</div>}>
+      <ResetForm />
+    </Suspense>
   );
 }

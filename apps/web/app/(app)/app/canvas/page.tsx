@@ -139,7 +139,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     if (templateIndex !== null && templateIndex >= list.length) {
       setTemplateIndex(null);
     }
-  }, [templates]);
+  }, [templates, templateIndex]);
 
   useEffect(() => {
     async function loadTemplates() {
