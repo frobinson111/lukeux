@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import { hashToken } from "./tokens";
-import { SESSION_COOKIE_NAME, clearSessionCookie } from "./session";
+import { SESSION_COOKIE_NAME } from "./session";
 
 export async function getCurrentUser() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
@@ -20,11 +20,7 @@ export async function getCurrentUser() {
     }
   });
 
-  if (!session) {
-    // Clear invalid/expired cookies to reduce confusion.
-    clearSessionCookie();
-    return null;
-  }
+  if (!session) return null;
 
   return session.user;
 }
