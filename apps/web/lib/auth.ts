@@ -20,8 +20,7 @@ export async function getCurrentUser() {
   const session = await prisma.session.findFirst({
     where: {
       tokenHash,
-      expiresAt: { gt: now },
-      revokedAt: null
+      expiresAt: { gt: now }
     }
   });
 
