@@ -5,7 +5,10 @@ import { SESSION_COOKIE_NAME } from "./session";
 
 export async function getCurrentUser() {
   const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return null;
+  if (!token) {
+    console.info("[auth] no session cookie");
+    return null;
+  }
   const tokenHash = hashToken(token);
   const now = new Date();
 
@@ -17,9 +20,18 @@ export async function getCurrentUser() {
     }
   });
 
-  if (!session) return null;
+  if (!session) {
+    console.info("[auth] no active session for token hash");
+    return null;
+  }
 
   const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user) {
+    console.info("[auth] session user not found", { userId: session.userId });
+    return null;
+  }
+
+  console.info("[auth] user authenticated", { userId: user.id, role: user.role, plan: user.plan });
   return user;
 }
 
