@@ -11,6 +11,8 @@ export const metadata = {
   }
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   if (!user) {
