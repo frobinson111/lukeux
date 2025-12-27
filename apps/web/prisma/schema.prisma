@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -42,7 +42,7 @@ enum FeatureFlagScope {
 }
 
 model User {
-  id               String    @id @default(cuid())
+  id               String    @id @map("_id") @default(auto()) @db.ObjectId
   firstName        String
   lastName         String
   workDescription  String?
@@ -71,8 +71,8 @@ model User {
 }
 
 model Session {
-  id         String   @id @default(cuid())
-  userId     String
+  id         String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId     String   @db.ObjectId
   user       User     @relation(fields: [userId], references: [id])
   tokenHash  String   @unique
   expiresAt  DateTime
@@ -84,8 +84,8 @@ model Session {
 }
 
 model SupportRequest {
-  id        String   @id @default(cuid())
-  userId    String?
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String?  @db.ObjectId
   user      User?    @relation(fields: [userId], references: [id])
   firstName String
   lastName  String
@@ -100,8 +100,8 @@ model SupportRequest {
 }
 
 model EmailVerification {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id])
   tokenHash String   @unique
   expiresAt DateTime
@@ -112,8 +112,8 @@ model EmailVerification {
 }
 
 model PasswordReset {
-  id        String   @id @default(cuid())
-  userId    String
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id])
   tokenHash String   @unique
   expiresAt DateTime
@@ -124,8 +124,8 @@ model PasswordReset {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  userId      String
+  id          String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId      String   @db.ObjectId
   user        User     @relation(fields: [userId], references: [id])
   name        String
   sortOrder   Int      @default(0)
@@ -139,10 +139,10 @@ model Project {
 }
 
 model HistoryEntry {
-  id            String    @id @default(cuid())
-  userId        String
+  id            String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId        String    @db.ObjectId
   user          User      @relation(fields: [userId], references: [id])
-  projectId     String?
+  projectId     String?   @db.ObjectId
   project       Project?  @relation(fields: [projectId], references: [id])
   title         String
   content       String
@@ -156,7 +156,7 @@ model HistoryEntry {
 }
 
 model TaskTemplate {
-  id                  String   @id @default(cuid())
+  id                  String   @id @map("_id") @default(auto()) @db.ObjectId
   category            String
   subcategory         String
   title               String
@@ -168,9 +168,9 @@ model TaskTemplate {
   allowedModes        String[]
   allowedModels       String[]
   isActive            Boolean  @default(true)
-  templateCategoryId  String?
+  templateCategoryId  String?  @db.ObjectId
   templateCategory    TemplateCategory? @relation(fields: [templateCategoryId], references: [id])
-  createdById         String?
+  createdById         String?  @db.ObjectId
   createdBy           User?    @relation("TemplateCreator", fields: [createdById], references: [id])
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -181,7 +181,7 @@ model TaskTemplate {
 }
 
 model TemplateCategory {
-  id        String   @id @default(cuid())
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
   name      String   @unique
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
@@ -191,19 +191,19 @@ model TemplateCategory {
 }
 
 model PaymentConfig {
-  id         String   @id @default(cuid())
+  id         String   @id @map("_id") @default(auto()) @db.ObjectId
   pricePro   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
 model Task {
-  id             String       @id @default(cuid())
-  projectId      String?
+  id             String       @id @map("_id") @default(auto()) @db.ObjectId
+  projectId      String?      @db.ObjectId
   project        Project?     @relation(fields: [projectId], references: [id])
-  userId         String
+  userId         String       @db.ObjectId
   user           User         @relation(fields: [userId], references: [id])
-  templateId     String?
+  templateId     String?      @db.ObjectId
   template       TaskTemplate? @relation(fields: [templateId], references: [id])
   prompt         String
   mode           String
@@ -224,8 +224,8 @@ model Task {
 }
 
 model TaskAsset {
-  id          String   @id @default(cuid())
-  taskId      String
+  id          String   @id @map("_id") @default(auto()) @db.ObjectId
+  taskId      String   @db.ObjectId
   task        Task     @relation(fields: [taskId], references: [id])
   filename    String
   mimeType    String
@@ -237,13 +237,13 @@ model TaskAsset {
 }
 
 model UsageLedger {
-  id              String    @id @default(cuid())
-  userId          String
+  id              String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId          String    @db.ObjectId
   user            User      @relation(fields: [userId], references: [id])
-  taskId          String?
+  taskId          String?   @db.ObjectId
   task            Task?     @relation(fields: [taskId], references: [id])
   type            UsageType
-  costEstimateUsd Decimal?  @db.Decimal(10, 4)
+  costEstimateUsd Float?
   tokensIn        Int?
   tokensOut       Int?
   model           String?
@@ -255,8 +255,8 @@ model UsageLedger {
 }
 
 model BillingEvent {
-  id            String   @id @default(cuid())
-  userId        String?
+  id            String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId        String?  @db.ObjectId
   user          User?    @relation(fields: [userId], references: [id])
   stripeEventId String   @unique
   type          String
@@ -267,7 +267,7 @@ model BillingEvent {
 }
 
 model FeatureFlag {
-  key       String            @id
+  key       String            @id @map("_id")
   scope     FeatureFlagScope
   value     Json
   userId    String?
@@ -276,7 +276,7 @@ model FeatureFlag {
 }
 
 model PlanConfig {
-  id         String    @id @default(cuid())
+  id         String    @id @map("_id") @default(auto()) @db.ObjectId
   plan       Plan      @unique
   dailyLimit Int
   createdAt  DateTime  @default(now())
@@ -284,12 +284,12 @@ model PlanConfig {
 }
 
 model ApiKey {
-  id          String   @id @default(cuid())
+  id          String   @id @map("_id") @default(auto()) @db.ObjectId
   provider    String
   displayName String
   key         String
   isActive    Boolean  @default(true)
-  createdById String?
+  createdById String?  @db.ObjectId
   createdBy   User?    @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
