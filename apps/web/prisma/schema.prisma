@@ -45,6 +45,7 @@ model User {
   id               String    @id @default(cuid())
   firstName        String
   lastName         String
+  workDescription  String?
   email            String    @unique
   passwordHash     String
   emailVerifiedAt  DateTime?
@@ -65,6 +66,8 @@ model User {
   billingEvents      BillingEvent[]
   usageLedger        UsageLedger[]
   historyEntries     HistoryEntry[]
+  apiKeys            ApiKey[]
+  supportRequests    SupportRequest[]
 }
 
 model Session {
@@ -78,6 +81,21 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model SupportRequest {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  firstName String
+  lastName  String
+  email     String
+  message   String
+  phone     String?
+  requestType String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model EmailVerification {
@@ -144,15 +162,35 @@ model TaskTemplate {
   guidanceExample     String?
   guidanceOutcome     String?
   prompt              String
+  assets              String?
   allowedModes        String[]
   allowedModels       String[]
   isActive            Boolean  @default(true)
+  templateCategoryId  String?
+  templateCategory    TemplateCategory? @relation(fields: [templateCategoryId], references: [id])
   createdById         String?
   createdBy           User?    @relation("TemplateCreator", fields: [createdById], references: [id])
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   tasks Task[]
+}
+
+model TemplateCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  templates TaskTemplate[]
+}
+
+model PaymentConfig {
+  id         String   @id @default(cuid())
+  pricePro   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Task {
@@ -224,4 +262,26 @@ model FeatureFlag {
   userId    String?
   role      UserRole?
   createdAt DateTime          @default(now())
+}
+
+model PlanConfig {
+  id         String    @id @default(cuid())
+  plan       Plan      @unique
+  dailyLimit Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  provider    String
+  displayName String
+  key         String
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([provider, isActive])
 }

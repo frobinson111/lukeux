@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 
-const FREE_GENERATION_LIMIT = 2;
+const DEFAULT_FREE_GENERATION_LIMIT = 2;
 
 export type GenerationGateUser = {
   id: string;
@@ -9,6 +9,13 @@ export type GenerationGateUser = {
   planStatus: string;
   generationLimit: number | null;
 };
+
+async function getPlanLimit(plan: "FREE" | "PRO"): Promise<number | null> {
+  if (plan === "PRO") return null;
+  const config = await prisma.planConfig.findUnique({ where: { plan } });
+  if (!config) return DEFAULT_FREE_GENERATION_LIMIT;
+  return config.dailyLimit;
+}
 
 export async function assertCanGenerate(user: GenerationGateUser) {
   // Admins/superusers bypass limits/billing
@@ -21,7 +28,8 @@ export async function assertCanGenerate(user: GenerationGateUser) {
     throw new Error("Account suspended");
   }
 
-  const limit = user.generationLimit ?? FREE_GENERATION_LIMIT;
+  const planLimit = await getPlanLimit("FREE");
+  const limit = user.generationLimit ?? planLimit ?? DEFAULT_FREE_GENERATION_LIMIT;
 
   const count = await prisma.usageLedger.count({
     where: { userId: user.id, type: "GENERATION" }

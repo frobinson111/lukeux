@@ -4,7 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Luke UX | AI-Augmented UX Design Copilot",
   description:
-    "Desktop-first UX design copilot with structured prompts, LLM selection, and admin-controlled models."
+    "Desktop-first UX design copilot with structured prompts, LLM selection, and admin-controlled models.",
+  icons: {
+    icon: "/favicon.svg"
+  }
 };
 
 export default function RootLayout({

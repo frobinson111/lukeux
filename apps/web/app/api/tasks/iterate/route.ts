@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "../../../lib/auth";
-import { getProvider } from "../../../lib/llm/provider-registry";
+import { callLlm } from "../../../lib/llm/service";
 import { assertCanGenerate, logGenerationUsage } from "../../../lib/usage";
 
 export async function POST(req: Request) {
@@ -26,9 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err?.message || "Generation limit reached." }, { status: 402 });
   }
 
-  const provider = getProvider("openai");
-
-  const response = await provider.send({ prompt, model, mode: "auto", contextThreadId: threadId });
+  const response = await callLlm({ prompt, model, mode: "auto", contextThreadId: threadId });
   await logGenerationUsage(user.id, null, model);
   return NextResponse.json({
     content: response.content,

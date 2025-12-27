@@ -1,21 +1,30 @@
 import type { LlmProvider } from "@luke-ux/shared";
 import { OpenAiProvider } from "./providers/openai";
+import { prisma } from "../prisma";
 
-export function getProviders(): Record<string, LlmProvider> {
-  const providers: Record<string, LlmProvider> = {};
+const providerCache = new Map<string, LlmProvider>();
 
-  if (process.env.OPENAI_API_KEY) {
-    providers.openai = new OpenAiProvider(process.env.OPENAI_API_KEY);
+export async function getProvider(name: string): Promise<LlmProvider> {
+  const cached = providerCache.get(name);
+  if (cached) return cached;
+
+  if (name === "openai") {
+    const key = process.env.OPENAI_API_KEY || (await getDbKey("openai"));
+    if (!key) {
+      throw new Error("OpenAI key not configured");
+    }
+    const provider = new OpenAiProvider(key);
+    providerCache.set(name, provider);
+    return provider;
   }
 
-  return providers;
+  throw new Error(`Provider ${name} not configured`);
 }
 
-export function getProvider(name: string): LlmProvider {
-  const providers = getProviders();
-  const provider = providers[name];
-  if (!provider) {
-    throw new Error(`Provider ${name} not configured`);
-  }
-  return provider;
+async function getDbKey(provider: string): Promise<string | null> {
+  const key = await prisma.apiKey.findFirst({
+    where: { provider, isActive: true },
+    orderBy: { createdAt: "desc" }
+  });
+  return key?.key ?? null;
 }
