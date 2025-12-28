@@ -945,7 +945,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/pdf-icon.svg", available: true },
                           { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: true },
                           { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: true },
-                          { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: false },
+                          { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: true },
                           { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: false },
                           { label: "Figma link", fmt: "FIGMA", icon: "/images/figma-icon.svg", available: false }
                         ].map((item) => (
@@ -1137,6 +1137,31 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                     setStatus("DOCX downloaded.");
                                   } catch (err) {
                                     setStatus("DOCX export failed.");
+                                  } finally {
+                                    setDownloadMenu(false);
+                                  }
+                                })();
+                                return;
+                              }
+                              if (item.fmt === "PNG") {
+                                (async () => {
+                                  try {
+                                    if (!responseRef.current) {
+                                      setStatus("Nothing to export yet.");
+                                      return;
+                                    }
+                                    const { toPng } = await import("html-to-image");
+                                    setStatus("Building PNG…");
+                                    const dataUrl = await toPng(responseRef.current, { cacheBust: true });
+                                    const link = document.createElement("a");
+                                    link.href = dataUrl;
+                                    link.download = "design-feedback.png";
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    setStatus("PNG downloaded.");
+                                  } catch (err) {
+                                    setStatus("PNG export failed.");
                                   } finally {
                                     setDownloadMenu(false);
                                   }
