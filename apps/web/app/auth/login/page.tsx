@@ -37,8 +37,9 @@ export default function LoginPage() {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(data.error || "Unable to sign in");
-      setNeedsVerification(res.status === 403 && (data.error || "").toLowerCase().includes("verify"));
+      const msg = data.error || "Unable to sign in";
+      setError(msg);
+      setNeedsVerification(res.status === 403 || msg.toLowerCase().includes("verify"));
       setLoading(false);
       return;
     }
