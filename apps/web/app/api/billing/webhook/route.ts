@@ -25,13 +25,16 @@ export async function POST(req: Request) {
   }
 
   try {
+    console.log("[webhook] event received", { type: event.type, id: event.id });
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
         const customerId = session.customer?.toString();
+        console.log("[webhook] checkout.session.completed", { userId, customerId, sessionId: session.id });
         if (userId && customerId) {
-          await prisma.user.update({
+          const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: {
               stripeCustomerId: customerId,
@@ -39,6 +42,9 @@ export async function POST(req: Request) {
               planStatus: "ACTIVE"
             }
           });
+          console.log("[webhook] user upgraded to PRO", { id: updatedUser.id, plan: updatedUser.plan });
+        } else {
+          console.warn("[webhook] skipped upgrade - missing userId or customerId", { userId, customerId });
         }
         break;
       }
