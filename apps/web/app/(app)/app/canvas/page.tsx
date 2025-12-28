@@ -946,7 +946,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: true },
                           { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: true },
                           { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: true },
-                          { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: false },
+                          { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: true },
                           { label: "Figma link", fmt: "FIGMA", icon: "/images/figma-icon.svg", available: false }
                         ].map((item) => (
                           <button
@@ -1162,6 +1162,31 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                     setStatus("PNG downloaded.");
                                   } catch (err) {
                                     setStatus("PNG export failed.");
+                                  } finally {
+                                    setDownloadMenu(false);
+                                  }
+                                })();
+                                return;
+                              }
+                              if (item.fmt === "JPG") {
+                                (async () => {
+                                  try {
+                                    if (!responseRef.current) {
+                                      setStatus("Nothing to export yet.");
+                                      return;
+                                    }
+                                    const { toJpeg } = await import("html-to-image");
+                                    setStatus("Building JPG…");
+                                    const dataUrl = await toJpeg(responseRef.current, { cacheBust: true, quality: 0.92 });
+                                    const link = document.createElement("a");
+                                    link.href = dataUrl;
+                                    link.download = "design-feedback.jpg";
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    setStatus("JPG downloaded.");
+                                  } catch (err) {
+                                    setStatus("JPG export failed.");
                                   } finally {
                                     setDownloadMenu(false);
                                   }
