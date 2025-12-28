@@ -3,7 +3,30 @@ import Stripe from "stripe";
 import { prisma } from "../../../../lib/prisma";
 import { stripe } from "../../../../lib/stripe";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+async function getUserIdFromSubscription(sub: Stripe.Subscription) {
+  if (sub.metadata?.userId) return sub.metadata.userId;
+  if (sub.customer) {
+    const customerId = sub.customer.toString();
+    const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId }, select: { id: true } });
+    return user?.id;
+  }
+  return undefined;
+}
+
+async function getUserIdFromSession(session: Stripe.Checkout.Session) {
+  if (session.metadata?.userId) return session.metadata.userId;
+  if (session.customer) {
+    const customerId = session.customer.toString();
+    const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId }, select: { id: true } });
+    return user?.id;
+  }
+  return undefined;
+}
 
 export async function POST(req: Request) {
   if (!stripe || !webhookSecret) {
@@ -30,9 +53,10 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.userId;
         const customerId = session.customer?.toString();
+        const userId = await getUserIdFromSession(session);
         console.log("[webhook] checkout.session.completed", { userId, customerId, sessionId: session.id });
+
         if (userId && customerId) {
           const updatedUser = await prisma.user.update({
             where: { id: userId },
@@ -51,30 +75,41 @@ export async function POST(req: Request) {
       case "customer.subscription.updated":
       case "customer.subscription.created": {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
         const status = subscription.status;
+        const userId = await getUserIdFromSubscription(subscription);
+        console.log("[webhook] subscription event", { userId, customer: subscription.customer?.toString(), status });
+
         if (userId) {
-          await prisma.user.update({
+          const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: {
               plan: "PRO",
-              planStatus: status === "active" ? "ACTIVE" : "PAUSED"
+              planStatus: status === "active" ? "ACTIVE" : "PAUSED",
+              stripeCustomerId: subscription.customer?.toString() ?? undefined
             }
           });
+          console.log("[webhook] user set to PRO from subscription", { id: updatedUser.id, plan: updatedUser.plan, status: updatedUser.planStatus });
+        } else {
+          console.warn("[webhook] skipped subscription update - no userId", { metadataUserId: subscription.metadata?.userId, customer: subscription.customer?.toString() });
         }
         break;
       }
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
+        const userId = await getUserIdFromSubscription(subscription);
+        console.log("[webhook] subscription deleted", { userId, customer: subscription.customer?.toString() });
+
         if (userId) {
-          await prisma.user.update({
+          const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: {
               plan: "FREE",
               planStatus: "PAUSED"
             }
           });
+          console.log("[webhook] user downgraded to FREE", { id: updatedUser.id, plan: updatedUser.plan });
+        } else {
+          console.warn("[webhook] skipped downgrade - no userId", { metadataUserId: subscription.metadata?.userId, customer: subscription.customer?.toString() });
         }
         break;
       }
