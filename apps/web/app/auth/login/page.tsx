@@ -14,7 +14,11 @@ export default function LoginPage() {
   const [resendMsg, setResendMsg] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
-  const shouldShowResend = needsVerification || (error && error.toLowerCase().includes("verify"));
+  const [lastStatus, setLastStatus] = useState<number | null>(null);
+  const shouldShowResend =
+    needsVerification ||
+    lastStatus === 403 ||
+    (error && error.toLowerCase().includes("verify"));
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,6 +40,7 @@ export default function LoginPage() {
     });
 
     const data = await res.json().catch(() => ({}));
+    setLastStatus(res.status);
     if (!res.ok) {
       const msg = data.error || "Unable to sign in";
       setError(msg);
