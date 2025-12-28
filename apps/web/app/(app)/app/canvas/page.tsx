@@ -1045,35 +1045,75 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                       return;
                                     }
                                     const { Document, Packer, Paragraph, TextRun } = await import("docx");
+
                                     const lines = lastResponse.split(/\r?\n/);
                                     const paragraphs = lines.map((line) => {
                                       const trimmed = line.trim();
-                                      if (!trimmed) return new Paragraph({ text: " " });
+                                      if (!trimmed) {
+                                        return new Paragraph({ children: [new TextRun({ text: " " })], spacing: { after: 120 } });
+                                      }
                                       if (/^#{3}\s+/.test(trimmed)) {
                                         return new Paragraph({
-                                          children: [new TextRun({ text: trimmed.replace(/^#{3}\s+/, ""), bold: true, size: 22 })],
-                                          spacing: { after: 120 }
+                                          children: [
+                                            new TextRun({
+                                              text: trimmed.replace(/^#{3}\s+/, ""),
+                                              bold: true,
+                                              size: 26,
+                                              font: "Arial"
+                                            })
+                                          ],
+                                          spacing: { after: 180 }
                                         });
                                       }
                                       if (/^#{2}\s+/.test(trimmed)) {
                                         return new Paragraph({
-                                          children: [new TextRun({ text: trimmed.replace(/^#{2}\s+/, ""), bold: true, size: 24 })],
-                                          spacing: { after: 140 }
+                                          children: [
+                                            new TextRun({
+                                              text: trimmed.replace(/^#{2}\s+/, ""),
+                                              bold: true,
+                                              size: 28,
+                                              font: "Arial"
+                                            })
+                                          ],
+                                          spacing: { after: 200 }
                                         });
                                       }
                                       if (/^#\s+/.test(trimmed)) {
                                         return new Paragraph({
-                                          children: [new TextRun({ text: trimmed.replace(/^#\s+/, ""), bold: true, size: 26 })],
-                                          spacing: { after: 160 }
+                                          children: [
+                                            new TextRun({
+                                              text: trimmed.replace(/^#\s+/, ""),
+                                              bold: true,
+                                              size: 32,
+                                              font: "Arial"
+                                            })
+                                          ],
+                                          spacing: { after: 220 }
                                         });
                                       }
                                       if (/^(\-|\*)\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
                                         return new Paragraph({
-                                          children: [new TextRun({ text: trimmed.replace(/^(\-|\*|\d+\.)\s+/, "") })],
-                                          bullet: { level: 0 }
+                                          children: [
+                                            new TextRun({
+                                              text: trimmed.replace(/^(\-|\*|\d+\.)\s+/, ""),
+                                              size: 22,
+                                              font: "Arial"
+                                            })
+                                          ],
+                                          bullet: { level: 0 },
+                                          spacing: { after: 100 }
                                         });
                                       }
-                                      return new Paragraph({ text: trimmed });
+                                      return new Paragraph({
+                                        children: [
+                                          new TextRun({
+                                            text: trimmed,
+                                            size: 22,
+                                            font: "Arial"
+                                          })
+                                        ],
+                                        spacing: { after: 160 }
+                                      });
                                     });
 
                                     const doc = new Document({
