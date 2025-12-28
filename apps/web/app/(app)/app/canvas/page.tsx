@@ -947,7 +947,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: true },
                           { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: true },
                           { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: true },
-                          { label: "Figma link", fmt: "FIGMA", icon: "/images/figma-icon.svg", available: false }
+                          { label: "Figjam (.jam)", fmt: "FIGMA", icon: "/images/figma-icon-2.svg", available: true }
                         ].map((item) => (
                           <button
                             key={item.fmt}
@@ -1187,6 +1187,32 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                     setStatus("JPG downloaded.");
                                   } catch (err) {
                                     setStatus("JPG export failed.");
+                                  } finally {
+                                    setDownloadMenu(false);
+                                  }
+                                })();
+                                return;
+                              }
+                              if (item.fmt === "FIGMA") {
+                                (async () => {
+                                  try {
+                                    if (!lastResponse) {
+                                      setStatus("Nothing to export yet.");
+                                      return;
+                                    }
+                                    // Text-based Figjam stub: export the response as plain text with .jam extension.
+                                    const blob = new Blob([lastResponse], { type: "text/plain;charset=utf-8" });
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.download = "design-feedback.jam";
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(url);
+                                    setStatus("Figjam (.jam) downloaded.");
+                                  } catch (err) {
+                                    setStatus("Figjam export failed.");
                                   } finally {
                                     setDownloadMenu(false);
                                   }
