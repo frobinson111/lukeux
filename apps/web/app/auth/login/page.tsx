@@ -15,11 +15,8 @@ export default function LoginPage() {
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [lastStatus, setLastStatus] = useState<number | null>(null);
-  const shouldShowResend =
-    !!email.trim() &&
-    (needsVerification ||
-      lastStatus === 403 ||
-      !!error);
+  // Show the resend block whenever an email is entered (keep it obvious even if error text changes).
+  const shouldShowResend = !!email.trim();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
