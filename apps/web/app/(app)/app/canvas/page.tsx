@@ -937,7 +937,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                     {downloadMenu && (
                       <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
                         {[
-                          { label: "Markdown (.md)", fmt: "MD", icon: "/images/download.svg", available: true },
+                          { label: "Markdown (.md)", fmt: "MD", icon: "/images/markdown-icon.svg", available: true },
                           { label: "Text (.txt)", fmt: "TXT", icon: "/images/download.svg", available: true },
                           { label: "CSV (.csv)", fmt: "CSV", icon: "/images/download.svg", available: true },
                           { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/download.svg", available: false },
