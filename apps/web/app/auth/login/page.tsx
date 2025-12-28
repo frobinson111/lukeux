@@ -6,18 +6,26 @@ import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setLoading(true);
+    setNeedsVerification(false);
+    setResendMsg(null);
+    setResendError(null);
 
-    const formData = new FormData(event.currentTarget);
     const payload = {
-      email: String(formData.get("email") || "").trim(),
-      password: String(formData.get("password") || "")
+      email: email.trim(),
+      password
     };
 
     const res = await fetch("/api/auth/login", {
@@ -29,11 +37,38 @@ export default function LoginPage() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setError(data.error || "Unable to sign in");
+      setNeedsVerification(res.status === 403 && (data.error || "").toLowerCase().includes("verify"));
       setLoading(false);
       return;
     }
 
     router.push("/app");
+  }
+
+  async function handleResend() {
+    setResendMsg(null);
+    setResendError(null);
+    if (!email.trim()) {
+      setResendError("Enter your email above first.");
+      return;
+    }
+    setResendLoading(true);
+
+    const res = await fetch("/api/auth/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setResendError(data.error || "Could not resend verification email");
+      setResendLoading(false);
+      return;
+    }
+
+    setResendMsg(data.message || "If the account is unverified, we sent a verification email.");
+    setResendLoading(false);
   }
 
   return (
@@ -53,6 +88,8 @@ export default function LoginPage() {
             autoComplete="email"
             required
             aria-required="true"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </label>
 
@@ -65,12 +102,31 @@ export default function LoginPage() {
             autoComplete="current-password"
             required
             aria-required="true"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </label>
 
         {error && (
           <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
+          </div>
+        )}
+        {needsVerification && (
+          <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <div>This email isn&apos;t verified yet. Resend the verification email.</div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendLoading}
+                className="inline-flex items-center justify-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {resendLoading ? "Sending..." : "Resend verification email"}
+              </button>
+              {resendMsg && <span className="text-xs text-amber-700">{resendMsg}</span>}
+              {resendError && <span className="text-xs text-red-700">{resendError}</span>}
+            </div>
           </div>
         )}
 
