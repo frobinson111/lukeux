@@ -42,7 +42,6 @@ export async function getCurrentUser() {
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) return null;
-  if (!user.emailVerifiedAt) return null;
   if (user.planStatus === "SUSPENDED") return null;
   return user;
 }
