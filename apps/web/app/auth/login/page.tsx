@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [resendMsg, setResendMsg] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
+  const shouldShowResend = needsVerification || (error && error.toLowerCase().includes("verify"));
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -112,7 +113,7 @@ export default function LoginPage() {
             {error}
           </div>
         )}
-        {needsVerification && (
+        {shouldShowResend && (
           <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             <div>This email isn&apos;t verified yet. Resend the verification email.</div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
