@@ -16,9 +16,10 @@ export default function LoginPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [lastStatus, setLastStatus] = useState<number | null>(null);
   const shouldShowResend =
-    needsVerification ||
-    lastStatus === 403 ||
-    (error && error.toLowerCase().includes("verify"));
+    !!email.trim() &&
+    (needsVerification ||
+      lastStatus === 403 ||
+      !!error);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
