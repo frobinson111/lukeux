@@ -943,7 +943,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           { label: "Text (.txt)", fmt: "TXT", icon: "/images/text-icon.svg", available: true },
                           { label: "CSV (.csv)", fmt: "CSV", icon: "/images/csv-icon.svg", available: true },
                           { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/pdf-icon.svg", available: true },
-                          { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: false },
+                          { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: true },
                           { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: false },
                           { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: false },
                           { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: false },
@@ -1031,6 +1031,72 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                     setStatus("PDF downloaded.");
                                   } catch (err) {
                                     setStatus("PDF export failed.");
+                                  } finally {
+                                    setDownloadMenu(false);
+                                  }
+                                })();
+                                return;
+                              }
+                              if (item.fmt === "DOCX") {
+                                (async () => {
+                                  try {
+                                    if (!lastResponse) {
+                                      setStatus("Nothing to export yet.");
+                                      return;
+                                    }
+                                    const { Document, Packer, Paragraph, TextRun } = await import("docx");
+                                    const lines = lastResponse.split(/\r?\n/);
+                                    const paragraphs = lines.map((line) => {
+                                      const trimmed = line.trim();
+                                      if (!trimmed) return new Paragraph({ text: " " });
+                                      if (/^#{3}\s+/.test(trimmed)) {
+                                        return new Paragraph({
+                                          children: [new TextRun({ text: trimmed.replace(/^#{3}\s+/, ""), bold: true, size: 22 })],
+                                          spacing: { after: 120 }
+                                        });
+                                      }
+                                      if (/^#{2}\s+/.test(trimmed)) {
+                                        return new Paragraph({
+                                          children: [new TextRun({ text: trimmed.replace(/^#{2}\s+/, ""), bold: true, size: 24 })],
+                                          spacing: { after: 140 }
+                                        });
+                                      }
+                                      if (/^#\s+/.test(trimmed)) {
+                                        return new Paragraph({
+                                          children: [new TextRun({ text: trimmed.replace(/^#\s+/, ""), bold: true, size: 26 })],
+                                          spacing: { after: 160 }
+                                        });
+                                      }
+                                      if (/^(\-|\*)\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
+                                        return new Paragraph({
+                                          children: [new TextRun({ text: trimmed.replace(/^(\-|\*|\d+\.)\s+/, "") })],
+                                          bullet: { level: 0 }
+                                        });
+                                      }
+                                      return new Paragraph({ text: trimmed });
+                                    });
+
+                                    const doc = new Document({
+                                      sections: [
+                                        {
+                                          properties: {},
+                                          children: paragraphs
+                                        }
+                                      ]
+                                    });
+
+                                    const blob = await Packer.toBlob(doc);
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.download = "design-feedback.docx";
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(url);
+                                    setStatus("DOCX downloaded.");
+                                  } catch (err) {
+                                    setStatus("DOCX export failed.");
                                   } finally {
                                     setDownloadMenu(false);
                                   }
