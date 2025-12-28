@@ -944,7 +944,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           { label: "CSV (.csv)", fmt: "CSV", icon: "/images/csv-icon.svg", available: true },
                           { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/pdf-icon.svg", available: true },
                           { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: true },
-                          { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: false },
+                          { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: true },
                           { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: false },
                           { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: false },
                           { label: "Figma link", fmt: "FIGMA", icon: "/images/figma-icon.svg", available: false }
@@ -1137,6 +1137,38 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                     setStatus("DOCX downloaded.");
                                   } catch (err) {
                                     setStatus("DOCX export failed.");
+                                  } finally {
+                                    setDownloadMenu(false);
+                                  }
+                                })();
+                                return;
+                              }
+                              if (item.fmt === "XLSX") {
+                                (async () => {
+                                  try {
+                                    if (!lastResponse) {
+                                      setStatus("Nothing to export yet.");
+                                      return;
+                                    }
+                                    const XLSX = await import("xlsx");
+                                    const lines = lastResponse.split(/\r?\n/);
+                                    const rows = lines.map((line) => [line]);
+                                    const sheet = XLSX.utils.aoa_to_sheet(rows);
+                                    const wb = XLSX.utils.book_new();
+                                    XLSX.utils.book_append_sheet(wb, sheet, "Design Feedback");
+                                    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+                                    const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.download = "design-feedback.xlsx";
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(url);
+                                    setStatus("XLSX downloaded.");
+                                  } catch (err) {
+                                    setStatus("XLSX export failed.");
                                   } finally {
                                     setDownloadMenu(false);
                                   }

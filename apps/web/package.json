@@ -24,11 +24,13 @@
     "nodemailer": "^7.0.12",
     "openai": "^6.15.0",
     "prisma": "5.18.0",
+    "xlsx": "^0.18.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "stripe": "^20.1.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
