@@ -45,6 +45,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [historyMoveProject, setHistoryMoveProject] = useState<string>("");
   const [saveProjectMenu, setSaveProjectMenu] = useState(false);
   const [saveProjectSelection, setSaveProjectSelection] = useState<string>("");
+  const [downloadMenu, setDownloadMenu] = useState(false);
   const [projectFolders, setProjectFolders] = useState<ProjectFolder[]>([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -921,68 +922,85 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       type="button"
                       aria-label="Download response"
                       disabled={!lastResponse || loading}
-                      onClick={() => {
-                        // default to markdown if no selection is made elsewhere
-                        if (!lastResponse) return;
-                        const blob = new Blob([lastResponse], { type: "text/markdown;charset=utf-8" });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = "design-feedback.md";
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
+                      onClick={() => setStatus(null)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClickCapture={(e) => {
+                        e.preventDefault();
+                        setSaveProjectMenu(false);
+                        setDownloadMenu((v) => !v);
                       }}
                       className="flex items-center gap-1 text-xs font-semibold text-slate-600 transition hover:text-slate-900 disabled:opacity-60"
                     >
                       <Image src="/images/download.svg" alt="Download" width={16} height={16} className="h-4 w-4" />
                       <span>Download</span>
                     </button>
-                    <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-slate-600">
-                      {["MD", "TXT", "CSV", "PDF", "PNG", "JPG", "DOCX", "XLSX", "FIGMA"].map((fmt) => (
-                        <button
-                          key={fmt}
-                          type="button"
-                          disabled={!lastResponse || loading}
-                          onClick={() => {
-                            if (!lastResponse) return;
-                            const textContent = lastResponse;
-                            const download = (data: BlobPart, type: string, filename: string) => {
-                              const blob = new Blob([data], { type });
-                              const url = URL.createObjectURL(blob);
-                              const link = document.createElement("a");
-                              link.href = url;
-                              link.download = filename;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              URL.revokeObjectURL(url);
-                            };
+                    {downloadMenu && (
+                      <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+                        {[
+                          { label: "Markdown (.md)", fmt: "MD", icon: "/images/download.svg", available: true },
+                          { label: "Text (.txt)", fmt: "TXT", icon: "/images/download.svg", available: true },
+                          { label: "CSV (.csv)", fmt: "CSV", icon: "/images/download.svg", available: true },
+                          { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/download.svg", available: false },
+                          { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/download.svg", available: false },
+                          { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/download.svg", available: false },
+                          { label: "PNG (.png)", fmt: "PNG", icon: "/images/download.svg", available: false },
+                          { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/download.svg", available: false },
+                          { label: "Figma link", fmt: "FIGMA", icon: "/images/download.svg", available: false }
+                        ].map((item) => (
+                          <button
+                            key={item.fmt}
+                            type="button"
+                            disabled={!lastResponse || loading}
+                            onClick={() => {
+                              if (!lastResponse) return;
+                              const textContent = lastResponse;
+                              const download = (data: BlobPart, type: string, filename: string) => {
+                                const blob = new Blob([data], { type });
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement("a");
+                                link.href = url;
+                                link.download = filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(url);
+                              };
 
-                            if (fmt === "MD") {
-                              download(textContent, "text/markdown;charset=utf-8", "design-feedback.md");
-                              return;
-                            }
-                            if (fmt === "TXT") {
-                              download(textContent, "text/plain;charset=utf-8", "design-feedback.txt");
-                              return;
-                            }
-                            if (fmt === "CSV") {
-                              const safe = textContent.replace(/"/g, '""');
-                              const csv = `\"Content\"\n\"${safe}\"`;
-                              download(csv, "text/csv;charset=utf-8", "design-feedback.csv");
-                              return;
-                            }
-                            // Placeholder handling for formats that need richer export support
-                            setStatus((prev) => prev || `${fmt} export is not available yet.`);
-                          }}
-                          className="rounded-full border border-slate-200 px-2 py-1 transition hover:-translate-y-[1px] hover:shadow disabled:opacity-50"
-                        >
-                          {fmt}
-                        </button>
-                      ))}
-                    </div>
+                              if (!item.available) {
+                                setStatus(`${item.label} is coming soon.`);
+                                setDownloadMenu(false);
+                                return;
+                              }
+
+                              if (item.fmt === "MD") {
+                                download(textContent, "text/markdown;charset=utf-8", "design-feedback.md");
+                                setDownloadMenu(false);
+                                return;
+                              }
+                              if (item.fmt === "TXT") {
+                                download(textContent, "text/plain;charset=utf-8", "design-feedback.txt");
+                                setDownloadMenu(false);
+                                return;
+                              }
+                              if (item.fmt === "CSV") {
+                                const safe = textContent.replace(/"/g, '""');
+                                const csv = `\"Content\"\n\"${safe}\"`;
+                                download(csv, "text/csv;charset=utf-8", "design-feedback.csv");
+                                setDownloadMenu(false);
+                                return;
+                              }
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+                          >
+                            <Image src={item.icon} alt={item.fmt} width={16} height={16} className="h-4 w-4" />
+                            <span className="flex-1 text-xs font-semibold">
+                              {item.label}
+                              {!item.available && <span className="ml-1 text-[10px] uppercase text-slate-500">(coming soon)</span>}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-4 space-y-3">
