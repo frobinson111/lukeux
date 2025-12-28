@@ -938,14 +938,14 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
                         {[
                           { label: "Markdown (.md)", fmt: "MD", icon: "/images/markdown-icon.svg", available: true },
-                          { label: "Text (.txt)", fmt: "TXT", icon: "/images/download.svg", available: true },
-                          { label: "CSV (.csv)", fmt: "CSV", icon: "/images/download.svg", available: true },
-                          { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/download.svg", available: false },
-                          { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/download.svg", available: false },
-                          { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/download.svg", available: false },
-                          { label: "PNG (.png)", fmt: "PNG", icon: "/images/download.svg", available: false },
-                          { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/download.svg", available: false },
-                          { label: "Figma link", fmt: "FIGMA", icon: "/images/download.svg", available: false }
+                          { label: "Text (.txt)", fmt: "TXT", icon: "/images/text-icon.svg", available: true },
+                          { label: "CSV (.csv)", fmt: "CSV", icon: "/images/csv-icon.svg", available: true },
+                          { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/pdf-icon.svg", available: false },
+                          { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: false },
+                          { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: false },
+                          { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: false },
+                          { label: "JPG (.jpg)", fmt: "JPG", icon: "/images/jpg-icon.svg", available: false },
+                          { label: "Figma link", fmt: "FIGMA", icon: "/images/figma-icon.svg", available: false }
                         ].map((item) => (
                           <button
                             key={item.fmt}
