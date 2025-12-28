@@ -5,6 +5,7 @@ import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import dynamic from "next/dynamic";
 
 type ProjectFolder = { id: string; name: string; open: boolean; sortOrder?: number };
 type HistoryItem = { id: string; title: string; content: string; templateIndex: number | null; projectId: string | null };
@@ -51,6 +52,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [projectName, setProjectName] = useState("");
   const responseRef = useRef<HTMLDivElement | null>(null);
   const template = templateIndex !== null ? templateList[templateIndex] : null;
+  const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [firstNameLocal, setFirstNameLocal] = useState(firstName || "");
 
@@ -940,7 +942,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           { label: "Markdown (.md)", fmt: "MD", icon: "/images/markdown-icon.svg", available: true },
                           { label: "Text (.txt)", fmt: "TXT", icon: "/images/text-icon.svg", available: true },
                           { label: "CSV (.csv)", fmt: "CSV", icon: "/images/csv-icon.svg", available: true },
-                          { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/pdf-icon.svg", available: false },
+                          { label: "PDF (.pdf)", fmt: "PDF", icon: "/images/pdf-icon.svg", available: true },
                           { label: "DOCX (.docx)", fmt: "DOCX", icon: "/images/docx-icon.svg", available: false },
                           { label: "XLSX (.xlsx)", fmt: "XLSX", icon: "/images/xlsx-icon.svg", available: false },
                           { label: "PNG (.png)", fmt: "PNG", icon: "/images/png-icon.svg", available: false },
@@ -987,6 +989,52 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                                 const csv = `\"Content\"\n\"${safe}\"`;
                                 download(csv, "text/csv;charset=utf-8", "design-feedback.csv");
                                 setDownloadMenu(false);
+                                return;
+                              }
+                              if (item.fmt === "PDF") {
+                                (async () => {
+                                  try {
+                                    if (!responseRef.current) {
+                                      setStatus("Nothing to export yet.");
+                                      return;
+                                    }
+                                    if (!pdfLibsRef.current) {
+                                      const [toPng, { jsPDF }] = await Promise.all([
+                                        import("html-to-image").then((m) => m.toPng),
+                                        import("jspdf")
+                                      ]);
+                                      pdfLibsRef.current = { toPng, jsPDF };
+                                    }
+                                    const { toPng, jsPDF } = pdfLibsRef.current;
+                                    setStatus("Building PDF…");
+                                    const dataUrl = await toPng(responseRef.current, { cacheBust: true });
+                                    const pdf = new (jsPDF as any)({
+                                      orientation: "p",
+                                      unit: "px",
+                                      format: "a4"
+                                    });
+                                    const pageWidth = pdf.internal.pageSize.getWidth();
+                                    const pageHeight = pdf.internal.pageSize.getHeight();
+                                    const img = new (window.Image as any)();
+                                    img.src = dataUrl;
+                                    await new Promise<void>((resolve, reject) => {
+                                      img.onload = () => resolve();
+                                      img.onerror = reject;
+                                    });
+                                    const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                                    const imgWidth = img.width * ratio;
+                                    const imgHeight = img.height * ratio;
+                                    const x = (pageWidth - imgWidth) / 2;
+                                    const y = 20;
+                                    pdf.addImage(dataUrl, "PNG", x, y, imgWidth, imgHeight, undefined, "FAST");
+                                    pdf.save("design-feedback.pdf");
+                                    setStatus("PDF downloaded.");
+                                  } catch (err) {
+                                    setStatus("PDF export failed.");
+                                  } finally {
+                                    setDownloadMenu(false);
+                                  }
+                                })();
                                 return;
                               }
                             }}
