@@ -51,12 +51,12 @@ export default function FeedbackAdmin({ feedback }: { feedback: FeedbackRow[] })
   );
 }
 
-function formatDate(d: string) {
+function formatDate(d: string | Date) {
   try {
     const asDate = d instanceof Date ? d : new Date(d);
     return asDate.toISOString().slice(0, 19).replace("T", " ");
   } catch {
-    return d;
+    return d as string;
   }
 }
 
