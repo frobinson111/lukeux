@@ -20,11 +20,16 @@ type Template = {
   guidanceExample?: string | null;
   guidanceOutcome?: string | null;
   assets?: string | null;
+  allowedModels?: string[];
+  allowedModes?: string[];
 };
 
 const projects = ["New UX Task"];
 
-const models = ["gpt-4o-mini", "gpt-4o", "ChatGPT 5.2", "Claude 3.5"] as const;
+const models = ["gpt-5.2", "gpt-5.1", "gpt-4.0", "gpt-4o", "gpt-4o-mini"] as const;
+const modes = ["auto", "instant", "thinking"] as const;
+const detailLevels = ["brief", "standard", "in-depth"] as const;
+type AssetPayload = { name: string; type: string; content: string };
 
 export default function CanvasPage({ firstName, templates = [] }: { firstName?: string; templates?: Template[] }) {
   const [status, setStatus] = useState<string | null>(null);
@@ -32,6 +37,10 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [files, setFiles] = useState<File[]>([]);
   const [model, setModel] = useState<(typeof models)[number]>(models[0]);
   const [templateIndex, setTemplateIndex] = useState<number | null>(null);
+  const [mode, setMode] = useState<(typeof modes)[number]>("auto");
+  const [detailLevel, setDetailLevel] = useState<(typeof detailLevels)[number]>("standard");
+  const [assetPayloads, setAssetPayloads] = useState<AssetPayload[]>([]);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [templateList, setTemplateList] = useState<Template[]>(templates ?? []);
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -171,11 +180,15 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     if (template) {
       setEditablePrompt(template.prompt);
       setPromptEditing(false);
+      const allowed = template.allowedModes && template.allowedModes.length ? template.allowedModes : modes;
+      if (!allowed.includes(mode)) {
+        setMode((allowed as any)[0] ?? "auto");
+      }
     } else {
       setEditablePrompt("");
       setPromptEditing(false);
     }
-  }, [templateIndex, template]);
+  }, [templateIndex, template, mode]);
 
   useEffect(() => {
     async function load() {
@@ -211,9 +224,63 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     load();
   }, []);
 
-  function handleUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files ?? []);
     setFiles(selected);
+    if (!selected.length) {
+      setAssetPayloads([]);
+      return;
+    }
+
+    const allowedTextTypes = new Set([
+      "text/plain",
+      "text/markdown",
+      "text/csv",
+      "application/json",
+      "application/xml",
+      "text/xml",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ]);
+
+    const maxPerFile = 20_000; // chars
+
+    const readAsText = (file: File) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file);
+      });
+
+    const payloads: AssetPayload[] = [];
+    for (const file of selected) {
+      if (!allowedTextTypes.has(file.type)) {
+        // skip binaries but note filename
+        payloads.push({
+          name: file.name,
+          type: file.type || "unknown",
+          content: "[binary or unsupported type; not inlined]"
+        });
+        continue;
+      }
+      try {
+        const text = await readAsText(file);
+        const trimmed = text.length > maxPerFile ? `${text.slice(0, maxPerFile)}\n...[truncated]` : text;
+        payloads.push({
+          name: file.name,
+          type: file.type || "text",
+          content: trimmed
+        });
+      } catch {
+        payloads.push({
+          name: file.name,
+          type: file.type || "unknown",
+          content: "[failed to read file]"
+        });
+      }
+    }
+    setAssetPayloads(payloads);
   }
 
   function handleUploadClick() {
@@ -398,8 +465,11 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
         body: JSON.stringify({
           template: template.category,
           model,
+          mode,
+          detailLevel,
           prompt: editablePrompt?.trim() || template.prompt,
-          files: files.map((f) => f.name)
+          files: files.map((f) => f.name),
+          assets: assetPayloads
         })
       });
       const data = await res.json().catch(() => null);
@@ -658,20 +728,85 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
 
         <main className="flex-1 space-y-6 pt-5">
           <header className="flex items-center justify-between text-sm text-slate-700">
-            <label className="inline-flex items-center gap-2 text-xs font-semibold">
-              <span>Model</span>
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value as (typeof models)[number])}
-                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none"
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setModelMenuOpen((v) => !v)}
+                className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow focus:outline-none focus:ring-2 focus:ring-black/10"
               >
-                {models.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <span className="text-[11px] uppercase text-slate-500">Model / Mode / Detail</span>
+                <span className="text-slate-900">
+                  {model} · {mode} · {detailLevel === "brief" ? "Brief" : detailLevel === "standard" ? "Standard" : "In-depth"}
+                </span>
+              </button>
+              {modelMenuOpen && (
+                <div
+                  className="absolute z-30 mt-2 w-[360px] rounded-lg border border-slate-200 bg-white p-3 shadow-xl"
+                  onMouseLeave={() => setModelMenuOpen(false)}
+                >
+                  <div className="grid grid-cols-3 gap-3 text-xs font-semibold text-slate-700">
+                    <div>
+                      <p className="mb-1 text-[11px] uppercase text-slate-500">Model</p>
+                      <div className="space-y-1">
+                        {models.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setModel(m)}
+                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
+                              model === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                            }`}
+                          >
+                            <span className="w-4 text-slate-900">{model === m ? "✓" : ""}</span>
+                            <span className="truncate">{m}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-[11px] uppercase text-slate-500">Mode</p>
+                      <div className="space-y-1">
+                        {modes.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setMode(m)}
+                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
+                              mode === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                            }`}
+                          >
+                            <span className="w-4 text-slate-900">{mode === m ? "✓" : ""}</span>
+                            <span className="truncate">
+                              {m === "auto" ? "Auto" : m === "instant" ? "Instant" : "Thinking"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-[11px] uppercase text-slate-500">Detail</p>
+                      <div className="space-y-1">
+                        {detailLevels.map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setDetailLevel(d)}
+                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
+                              detailLevel === d ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                            }`}
+                          >
+                            <span className="w-4 text-slate-900">{detailLevel === d ? "✓" : ""}</span>
+                            <span className="truncate">
+                              {d === "brief" ? "Brief" : d === "standard" ? "Standard" : "In-depth"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </header>
 
           {!lastResponse && (
@@ -1289,9 +1424,12 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           model,
+                          mode,
+                          detailLevel,
                           prompt: followup,
                           taskId,
-                          threadId
+                          threadId,
+                          assets: assetPayloads
                         })
                       });
                       const json = await res.json().catch(() => null);

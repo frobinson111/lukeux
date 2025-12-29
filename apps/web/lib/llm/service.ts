@@ -16,8 +16,11 @@ type ModelConfig = {
 };
 
 export const MODEL_MAP: Record<string, ModelConfig> = {
-  "gpt-4o-mini": { provider: "openai", defaultMode: "auto" },
-  "gpt-4o": { provider: "openai", defaultMode: "auto" }
+  "gpt-5.2": { provider: "openai", defaultMode: "auto" },
+  "gpt-5.1": { provider: "openai", defaultMode: "auto" },
+  "gpt-4.0": { provider: "openai", defaultMode: "auto" },
+  "gpt-4o": { provider: "openai", defaultMode: "auto" },
+  "gpt-4o-mini": { provider: "openai", defaultMode: "auto" }
 };
 
 const DEFAULT_TIMEOUT_MS = 20_000;

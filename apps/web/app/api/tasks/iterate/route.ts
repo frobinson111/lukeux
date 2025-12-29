@@ -8,11 +8,38 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const { model, prompt, taskId, threadId } = body || {};
+  const { model, prompt, taskId, threadId, mode, detailLevel, assets } = body || {};
 
   if (!model || !prompt || !taskId || !threadId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+  const allowedModes = ["auto", "instant", "thinking"];
+  const allowedDetail = ["brief", "standard", "in-depth"];
+  const selectedMode = allowedModes.includes(mode) ? mode : "auto";
+  const selectedDetail = allowedDetail.includes(detailLevel) ? detailLevel : "standard";
+
+  const detailSuffix =
+    selectedDetail === "brief"
+      ? "Keep the response concise: 3-5 bullets or short paragraphs."
+      : selectedDetail === "in-depth"
+      ? "Provide an in-depth response with clear sections and 8-12 detailed points."
+      : "Provide a balanced response with 5-8 clear points.";
+
+  const assetsArray: { name?: string; type?: string; content?: string }[] = Array.isArray(assets) ? assets : [];
+  const assetsSection = assetsArray
+    .map((a) => {
+      const name = a.name || "asset";
+      const type = a.type || "unknown";
+      const content = a.content || "";
+      const capped = content.length > 2000 ? `${content.slice(0, 2000)}\n...[truncated]` : content;
+      return `- ${name} (${type}):\n${capped}`;
+    })
+    .join("\n\n");
+
+  const fullPrompt =
+    assetsSection && assetsSection.length > 0
+      ? `${prompt}\n\nAssets provided:\n${assetsSection}\n\n${detailSuffix}`
+      : `${prompt}\n\n${detailSuffix}`;
 
   try {
     await assertCanGenerate({
@@ -26,7 +53,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err?.message || "Generation limit reached." }, { status: 402 });
   }
 
-  const response = await callLlm({ prompt, model, mode: "auto", contextThreadId: threadId });
+  const response = await callLlm({ prompt: fullPrompt, model, mode: selectedMode as any, contextThreadId: threadId });
   await logGenerationUsage(user.id, null, model);
   return NextResponse.json({
     content: response.content,
