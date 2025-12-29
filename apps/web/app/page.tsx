@@ -105,11 +105,8 @@ export default function HomePage() {
         return;
       }
 
-      setMessage(
-        data.devPreview
-          ? `Check your email to verify. Dev preview link: ${data.devPreview}`
-          : "Check your email to verify your account."
-      );
+      // Email verification messaging disabled
+      setMessage(null);
       setForm(initialState);
       setMode("login");
     } catch (err) {
@@ -627,15 +624,6 @@ export default function HomePage() {
                   {error}
                 </div>
               )}
-              {message && (
-                <div
-                  role="status"
-                  className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700"
-                >
-                  {message}
-                </div>
-              )}
-
               <button
                 type="submit"
                 disabled={loading}
