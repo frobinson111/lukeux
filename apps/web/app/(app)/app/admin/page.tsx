@@ -80,6 +80,17 @@ export type SupportRow = {
   createdAt: Date;
 };
 
+export type FeedbackRow = {
+  id: string;
+  type: string;
+  source: string | null;
+  triggerCount: number | null;
+  message: string;
+  createdAt: Date;
+  userEmail: string | null;
+  userName: string | null;
+};
+
 export default async function AdminPage() {
   const user = await requireUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPERUSER")) {
@@ -93,7 +104,7 @@ export default async function AdminPage() {
 
   const prismaAny = prisma as any;
 
-  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests] = await Promise.all([
+  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows] = await Promise.all([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -143,6 +154,11 @@ export default async function AdminPage() {
     prismaAny.supportRequest.findMany({
       orderBy: { createdAt: "desc" },
       take: 200
+    }),
+    prismaAny.feedback.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: { user: { select: { email: true, firstName: true, lastName: true } } }
     })
   ]);
 
@@ -196,6 +212,18 @@ export default async function AdminPage() {
         webhookMasked: webhook ? `${webhook.slice(0, 2)}••••${webhook.slice(-4)}` : ""
       }}
       support={supportRequests as SupportRow[]}
+      feedback={
+        feedbackRows.map((f: any) => ({
+          id: f.id,
+          type: f.type,
+          source: f.source ?? null,
+          triggerCount: f.triggerCount ?? null,
+          message: f.message,
+          createdAt: f.createdAt,
+          userEmail: f.user?.email ?? null,
+          userName: f.user ? `${f.user.firstName ?? ""} ${f.user.lastName ?? ""}`.trim() || null : null
+        })) as FeedbackRow[]
+      }
     />
   );
 }

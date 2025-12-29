@@ -30,6 +30,9 @@ const models = ["gpt-5.2", "gpt-5.1", "gpt-4.0", "gpt-4o", "gpt-4o-mini"] as con
 const modes = ["auto", "instant", "thinking"] as const;
 const detailLevels = ["brief", "standard", "in-depth"] as const;
 type AssetPayload = { name: string; type: string; content: string };
+const milestones = [3, 10, 20];
+type FeedbackType = "LIKE" | "DISLIKE" | "SUGGESTION";
+const FEEDBACK_MAX_LEN = 1000;
 
 export default function CanvasPage({ firstName, templates = [] }: { firstName?: string; templates?: Template[] }) {
   const [status, setStatus] = useState<string | null>(null);
@@ -61,6 +64,12 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [projectFolders, setProjectFolders] = useState<ProjectFolder[]>([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [genCount, setGenCount] = useState(0);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<FeedbackType>("LIKE");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const responseRef = useRef<HTMLDivElement | null>(null);
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
@@ -190,8 +199,15 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
       }
     }
     loadTemplates();
+    const stored = Number(localStorage.getItem("lx_gen_count") || "0");
+    setGenCount(Number.isFinite(stored) ? stored : 0);
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const stored = Number(localStorage.getItem("lx_gen_count") || "0");
+    setGenCount(Number.isFinite(stored) ? stored : 0);
   }, []);
 
   useEffect(() => {
@@ -241,6 +257,33 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (!lastResponse) return;
+    const next = genCount + 1;
+    setGenCount(next);
+    localStorage.setItem("lx_gen_count", String(next));
+    const promptedRaw = localStorage.getItem("lx_gen_prompted");
+    const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
+    const milestone = milestones.find((m) => m === next && !prompted.includes(m));
+    if (milestone) {
+      setShowFeedbackModal(true);
+      localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
+    }
+  }, [lastResponse]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!lastResponse) return;
+    const next = genCount + 1;
+    setGenCount(next);
+    localStorage.setItem("lx_gen_count", String(next));
+    const promptedRaw = localStorage.getItem("lx_gen_prompted");
+    const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
+    const milestone = milestones.find((m) => m === next && !prompted.includes(m));
+    if (milestone) {
+      setShowFeedbackModal(true);
+      localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
+    }
+  }, [lastResponse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allowedTextTypes = new Set([
     "text/plain",
@@ -1534,6 +1577,109 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                     </div>
                   </div>
                 </form>
+              </div>
+            )}
+
+            {showFeedbackModal && (
+              <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
+                <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">Tell us what you think.</h2>
+                      <p className="text-xs font-semibold uppercase text-slate-600 mt-1">What kind of feedback do you have?</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="rounded-full px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      { key: "LIKE", label: "😊 I like something" },
+                      { key: "DISLIKE", label: "🙁 I don't like something" },
+                      { key: "SUGGESTION", label: "💡 I have a suggestion" }
+                    ].map((opt) => (
+                      <label
+                        key={opt.key}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold shadow-sm transition ${
+                          feedbackType === opt.key ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white hover:bg-slate-50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          className="h-4 w-4"
+                          checked={feedbackType === opt.key}
+                          onChange={() => setFeedbackType(opt.key as FeedbackType)}
+                        />
+                        <span className="text-slate-900">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 space-y-1">
+                    <label className="text-xs font-semibold uppercase text-slate-600">Comments or Questions</label>
+                    <textarea
+                      value={feedbackMessage}
+                      onChange={(e) => {
+                        if (e.target.value.length <= FEEDBACK_MAX_LEN) setFeedbackMessage(e.target.value);
+                      }}
+                      rows={4}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                      placeholder="Can you add the following UX task…"
+                    />
+                    <div className="text-right text-[11px] text-slate-500">{feedbackMessage.length}/{FEEDBACK_MAX_LEN}</div>
+                    {feedbackError && <div className="text-[12px] text-rose-600">{feedbackError}</div>}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedbackModal(false)}
+                      className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:-translate-y-[1px] hover:shadow"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={feedbackSubmitting || feedbackMessage.trim().length < 5}
+                      onClick={async () => {
+                        setFeedbackError(null);
+                        setFeedbackSubmitting(true);
+                        try {
+                          const res = await fetch("/api/feedback", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              type: feedbackType,
+                              message: feedbackMessage.trim(),
+                              source: "modal",
+                              triggerCount: genCount
+                            })
+                          });
+                          if (!res.ok) {
+                            const json = await res.json().catch(() => null);
+                            setFeedbackError(json?.error || "Failed to send feedback.");
+                          } else {
+                            setShowFeedbackModal(false);
+                            setFeedbackMessage("");
+                            setStatus("Thanks for your feedback!");
+                          }
+                        } catch (err) {
+                          setFeedbackError("Failed to send feedback.");
+                        } finally {
+                          setFeedbackSubmitting(false);
+                        }
+                      }}
+                      className="rounded-md bg-black px-4 py-2 text-sm font-bold text-white shadow-[0_3px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_5px_0_#111] disabled:opacity-60"
+                    >
+                      {feedbackSubmitting ? "Sending..." : "Submit"}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 

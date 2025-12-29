@@ -74,6 +74,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                     <Image src="/images/help.svg" alt="Help" width={18} height={18} className="h-5 w-5" />
                     <span>Help</span>
                   </Link>
+                  <Link className="flex items-center gap-2 px-4 py-3 hover:bg-slate-50" href="/app/feedback" role="menuitem">
+                    <Image src="/images/help.svg" alt="Feedback" width={18} height={18} className="h-5 w-5" />
+                    <span>Feedback &amp; Requests</span>
+                  </Link>
                   <form action="/api/auth/logout" method="post">
                     <button
                       type="submit"

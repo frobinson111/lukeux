@@ -5,8 +5,9 @@ import Image from "next/image";
 import TemplatesAdmin from "./templates-client";
 import KeysAdmin from "./keys-client";
 import PaymentsAdmin from "./payments-client";
-import type { UserRow, TemplateRow, UsageRow, EventRow, KeyRow, CategoryRow, PaymentConfigRow, SupportRow } from "./page";
+import type { UserRow, TemplateRow, UsageRow, EventRow, KeyRow, CategoryRow, PaymentConfigRow, SupportRow, FeedbackRow } from "./page";
 import SupportAdmin from "./support-client";
+import FeedbackAdmin from "./feedback-client";
 
 const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "usage", "events"] as const;
 type Tab = (typeof TABS)[number];
@@ -21,7 +22,8 @@ export default function AdminClient({
   availableModels,
   categories,
   payments,
-  support
+  support,
+  feedback
 }: {
   userRole: string;
   users: UserRow[];
@@ -33,6 +35,7 @@ export default function AdminClient({
   categories: CategoryRow[];
   payments: PaymentConfigRow;
   support: SupportRow[];
+  feedback: FeedbackRow[];
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [page, setPage] = useState(1);
@@ -272,6 +275,7 @@ export default function AdminClient({
                 <h2 className="text-lg font-semibold text-slate-900">Feedback & Enquirer</h2>
               </div>
               <SupportAdmin requests={support} />
+              <FeedbackAdmin feedback={feedback} />
             </section>
           )}
 
