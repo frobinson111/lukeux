@@ -53,7 +53,8 @@ export default function FeedbackAdmin({ feedback }: { feedback: FeedbackRow[] })
 
 function formatDate(d: string) {
   try {
-    return new Date(d).toISOString().slice(0, 19).replace("T", " ");
+    const asDate = d instanceof Date ? d : new Date(d);
+    return asDate.toISOString().slice(0, 19).replace("T", " ");
   } catch {
     return d;
   }
