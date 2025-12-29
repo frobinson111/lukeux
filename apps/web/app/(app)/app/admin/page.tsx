@@ -86,7 +86,7 @@ export type FeedbackRow = {
   source: string | null;
   triggerCount: number | null;
   message: string;
-  createdAt: Date;
+  createdAt: string | Date;
   userEmail: string | null;
   userName: string | null;
 };
@@ -219,7 +219,7 @@ export default async function AdminPage() {
           source: f.source ?? null,
           triggerCount: f.triggerCount ?? null,
           message: f.message,
-          createdAt: f.createdAt,
+          createdAt: f.createdAt instanceof Date ? f.createdAt.toISOString() : f.createdAt,
           userEmail: f.user?.email ?? null,
           userName: f.user ? `${f.user.firstName ?? ""} ${f.user.lastName ?? ""}`.trim() || null : null
         })) as FeedbackRow[]

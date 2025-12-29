@@ -8,7 +8,7 @@ export type FeedbackRow = {
   source?: string | null;
   triggerCount?: number | null;
   message: string;
-  createdAt: string;
+  createdAt: string | Date;
 };
 
 export default function FeedbackAdmin({ feedback }: { feedback: FeedbackRow[] }) {
