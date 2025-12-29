@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "../../../../lib/auth";
-import FeedbackClient from "./feedback-client";
+import FeedbackClientComponent from "./feedback-client";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +22,8 @@ export default async function FeedbackPage() {
           Back to app
         </Link>
       </div>
-      <FeedbackClient />
+      <FeedbackClientComponent />
     </div>
   );
-}
-
-function FeedbackClient() {
-  return <FeedbackClient />;
 }
 
