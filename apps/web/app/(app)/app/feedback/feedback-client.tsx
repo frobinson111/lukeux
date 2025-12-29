@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const types = [
   { key: "LIKE", label: "😊 I like something" },
@@ -10,6 +11,7 @@ const types = [
 ];
 
 export default function FeedbackClient() {
+  const router = useRouter();
   const [type, setType] = useState<string>("LIKE");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +39,8 @@ export default function FeedbackClient() {
       } else {
         setStatus("Thanks for your feedback!");
         setMessage("");
+        // Redirect back to canvas with a thank-you indicator.
+        setTimeout(() => router.push("/app/canvas?feedback=thanks"), 400);
       }
     } catch {
       setError("Failed to submit feedback.");
