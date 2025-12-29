@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
@@ -40,6 +40,8 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [mode, setMode] = useState<(typeof modes)[number]>("auto");
   const [detailLevel, setDetailLevel] = useState<(typeof detailLevels)[number]>("standard");
   const [assetPayloads, setAssetPayloads] = useState<AssetPayload[]>([]);
+  const [followupFiles, setFollowupFiles] = useState<File[]>([]);
+  const [followupAssetPayloads, setFollowupAssetPayloads] = useState<AssetPayload[]>([]);
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [templateList, setTemplateList] = useState<Template[]>(templates ?? []);
   const [railCollapsed, setRailCollapsed] = useState(false);
@@ -63,7 +65,23 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const followupFileInputRef = useRef<HTMLInputElement | null>(null);
   const [firstNameLocal, setFirstNameLocal] = useState(firstName || "");
+
+  const groupedTemplates = useMemo(() => {
+    const groups: Record<string, { category: string; items: { t: Template; idx: number }[] }> = {};
+    templateList.forEach((t, idx) => {
+      const cat = t.category || "Uncategorized";
+      if (!groups[cat]) groups[cat] = { category: cat, items: [] };
+      groups[cat].items.push({ t, idx });
+    });
+    return Object.values(groups)
+      .sort((a, b) => a.category.localeCompare(b.category))
+      .map((g) => ({
+        category: g.category,
+        items: g.items.sort((a, b) => a.t.title.localeCompare(b.t.title))
+      }));
+  }, [templateList]);
 
   const markdownComponents: Components = {
     h3: ({ node, ...props }) => (
@@ -224,39 +242,30 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     load();
   }, []);
 
-  async function handleUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = Array.from(e.target.files ?? []);
-    setFiles(selected);
-    if (!selected.length) {
-      setAssetPayloads([]);
-      return;
-    }
+  const allowedTextTypes = new Set([
+    "text/plain",
+    "text/markdown",
+    "text/csv",
+    "application/json",
+    "application/xml",
+    "text/xml",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ]);
+  const maxPerFile = 20_000; // chars
 
-    const allowedTextTypes = new Set([
-      "text/plain",
-      "text/markdown",
-      "text/csv",
-      "application/json",
-      "application/xml",
-      "text/xml",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ]);
+  const readAsText = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file);
+    });
 
-    const maxPerFile = 20_000; // chars
-
-    const readAsText = (file: File) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsText(file);
-      });
-
+  async function toAssetPayloads(selected: File[]): Promise<AssetPayload[]> {
     const payloads: AssetPayload[] = [];
     for (const file of selected) {
       if (!allowedTextTypes.has(file.type)) {
-        // skip binaries but note filename
         payloads.push({
           name: file.name,
           type: file.type || "unknown",
@@ -280,7 +289,27 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
         });
       }
     }
-    setAssetPayloads(payloads);
+    return payloads;
+  }
+
+  async function handleUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? []);
+    setFiles(selected);
+    if (!selected.length) {
+      setAssetPayloads([]);
+      return;
+    }
+    setAssetPayloads(await toAssetPayloads(selected));
+  }
+
+  async function handleFollowupUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? []);
+    setFollowupFiles(selected);
+    if (!selected.length) {
+      setFollowupAssetPayloads([]);
+      return;
+    }
+    setFollowupAssetPayloads(await toAssetPayloads(selected));
   }
 
   function handleUploadClick() {
@@ -818,30 +847,31 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
           )}
 
           <section className="space-y-4">
-            {!lastResponse && (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-4 text-sm text-slate-600 shadow-sm flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-800">Select a UX Objective</p>
-                  <p className="text-xs text-slate-500">Choose a template to load UX guidance</p>
-                </div>
-              </div>
-            )}
-
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-3 text-sm font-semibold text-slate-900">
                 <span className="shrink-0">{template ? template.category : "Define Your UX Objective"}</span>
                 <select
                   value={templateIndex ?? ""}
                   onChange={(e) => setTemplateIndex(e.target.value === "" ? null : Number(e.target.value))}
-                  className="flex-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none"
+                  className="flex-1 w-full rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none appearance-none"
+                  style={{
+                    backgroundImage: "url('/images/rotate.svg')",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 0.75rem center",
+                    backgroundSize: "14px 14px"
+                  }}
                   name="template"
                   id="template"
                 >
                   <option value="">Choose…</option>
-                    {templateList?.map((t, idx) => (
-                      <option key={t.id} value={idx}>
-                        {t.category} — {t.title}
-                    </option>
+                  {groupedTemplates.map((group) => (
+                    <optgroup key={group.category} label={group.category}>
+                      {group.items.map(({ t, idx }) => (
+                        <option key={t.id} value={idx}>
+                          {t.title}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
@@ -856,7 +886,13 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       className="flex h-6 w-6 items-center justify-center text-slate-700 transition hover:-translate-y-[1px]"
                       aria-label={inputsCollapsed ? "Expand task inputs" : "Collapse task inputs"}
                     >
-                      <span className={`transition-transform ${inputsCollapsed ? "" : "rotate-180"}`}>⌄</span>
+                    <Image
+                      src="/images/rotate.svg"
+                      alt="Toggle"
+                      width={14}
+                      height={14}
+                      className={`transition-transform ${inputsCollapsed ? "" : "rotate-180"}`}
+                    />
                     </button>
                   </div>
 
@@ -1429,7 +1465,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           prompt: followup,
                           taskId,
                           threadId,
-                          assets: assetPayloads
+                          assets: [...assetPayloads, ...followupAssetPayloads]
                         })
                       });
                       const json = await res.json().catch(() => null);
@@ -1455,27 +1491,47 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       placeholder="Add Constraints or Context"
                     />
                   </label>
-                  <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={handleUploadClick}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 transition hover:-translate-y-[1px]"
-                      aria-label="Add assets"
-                    >
-                      <Image src="/images/add-assets.svg" alt="Add assets" width={25} height={25} className="h-6 w-6" />
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      aria-label="Send follow-up"
-                      className="rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {loading ? (
-                        "Working..."
-                      ) : (
-                        <Image src="/images/uparrow.svg" alt="Send" width={16} height={16} className="h-4 w-4" />
-                      )}
-                    </button>
+                  <div className="mt-2 space-y-2">
+                    {followupFiles.length > 0 && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                        <p className="font-semibold">Attached files</p>
+                        <ul className="mt-1 list-disc pl-4">
+                          {followupFiles.map((file) => (
+                            <li key={file.name}>{file.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2">
+                      <input
+                        ref={followupFileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFollowupUploadSelect}
+                        aria-label="Upload follow-up assets"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => followupFileInputRef.current?.click()}
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 transition hover:-translate-y-[1px]"
+                        aria-label="Add assets"
+                      >
+                        <Image src="/images/add-assets.svg" alt="Add assets" width={25} height={25} className="h-6 w-6" />
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        aria-label="Send follow-up"
+                        className="rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {loading ? (
+                          "Working..."
+                        ) : (
+                          <Image src="/images/uparrow.svg" alt="Send" width={16} height={16} className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
