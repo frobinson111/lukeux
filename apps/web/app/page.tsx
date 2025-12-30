@@ -609,11 +609,13 @@ export default function HomePage() {
 
               <button
                 type="button"
-                disabled
-                className="w-full rounded-[12px] border border-slate-300 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600 opacity-60"
-                aria-disabled="true"
+                onClick={() => (window.location.href = "/api/auth/google/start")}
+                className="w-full rounded-[12px] border border-slate-300 bg-white px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:bg-slate-50"
               >
-                Continue with Google (coming soon)
+                <span className="flex items-center justify-center gap-2">
+                  <Image src="/images/google-icon.svg" alt="Google" width={18} height={18} className="h-4 w-4" />
+                  <span>Continue with Google</span>
+                </span>
               </button>
 
               {error && (
