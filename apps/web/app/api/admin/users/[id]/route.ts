@@ -34,7 +34,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
       const subs = await stripe.subscriptions.list({ customer: user.stripeCustomerId, limit: 100 });
       for (const sub of subs.data) {
         if (sub.status !== "canceled" && sub.status !== "incomplete_expired") {
-          await stripe.subscriptions.cancel(sub.id, { cancel_at_period_end: true });
+          await stripe.subscriptions.update(sub.id, { cancel_at_period_end: true });
         }
       }
     } catch (err) {
