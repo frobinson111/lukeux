@@ -25,6 +25,11 @@ function decodeIdToken(token: string): IdToken {
   return JSON.parse(json);
 }
 
+function abs(req: Request, path: string) {
+  const url = new URL(req.url);
+  return `${url.origin}${path}`;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
@@ -32,7 +37,7 @@ export async function GET(req: Request) {
 
   const expectedState = cookies().get("oauth_state")?.value;
   if (!code || !state || !expectedState || state !== expectedState) {
-    return NextResponse.redirect("/?error=oauth_state");
+    return NextResponse.redirect(abs(req, "/?error=oauth_state"));
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -40,7 +45,7 @@ export async function GET(req: Request) {
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
   if (!clientId || !clientSecret || !redirectUri) {
-    return NextResponse.redirect("/?error=oauth_config");
+    return NextResponse.redirect(abs(req, "/?error=oauth_config"));
   }
 
   try {
@@ -57,21 +62,21 @@ export async function GET(req: Request) {
     });
 
     if (!tokenRes.ok) {
-      return NextResponse.redirect("/?error=oauth_token");
+      return NextResponse.redirect(abs(req, "/?error=oauth_token"));
     }
 
     const tokens = await tokenRes.json();
     const idToken = tokens.id_token as string | undefined;
     if (!idToken) {
-      return NextResponse.redirect("/?error=oauth_token_missing");
+      return NextResponse.redirect(abs(req, "/?error=oauth_token_missing"));
     }
 
     const decoded = decodeIdToken(idToken);
     if (!decoded.sub || !decoded.aud || decoded.aud !== clientId) {
-      return NextResponse.redirect("/?error=oauth_id_token");
+      return NextResponse.redirect(abs(req, "/?error=oauth_id_token"));
     }
     if (decoded.exp * 1000 < Date.now()) {
-      return NextResponse.redirect("/?error=oauth_id_token_expired");
+      return NextResponse.redirect(abs(req, "/?error=oauth_id_token_expired"));
     }
 
     const email = decoded.email?.toLowerCase() || null;
@@ -133,16 +138,16 @@ export async function GET(req: Request) {
 
     // Block suspended/deleted
     if (user.planStatus === "SUSPENDED" || user.deletedAt) {
-      return NextResponse.redirect("/?error=account_suspended");
+      return NextResponse.redirect(abs(req, "/?error=account_suspended"));
     }
 
     const { token, expiresAt } = await createSession(user.id);
-    const res = NextResponse.redirect("/app");
+    const res = NextResponse.redirect(abs(req, "/app"));
     res.cookies.set(SESSION_COOKIE_NAME, token, buildSessionCookie(expiresAt));
     res.cookies.delete("oauth_state");
     return res;
   } catch (err) {
-    return NextResponse.redirect("/?error=oauth_failed");
+    return NextResponse.redirect(abs(req, "/?error=oauth_failed"));
   }
 }
 
