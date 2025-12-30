@@ -21,9 +21,10 @@ export const MODEL_MAP: Record<string, ModelConfig> = {
   "gpt-4.0": { provider: "openai", defaultMode: "auto" },
   "gpt-4o": { provider: "openai", defaultMode: "auto" },
   "gpt-4o-mini": { provider: "openai", defaultMode: "auto" },
-  "claude-3-opus": { provider: "anthropic", defaultMode: "auto" },
-  "claude-3-sonnet": { provider: "anthropic", defaultMode: "auto" },
-  "claude-3-haiku": { provider: "anthropic", defaultMode: "auto" }
+  // Anthropic requires versioned model IDs
+  "claude-3-opus-20240229": { provider: "anthropic", defaultMode: "auto" },
+  "claude-3-sonnet-20240229": { provider: "anthropic", defaultMode: "auto" },
+  "claude-3-haiku-20240307": { provider: "anthropic", defaultMode: "auto" }
 };
 
 const DEFAULT_TIMEOUT_MS = 20_000;

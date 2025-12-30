@@ -4,7 +4,8 @@ import { MODEL_MAP } from "./service";
 // Map providers to supported model ids. Extend as new providers/ids are added.
 const PROVIDER_MODELS: Record<string, string[]> = {
   openai: ["gpt-5.2", "gpt-5.1", "gpt-4.0", "gpt-4o", "gpt-4o-mini"],
-  anthropic: ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
+  // Use versioned Anthropic model IDs; unversioned IDs return 404.
+  anthropic: ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"],
   local: ["local-fast"]
 };
 

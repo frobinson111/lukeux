@@ -26,7 +26,16 @@ type Template = {
 
 const projects = ["New UX Task"];
 
-const models = ["gpt-5.2", "gpt-5.1", "gpt-4.0", "gpt-4o", "gpt-4o-mini", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"] as const;
+const models = [
+  "gpt-5.2",
+  "gpt-5.1",
+  "gpt-4.0",
+  "gpt-4o",
+  "gpt-4o-mini",
+  "claude-3-opus-20240229",
+  "claude-3-sonnet-20240229",
+  "claude-3-haiku-20240307"
+] as const;
 const modes = ["auto", "instant", "thinking"] as const;
 const detailLevels = ["brief", "standard", "in-depth"] as const;
 type AssetPayload = { name: string; type: string; content: string };
