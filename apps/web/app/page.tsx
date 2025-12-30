@@ -617,6 +617,11 @@ export default function HomePage() {
                   <span>Continue with Google</span>
                 </span>
               </button>
+              <div className="text-[11px] text-slate-600 text-center">
+                <Link href="/app/privacy" className="underline hover:text-slate-800">
+                  Privacy Policy
+                </Link>
+              </div>
 
               {error && (
                 <div
