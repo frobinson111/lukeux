@@ -26,7 +26,7 @@ type Template = {
 
 const projects = ["New UX Task"];
 
-const models = ["gpt-5.2", "gpt-5.1", "gpt-4.0", "gpt-4o", "gpt-4o-mini"] as const;
+const models = ["gpt-5.2", "gpt-5.1", "gpt-4.0", "gpt-4o", "gpt-4o-mini", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"] as const;
 const modes = ["auto", "instant", "thinking"] as const;
 const detailLevels = ["brief", "standard", "in-depth"] as const;
 type AssetPayload = { name: string; type: string; content: string };
@@ -45,6 +45,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [assetPayloads, setAssetPayloads] = useState<AssetPayload[]>([]);
   const [followupFiles, setFollowupFiles] = useState<File[]>([]);
   const [followupAssetPayloads, setFollowupAssetPayloads] = useState<AssetPayload[]>([]);
+  const [followupText, setFollowupText] = useState("");
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const [templateList, setTemplateList] = useState<Template[]>(templates ?? []);
   const [railCollapsed, setRailCollapsed] = useState(false);
@@ -402,7 +403,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   }
 
   async function addToHistory(content: string) {
-    const title = template ? template.category : "Untitled Task";
+    const title = template ? template.title : "Untitled Task";
     try {
       const res = await fetch("/api/history", {
         method: "POST",
@@ -489,7 +490,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
 
   async function saveCurrentToFolder(projectId: string) {
     if (!projectId || !lastResponse) return;
-        const title = template ? template.category : "Untitled Task";
+        const title = template ? template.title : "Untitled Task";
     try {
       const res = await fetch("/api/history", {
         method: "POST",
@@ -1491,8 +1492,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                   className="mt-4 space-y-3"
                   onSubmit={async (e) => {
                     e.preventDefault();
-                    const data = new FormData(e.currentTarget);
-                    const followup = String(data.get("followup") || "").trim();
+                    const followup = followupText.trim();
                     if (!followup || !taskId || !threadId) return;
                     setLoading(true);
                     setStatus(null);
@@ -1517,6 +1517,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       } else {
                         setLastResponse(json?.content || null);
                         setStatus("Iteration completed.");
+                        setFollowupText("");
                       }
                     } catch (err) {
                       setStatus("Iteration failed.");
@@ -1532,6 +1533,8 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
                       rows={3}
                       placeholder="Add Constraints or Context"
+                      value={followupText}
+                      onChange={(e) => setFollowupText(e.target.value)}
                     />
                   </label>
                   <div className="mt-2 space-y-2">

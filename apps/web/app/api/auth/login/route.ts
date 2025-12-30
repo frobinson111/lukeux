@@ -36,6 +36,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
+  if (user.deletedAt) {
+    return NextResponse.json({ error: "Account is deleted" }, { status: 403 });
+  }
+
   if (user.planStatus === "SUSPENDED") {
     return NextResponse.json({ error: "Account is suspended" }, { status: 403 });
   }

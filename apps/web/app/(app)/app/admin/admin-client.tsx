@@ -99,6 +99,30 @@ export default function AdminClient({
     }
   }
 
+  async function deleteUser(userId: string, email: string) {
+    setStatus(null);
+    const confirmed = typeof window === "undefined" ? false : window.confirm(`Delete user ${email}? This will suspend access.`);
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setStatus(json?.error || "Failed to delete user.");
+        return;
+      }
+      setUsersState((prev) => {
+        const next = prev.filter((u) => u.id !== userId);
+        const nextTotalPages = Math.max(1, Math.ceil(next.length / pageSize));
+        setPage((p) => Math.min(p, nextTotalPages));
+        return next;
+      });
+      setStatus(`User ${email} deleted.`);
+    } catch {
+      setStatus("Failed to delete user.");
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex items-start gap-6">
@@ -178,18 +202,25 @@ export default function AdminClient({
                         </div>
                         <div className="text-xs text-slate-700">{u.generationLimit ?? "—"}</div>
                         <div className="text-[12px] text-slate-500">{u.createdAt.toISOString().slice(0, 10)}</div>
-                        <div>
-                        <button
-                          type="button"
-                          onClick={() => togglePlan(u.id, u.plan)}
-                          className={`rounded-full px-3 py-1 text-[11px] font-semibold transition hover:-translate-y-[1px] hover:shadow ${
-                            u.plan === "PRO"
-                              ? "border border-slate-300 text-slate-700"
-                              : "border border-emerald-300 bg-emerald-50 text-emerald-700"
-                          }`}
-                        >
-                          Set {u.plan === "PRO" ? "Free" : "Pro"}
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => togglePlan(u.id, u.plan)}
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold transition hover:-translate-y-[1px] hover:shadow ${
+                              u.plan === "PRO"
+                                ? "border border-slate-300 text-slate-700"
+                                : "border border-emerald-300 bg-emerald-50 text-emerald-700"
+                            }`}
+                          >
+                            Set {u.plan === "PRO" ? "Free" : "Pro"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteUser(u.id, u.email)}
+                            className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-700 transition hover:-translate-y-[1px] hover:shadow"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -230,7 +261,7 @@ export default function AdminClient({
                       </div>
                       <div className="text-xs text-slate-700">{u.generationLimit ?? "—"}</div>
                       <div className="text-[12px] text-slate-500">{u.createdAt.toISOString().slice(0, 10)}</div>
-                      <div>
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => togglePlan(u.id, u.plan)}
@@ -241,6 +272,13 @@ export default function AdminClient({
                           }`}
                         >
                           Set {u.plan === "PRO" ? "Free" : "Pro"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteUser(u.id, u.email)}
+                          className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-700 transition hover:-translate-y-[1px] hover:shadow"
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>

@@ -35,6 +35,11 @@ export async function getCurrentUser() {
     return null;
   }
 
+  if (user.deletedAt) {
+    console.info("[auth] user is deleted", { userId: user.id });
+    return null;
+  }
+
   console.info("[auth] user authenticated", { userId: user.id, role: user.role, plan: user.plan });
   return user;
 }
@@ -43,5 +48,6 @@ export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) return null;
   if (user.planStatus === "SUSPENDED") return null;
+  if (user.deletedAt) return null;
   return user;
 }

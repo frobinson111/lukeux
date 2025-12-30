@@ -12,6 +12,7 @@ export type UserRow = {
   generationLimit: number | null;
   stripeCustomerId: string | null;
   createdAt: Date;
+  deletedAt?: Date | null;
 };
 
 export type TemplateRow = {
@@ -115,7 +116,8 @@ export default async function AdminPage() {
         planStatus: true,
         generationLimit: true,
         stripeCustomerId: true,
-        createdAt: true
+        createdAt: true,
+        deletedAt: true
       }
     }),
     prismaAny.taskTemplate.findMany({
@@ -170,7 +172,7 @@ export default async function AdminPage() {
       ? "test"
       : "unknown";
 
-  const usersData = users as UserRow[];
+  const usersData = (users as UserRow[]).filter((u) => !u.deletedAt);
   const templatesData = templates as TemplateRow[];
   const usageData: UsageRow[] = usage.map((u: any) => ({
     id: u.id,
