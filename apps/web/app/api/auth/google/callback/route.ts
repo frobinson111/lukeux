@@ -142,7 +142,7 @@ export async function GET(req: Request) {
     }
 
     const { token, expiresAt } = await createSession(user.id);
-    const res = NextResponse.redirect(abs(req, "/app"));
+    const res = NextResponse.redirect(abs(req, "/app/canvas"));
     res.cookies.set(SESSION_COOKIE_NAME, token, buildSessionCookie(expiresAt));
     res.cookies.delete("oauth_state");
     return res;
