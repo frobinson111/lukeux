@@ -115,10 +115,12 @@ export async function GET(req: Request) {
         });
       } catch (createErr: any) {
         // Handle unique constraint violation (email already exists)
+        console.info("[google-oauth] create failed", { code: createErr?.code, email });
         if (createErr?.code === "P2002") {
           user = await prisma.user.findFirst({
             where: { email: email ?? "", deletedAt: null }
           });
+          console.info("[google-oauth] P2002 fallback findFirst", { found: !!user, email });
           if (!user) {
             return NextResponse.redirect(abs(req, "/?error=oauth_failed"));
           }
@@ -154,13 +156,16 @@ export async function GET(req: Request) {
 
     // Block suspended/deleted or missing user
     if (!user || user.planStatus === "SUSPENDED" || user.deletedAt) {
+      console.error("[google-oauth] user missing or suspended", { user: user?.id, status: user?.planStatus });
       return NextResponse.redirect(abs(req, "/?error=account_suspended"));
     }
 
+    console.info("[google-oauth] creating session for user", { userId: user.id, email: user.email });
     const { token, expiresAt } = await createSession(user.id);
     const res = NextResponse.redirect(abs(req, "/app/canvas"));
     res.cookies.set(SESSION_COOKIE_NAME, token, buildSessionCookie(expiresAt));
     res.cookies.delete("oauth_state");
+    console.info("[google-oauth] redirecting to /app/canvas");
     return res;
   } catch (err) {
     return NextResponse.redirect(abs(req, "/?error=oauth_failed"));
