@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import TemplateTaskList from "./components/template-task-list";
 
 const brand = {
   blue: "#0c3c80",
@@ -435,6 +436,7 @@ export default function HomePage() {
                 />
               </div>
             </div>
+            <TemplateTaskList />
             <div className="space-y-2 text-sm text-slate-700">
               <p className="italic">
                 “AI won’t make your designs better by itself. It will make your thinking sharper, your blind spots louder, and your standards harder to ignore.”
