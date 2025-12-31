@@ -437,14 +437,8 @@ export default function HomePage() {
               </div>
             </div>
             <TemplateTaskList />
-            <div className="space-y-2 text-sm text-slate-700">
-              <p className="italic">
-                “AI won’t make your designs better by itself. It will make your thinking sharper, your blind spots louder, and your standards harder to ignore.”
-              </p>
-              <p className="text-xs text-slate-600">Frank Robinson III — Senior Product Designer, UX & AI</p>
-            </div>
           </div>
-          <div className="hidden flex-wrap items-center gap-3 text-xs text-slate-600 lg:flex">
+          <div className="hidden w-full flex-wrap items-center justify-between gap-4 text-xs text-slate-600 lg:flex mt-[50px]">
             {[
               { key: "about", label: "About" },
               { key: "features", label: "Features" },
@@ -461,7 +455,6 @@ export default function HomePage() {
                 className="underline-offset-4 hover:underline"
               >
                 {item.label}
-                {idx < arr.length - 1 ? <span className="mx-2 text-slate-400">•</span> : null}
               </button>
             ))}
           </div>

@@ -51,7 +51,7 @@ export default function TemplateTaskList() {
     body = <div className="py-6 text-center text-sm text-slate-600">No templates available yet.</div>;
   } else {
     body = (
-      <div className="max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="max-h-60 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-[0_6px_0_#eaebf1] pb-10 custom-scroll">
         {templates.map((t, idx) => (
           <button
             key={t.id}
@@ -71,8 +71,8 @@ export default function TemplateTaskList() {
   }
 
   return (
-    <div className="mt-6 space-y-3">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-600">UX tasks Luke UX can assist with</h3>
+    <div className="mt-6 mb-8 space-y-3">
+      <h3 className="text-[20px] font-bold tracking-wide text-black uppercase">What Luke UX Can Help You Do</h3>
       {body}
 
       {selected && (
@@ -92,9 +92,9 @@ export default function TemplateTaskList() {
               </button>
             </div>
             <div className="space-y-3 text-sm text-slate-800">
-              <Field label="Use AI To" value={selected.guidanceUseAiTo} />
-              <Field label="Example" value={selected.guidanceExample} />
-              <Field label="Outcome" value={selected.guidanceOutcome} />
+              <Field label="Use AI To" value={selected.guidanceUseAiTo} bgClass="bg-[rgb(239,246,255)]" />
+              <Field label="Example" value={selected.guidanceExample} bgClass="bg-[rgb(236,253,245)]" />
+              <Field label="Outcome" value={selected.guidanceOutcome} bgClass="bg-[rgb(236,253,245)]" />
             </div>
           </div>
         </div>
@@ -103,15 +103,37 @@ export default function TemplateTaskList() {
   );
 }
 
-function Field({ label, value }: { label: string; value: string | null }) {
+function Field({ label, value, bgClass }: { label: string; value: string | null; bgClass?: string }) {
   return (
     <div className="space-y-1">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</div>
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 min-h-[44px]">
+      <div className={`rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 min-h-[44px] ${bgClass ?? "bg-slate-50"}`}>
         {value?.trim() || "—"}
       </div>
     </div>
   );
+}
+
+// Scoped scrollbar styling
+const styles = `
+.custom-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #ffd526;
+  border-radius: 9999px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+`;
+
+// Inject styles once
+if (typeof document !== "undefined" && !document.getElementById("custom-scrollbar-styles")) {
+  const style = document.createElement("style");
+  style.id = "custom-scrollbar-styles";
+  style.innerHTML = styles;
+  document.head.appendChild(style);
 }
 
 
