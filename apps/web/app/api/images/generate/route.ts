@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
-import { requireUser } from "../../../../../lib/auth";
+import { requireUser } from "../../../../lib/auth";
 
 const schema = z.object({
   prompt: z.string().min(1),
