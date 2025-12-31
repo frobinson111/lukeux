@@ -596,6 +596,23 @@ export default function HomePage() {
                 </label>
               )}
 
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                >
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loading ? "Working..." : heading}
+              </button>
+
               <div className="flex items-center gap-4 text-xs font-semibold uppercase text-slate-600">
                 <span className="flex-1 border-t border-slate-300" aria-hidden="true" />
                 <span>or</span>
@@ -611,27 +628,6 @@ export default function HomePage() {
                   <Image src="/images/google-icon.svg" alt="Google" width={18} height={18} className="h-4 w-4" />
                   <span>Continue with Google</span>
                 </span>
-              </button>
-              <div className="text-[11px] text-slate-600 text-center">
-                <Link href="/app/privacy" className="underline hover:text-slate-800">
-                  Privacy Policy
-                </Link>
-              </div>
-
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-                >
-                  {error}
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loading ? "Working..." : heading}
               </button>
             </form>
 
