@@ -96,23 +96,39 @@ export async function GET(req: Request) {
     });
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          firstName: decoded.given_name || "Google",
-          lastName: decoded.family_name || "User",
-          email: email || `google-${sub}@placeholder.local`,
-          passwordHash: "oauth", // placeholder; not used for OAuth
-          emailVerifiedAt: decoded.email_verified ? now : null,
-          oauthAccounts: {
-            create: {
-              provider: "google",
-              providerAccountId: sub,
-              email: email ?? undefined
+      try {
+        user = await prisma.user.create({
+          data: {
+            firstName: decoded.given_name || "Google",
+            lastName: decoded.family_name || "User",
+            email: email || `google-${sub}@placeholder.local`,
+            passwordHash: "oauth", // placeholder; not used for OAuth
+            emailVerifiedAt: decoded.email_verified ? now : null,
+            oauthAccounts: {
+              create: {
+                provider: "google",
+                providerAccountId: sub,
+                email: email ?? undefined
+              }
             }
           }
+        });
+      } catch (createErr: any) {
+        // Handle unique constraint violation (email already exists)
+        if (createErr?.code === "P2002") {
+          user = await prisma.user.findFirst({
+            where: { email: email ?? "", deletedAt: null }
+          });
+          if (!user) {
+            return NextResponse.redirect(abs(req, "/?error=oauth_failed"));
+          }
+        } else {
+          throw createErr;
         }
-      });
-    } else {
+      }
+    }
+
+    if (user) {
       // Ensure OAuth account link exists
       const existingLink = await prisma.oAuthAccount.findFirst({
         where: { provider: "google", providerAccountId: sub, userId: user.id }
@@ -136,8 +152,8 @@ export async function GET(req: Request) {
       }
     }
 
-    // Block suspended/deleted
-    if (user.planStatus === "SUSPENDED" || user.deletedAt) {
+    // Block suspended/deleted or missing user
+    if (!user || user.planStatus === "SUSPENDED" || user.deletedAt) {
       return NextResponse.redirect(abs(req, "/?error=account_suspended"));
     }
 
