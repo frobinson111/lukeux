@@ -16,6 +16,7 @@ export default function AvatarDropdown({ user, initials, fullName }: Props) {
   const hoverRef = useRef<NodeJS.Timeout | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Close when clicking outside
   useEffect(() => {
@@ -46,6 +47,19 @@ export default function AvatarDropdown({ user, initials, fullName }: Props) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      // ignore; still attempt redirect
+    } finally {
+      setOpen(false);
+      window.location.href = "/";
+    }
+  }
 
   return (
     <div className="relative" onMouseEnter={cancelClose} onMouseLeave={scheduleClose}>
@@ -94,17 +108,16 @@ export default function AvatarDropdown({ user, initials, fullName }: Props) {
               <Image src="/images/help.svg" alt="Feedback" width={18} height={18} className="h-5 w-5" />
               <span>Feedback &amp; Requests</span>
             </Link>
-            <form action="/api/auth/logout" method="post">
-              <button
-                type="submit"
-                className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-slate-50"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-              >
-                <Image src="/images/logout.svg" alt="Log out" width={18} height={18} className="h-5 w-5" />
-                <span>Log out</span>
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-slate-50 disabled:opacity-60"
+              role="menuitem"
+              disabled={loggingOut}
+            >
+              <Image src="/images/logout.svg" alt="Log out" width={18} height={18} className="h-5 w-5" />
+              <span>{loggingOut ? "Logging out…" : "Log out"}</span>
+            </button>
           </div>
         </div>
       )}
