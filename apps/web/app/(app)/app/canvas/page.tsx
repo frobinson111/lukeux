@@ -88,6 +88,18 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
       statusRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
+  const scrollToTopOfResponse = () => {
+    if (!responseRef.current) return;
+    requestAnimationFrame(() => {
+      responseRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [imageSize, setImageSize] = useState<"1024x1024" | "1024x1792" | "1792x1024">("1024x1024");
+  const [imageCount, setImageCount] = useState(1);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1504,6 +1516,103 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       {lastResponse}
                     </ReactMarkdown>
                   </div>
+                </div>
+                <div className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900">Image Generation</p>
+                    {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
+                  </div>
+                  <label className="block text-xs font-semibold uppercase text-slate-700">
+                    <span className="block">Prompt</span>
+                    <textarea
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                      rows={2}
+                      placeholder="Describe the image you want"
+                    />
+                  </label>
+                  <div className="flex flex-col gap-3 md:flex-row">
+                    <label className="flex-1 text-xs font-semibold uppercase text-slate-700">
+                      <span className="block">Size</span>
+                      <select
+                        value={imageSize}
+                        onChange={(e) => setImageSize(e.target.value as any)}
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                      >
+                        <option value="1024x1024">1024 x 1024</option>
+                        <option value="1024x1792">1024 x 1792</option>
+                        <option value="1792x1024">1792 x 1024</option>
+                      </select>
+                    </label>
+                    <label className="w-32 text-xs font-semibold uppercase text-slate-700">
+                      <span className="block">Count</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={4}
+                        value={imageCount}
+                        onChange={(e) => setImageCount(Math.max(1, Math.min(4, Number(e.target.value) || 1)))}
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!imagePrompt.trim()) {
+                        setImageError("Enter a prompt.");
+                        return;
+                      }
+                      setImageError(null);
+                      setImageLoading(true);
+                      try {
+                        const res = await fetch("/api/images/generate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ prompt: imagePrompt.trim(), size: imageSize, n: imageCount })
+                        });
+                        const json = await res.json().catch(() => null);
+                        if (!res.ok) {
+                          setImageError(json?.error || "Image generation failed.");
+                          return;
+                        }
+                        setImages(json.images || []);
+                        scrollToTopOfResponse();
+                      } catch (err) {
+                        setImageError("Image generation failed.");
+                      } finally {
+                        setImageLoading(false);
+                      }
+                    }}
+                    disabled={imageLoading}
+                    className="w-full rounded-[14px] bg-black px-4 py-3 text-sm font-bold uppercase text-white shadow-[0_4px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_6px_0_#111] disabled:opacity-60"
+                  >
+                    {imageLoading ? "Generating..." : "Generate Images"}
+                  </button>
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {images.map((src, idx) => (
+                        <div key={idx} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm">
+                          <Image src={src} alt={`Generated ${idx + 1}`} width={512} height={512} className="h-auto w-full rounded-md object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const link = document.createElement("a");
+                              link.href = src;
+                              link.download = `generated-${idx + 1}.png`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                            className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                          >
+                            Download
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <form
                   className="mt-4 space-y-3"
