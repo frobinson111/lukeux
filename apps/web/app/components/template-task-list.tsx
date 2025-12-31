@@ -1,8 +1,7 @@
 "use client";
 
-import useSWR from "swr";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type TemplateRow = {
   id: string;
@@ -12,22 +11,41 @@ type TemplateRow = {
   guidanceOutcome: string | null;
 };
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-
 export default function TemplateTaskList() {
-  const { data, error, isLoading } = useSWR<{ templates: TemplateRow[] }>("/api/templates/public", fetcher, {
-    refreshInterval: 45000,
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true
-  });
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<TemplateRow | null>(null);
 
-  const templates = useMemo(() => data?.templates ?? [], [data]);
+  const load = async () => {
+    try {
+      const res = await fetch("/api/templates/public");
+      if (!res.ok) throw new Error("Failed");
+      const json = await res.json();
+      setTemplates(json.templates ?? []);
+      setError(null);
+    } catch {
+      setError("Failed to load templates.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 45000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   let body = null;
   if (error) {
-    body = <div className="py-6 text-center text-sm text-slate-600">Failed to load templates.</div>;
-  } else if (isLoading) {
+    body = <div className="py-6 text-center text-sm text-slate-600">{error}</div>;
+  } else if (loading) {
     body = <div className="py-6 text-center text-sm text-slate-600">Loading templates…</div>;
   } else if (!templates.length) {
     body = <div className="py-6 text-center text-sm text-slate-600">No templates available yet.</div>;
