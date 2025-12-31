@@ -117,12 +117,21 @@ export async function GET(req: Request) {
         // Handle unique constraint violation (email already exists)
         console.info("[google-oauth] create failed", { code: createErr?.code, email });
         if (createErr?.code === "P2002") {
+          // Find user regardless of deletedAt - they may be soft-deleted
           user = await prisma.user.findFirst({
-            where: { email: email ?? "", deletedAt: null }
+            where: { email: email ?? "" }
           });
-          console.info("[google-oauth] P2002 fallback findFirst", { found: !!user, email });
+          console.info("[google-oauth] P2002 fallback findFirst", { found: !!user, email, deleted: !!user?.deletedAt });
           if (!user) {
             return NextResponse.redirect(abs(req, "/?error=oauth_failed"));
+          }
+          // Reactivate soft-deleted user on successful Google login
+          if (user.deletedAt) {
+            console.info("[google-oauth] reactivating deleted user", { userId: user.id, email });
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { deletedAt: null, planStatus: "ACTIVE" }
+            });
           }
         } else {
           throw createErr;
