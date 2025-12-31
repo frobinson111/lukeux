@@ -81,6 +81,13 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const responseRef = useRef<HTMLDivElement | null>(null);
+  const statusRef = useRef<HTMLDivElement | null>(null);
+  const scrollToStatus = () => {
+    if (!statusRef.current) return;
+    requestAnimationFrame(() => {
+      statusRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -981,6 +988,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
               )}
             </div>
 
+            <div ref={statusRef} />
             {status && (
               <div className="flex items-start justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 <div className="pr-3">{status}</div>
@@ -1504,6 +1512,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                     const followup = followupText.trim();
                     if (!followup || !taskId || !threadId) return;
                     setLoading(true);
+                    scrollToStatus();
                     setStatus(null);
                     setInputsCollapsed(true);
                     try {
