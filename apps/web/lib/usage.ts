@@ -1,42 +1,27 @@
 import { prisma } from "./prisma";
 
-const DEFAULT_FREE_GENERATION_LIMIT = 2;
+const FREE_GENERATION_LIMIT = 2;
 
-export type GenerationGateUser = {
-  id: string;
-  role: "USER" | "ADMIN" | "SUPERUSER";
+type GenerationCheck = {
+  userId: string;
   plan: "FREE" | "PRO";
   planStatus: string;
-  generationLimit: number | null;
+  generationLimit?: number | null;
 };
 
-async function getPlanLimit(plan: "FREE" | "PRO"): Promise<number | null> {
-  if (plan === "PRO") return null;
-  const config = await prisma.planConfig.findUnique({ where: { plan } });
-  if (!config) return DEFAULT_FREE_GENERATION_LIMIT;
-  return config.dailyLimit;
-}
-
-export async function assertCanGenerate(user: GenerationGateUser) {
-  // Admins/superusers bypass limits/billing
-  if (user.role === "ADMIN" || user.role === "SUPERUSER") return;
-
-  // Pro + active bypasses limits
-  if (user.plan === "PRO" && user.planStatus === "ACTIVE") return;
-
-  if (user.planStatus === "SUSPENDED") {
+export async function assertCanGenerate(input: GenerationCheck) {
+  const { userId, plan, planStatus } = input;
+  if (plan === "PRO" && planStatus === "ACTIVE") return;
+  if (planStatus === "SUSPENDED") {
     throw new Error("Account suspended");
   }
 
-  const planLimit = await getPlanLimit("FREE");
-  const limit = user.generationLimit ?? planLimit ?? DEFAULT_FREE_GENERATION_LIMIT;
-
   const count = await prisma.usageLedger.count({
-    where: { userId: user.id, type: "GENERATION" }
+    where: { userId, type: "GENERATION" }
   });
 
-  if (count >= limit) {
-    throw new Error(`Generation limit reached (${limit}). Upgrade to Pro or contact an admin.`);
+  if (count >= FREE_GENERATION_LIMIT) {
+    throw new Error("Free tier limit reached. Upgrade to Pro for unlimited generations.");
   }
 }
 

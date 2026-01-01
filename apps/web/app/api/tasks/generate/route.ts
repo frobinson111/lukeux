@@ -45,7 +45,12 @@ export async function POST(req: Request) {
   const threadId = crypto.randomUUID();
 
   try {
-    await assertCanGenerate(user.id, user.plan as any, user.planStatus as any);
+    await assertCanGenerate({
+      userId: user.id,
+      plan: user.plan as any,
+      planStatus: user.planStatus as any,
+      generationLimit: (user as any).generationLimit ?? null
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Generation limit reached." }, { status: 402 });
   }
