@@ -95,8 +95,6 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     });
   };
   const [imagePrompt, setImagePrompt] = useState("");
-  const [imageSize, setImageSize] = useState<"1024x1024" | "1024x1792" | "1792x1024">("1024x1024");
-  const [imageCount, setImageCount] = useState(1);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
@@ -1114,7 +1112,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                     disabled={loading || !template}
                     className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 md:w-80"
                   >
-                    {loading ? "Working..." : "Generate"}
+                    {loading ? "Working..." : "Generate Output"}
                   </button>
                 </div>
               </div>
@@ -1545,31 +1543,6 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           placeholder="Describe the image you want"
                         />
                       </label>
-                      <div className="flex flex-col gap-3 md:flex-row">
-                        <label className="flex-1 text-xs font-semibold uppercase text-slate-700">
-                          <span className="block">Size</span>
-                          <select
-                            value={imageSize}
-                            onChange={(e) => setImageSize(e.target.value as any)}
-                            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                          >
-                            <option value="1024x1024">1024 x 1024</option>
-                            <option value="1024x1792">1024 x 1792</option>
-                            <option value="1792x1024">1792 x 1024</option>
-                          </select>
-                        </label>
-                        <label className="w-32 text-xs font-semibold uppercase text-slate-700">
-                          <span className="block">Count</span>
-                          <input
-                            type="number"
-                            min={1}
-                            max={4}
-                            value={imageCount}
-                            onChange={(e) => setImageCount(Math.max(1, Math.min(4, Number(e.target.value) || 1)))}
-                            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                          />
-                        </label>
-                      </div>
                       <button
                         type="button"
                         onClick={async () => {
@@ -1583,7 +1556,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                             const res = await fetch("/api/images/generate", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ prompt: imagePrompt.trim(), size: imageSize, n: imageCount })
+                              body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
                             });
                             const json = await res.json().catch(() => null);
                             if (!res.ok) {

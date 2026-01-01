@@ -42,13 +42,7 @@ export async function POST(req: Request) {
       : `${prompt}\n\n${detailSuffix}`;
 
   try {
-    await assertCanGenerate({
-      id: user.id,
-      role: user.role as any,
-      plan: user.plan as any,
-      planStatus: user.planStatus as any,
-      generationLimit: (user as any).generationLimit ?? null
-    });
+    await assertCanGenerate(user.id, user.plan as any, user.planStatus as any);
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Generation limit reached." }, { status: 402 });
   }
