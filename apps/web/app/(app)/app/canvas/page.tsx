@@ -1114,7 +1114,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                     disabled={loading || !template}
                     className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 md:w-80"
                   >
-                    {loading ? "Working..." : "Generate Output"}
+                    {loading ? "Working..." : "Generate"}
                   </button>
                 </div>
               </div>
