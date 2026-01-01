@@ -15,13 +15,13 @@ export default async function FeedbackPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6 space-y-4">
+    <div className="mx-auto max-w-2xl px-6 py-8 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900">Feedback &amp; Requests</h1>
-        <Link href="/app" className="text-sm text-slate-600 hover:text-slate-900 underline">
-          Back to app
+        <Link href="/app" className="text-sm font-semibold text-slate-700 hover:text-slate-900">
+          ← Back to app
         </Link>
       </div>
+      <h1 className="text-xl font-bold text-slate-900">Feedback &amp; Requests</h1>
       <FeedbackClientComponent />
     </div>
   );
