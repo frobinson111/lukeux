@@ -99,6 +99,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [imageError, setImageError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
+  const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -319,10 +320,10 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     "text/csv",
     "application/json",
     "application/xml",
-    "text/xml",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "text/xml"
   ]);
+  const allowedDocTypes = new Set(["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
+  const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/jpg"]);
   const maxPerFile = 20_000; // chars
 
   const readAsText = (file: File) =>
@@ -333,32 +334,60 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
       reader.readAsText(file);
     });
 
+  const readAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+  async function parseDocxToText(file: File) {
+    const arrayBuf = await file.arrayBuffer();
+    const mammothMod = await import("mammoth");
+    const { value } = await mammothMod.extractRawText({ arrayBuffer: arrayBuf });
+    return value || "";
+  }
+
   async function toAssetPayloads(selected: File[]): Promise<AssetPayload[]> {
     const payloads: AssetPayload[] = [];
+    const warnings: string[] = [];
     for (const file of selected) {
-      if (!allowedTextTypes.has(file.type)) {
-        payloads.push({
-          name: file.name,
-          type: file.type || "unknown",
-          content: "[binary or unsupported type; not inlined]"
-        });
-        continue;
-      }
       try {
-        const text = await readAsText(file);
-        const trimmed = text.length > maxPerFile ? `${text.slice(0, maxPerFile)}\n...[truncated]` : text;
-        payloads.push({
-          name: file.name,
-          type: file.type || "text",
-          content: trimmed
-        });
+        if (allowedTextTypes.has(file.type)) {
+          const text = await readAsText(file);
+          const trimmed = text.length > maxPerFile ? `${text.slice(0, maxPerFile)}\n...[truncated]` : text;
+          payloads.push({
+            name: file.name,
+            type: file.type || "text",
+            content: trimmed
+          });
+        } else if (allowedDocTypes.has(file.type)) {
+          const text = await parseDocxToText(file);
+          const trimmed = text.length > maxPerFile ? `${text.slice(0, maxPerFile)}\n...[truncated]` : text;
+          payloads.push({
+            name: file.name,
+            type: "docx/text",
+            content: trimmed
+          });
+        } else if (allowedImageTypes.has(file.type)) {
+          const dataUrl = await readAsDataUrl(file);
+          payloads.push({
+            name: file.name,
+            type: "image",
+            content: dataUrl
+          });
+        } else {
+          warnings.push(`${file.name}: unsupported type (${file.type || "unknown"}); not inlined.`);
+        }
       } catch {
-        payloads.push({
-          name: file.name,
-          type: file.type || "unknown",
-          content: "[failed to read file]"
-        });
+        warnings.push(`${file.name}: failed to read file.`);
       }
+    }
+    if (warnings.length) {
+      setInlineWarnings(warnings);
+    } else {
+      setInlineWarnings([]);
     }
     return payloads;
   }

@@ -31,6 +31,9 @@ export async function POST(req: Request) {
       const name = a.name || "asset";
       const type = a.type || "unknown";
       const content = a.content || "";
+      if (type === "image") {
+        return `- ${name} (image):\n![${name}](${content})`;
+      }
       const capped = content.length > 2000 ? `${content.slice(0, 2000)}\n...[truncated]` : content;
       return `- ${name} (${type}):\n${capped}`;
     })
