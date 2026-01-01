@@ -1607,7 +1607,16 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                   onSubmit={async (e) => {
                     e.preventDefault();
                     const followup = followupText.trim();
-                    if (!followup || !taskId || !threadId) return;
+                    if (!followup) {
+                      setStatus("Please enter a follow-up message.");
+                      scrollToStatus();
+                      return;
+                    }
+                    if (!taskId || !threadId) {
+                      setStatus("Please generate a task first, then add a follow-up.");
+                      scrollToStatus();
+                      return;
+                    }
                     setLoading(true);
                     scrollToStatus();
                     setStatus(null);
@@ -1682,7 +1691,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       </button>
                       <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || !taskId || !threadId}
                         aria-label="Send follow-up"
                         className="rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
                       >
