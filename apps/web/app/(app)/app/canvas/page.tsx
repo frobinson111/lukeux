@@ -100,6 +100,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [images, setImages] = useState<string[]>([]);
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
   const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
+  const MAX_IMAGE_DATAURL = 50_000; // chars
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -372,11 +373,15 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
           });
         } else if (allowedImageTypes.has(file.type)) {
           const dataUrl = await readAsDataUrl(file);
-          payloads.push({
-            name: file.name,
-            type: "image",
-            content: dataUrl
-          });
+          if (dataUrl.length > MAX_IMAGE_DATAURL) {
+            warnings.push(`${file.name}: image too large to inline; skipped.`);
+          } else {
+            payloads.push({
+              name: file.name,
+              type: "image",
+              content: dataUrl
+            });
+          }
         } else {
           warnings.push(`${file.name}: unsupported type (${file.type || "unknown"}); not inlined.`);
         }

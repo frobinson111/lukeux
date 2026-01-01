@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       : "Provide a balanced response with 5-8 clear points.";
 
   const assetsArray: { name?: string; type?: string; content?: string }[] = Array.isArray(assets) ? assets : [];
-  const assetsSection = assetsArray
+  const assetsSectionRaw = assetsArray
     .map((a) => {
       const name = a.name || "asset";
       const type = a.type || "unknown";
@@ -38,6 +38,12 @@ export async function POST(req: Request) {
       return `- ${name} (${type}):\n${capped}`;
     })
     .join("\n\n");
+
+  const MAX_ASSETS_SECTION = 50_000;
+  const assetsSection =
+    assetsSectionRaw.length > MAX_ASSETS_SECTION
+      ? `${assetsSectionRaw.slice(0, MAX_ASSETS_SECTION)}\n...[assets truncated to stay within token limits]`
+      : assetsSectionRaw;
 
   const fullPrompt =
     assetsSection && assetsSection.length > 0
