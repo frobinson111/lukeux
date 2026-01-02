@@ -100,6 +100,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [images, setImages] = useState<string[]>([]);
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
   const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const MAX_IMAGE_DATAURL = 50_000; // chars
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
@@ -192,7 +193,9 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
         if (!res.ok) return;
         const data = await res.json().catch(() => null);
         const name = data?.user?.firstName || data?.firstName;
+        const role = data?.user?.role || data?.role || null;
         if (name) setFirstNameLocal(name);
+        if (role) setUserRole(role);
       } catch {
         // ignore
       }
@@ -1090,7 +1093,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
               </div>
             )}
 
-            {template && !inputsCollapsed && (
+            {template && !inputsCollapsed && (userRole === "ADMIN" || userRole === "SUPERUSER") && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase text-amber-700">AI Prompt</p>
