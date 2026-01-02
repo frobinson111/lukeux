@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { requireUser } from "../../../../lib/auth";
 
 export default async function BillingPage() {

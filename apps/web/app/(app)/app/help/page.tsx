@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { requireUser } from "../../../../lib/auth";
 import { redirect } from "next/navigation";

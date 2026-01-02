@@ -297,3 +297,4 @@ export default function SettingsClient({ user, sessions }: { user: User; session
   );
 }
 
+

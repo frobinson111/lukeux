@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { requireUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { getAvailableModelsFromKeys } from "../../../../lib/llm/models";
