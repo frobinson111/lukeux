@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -35,15 +34,17 @@ export async function POST(req: Request) {
       model: "gpt-image-1",
       prompt,
       size,
-      n,
-      response_format: "b64_json"
+      n
     });
 
     const images =
-      response.data?.map((img: any) => {
-        if (!img.b64_json) return null;
-        return `data:image/png;base64,${img.b64_json}`;
-      })?.filter(Boolean) ?? [];
+      response.data
+        ?.map((img: any) => {
+          if (img?.b64_json) return `data:image/png;base64,${img.b64_json}`;
+          if (img?.url) return img.url;
+          return null;
+        })
+        ?.filter(Boolean) ?? [];
 
     return NextResponse.json({ images });
   } catch (err: any) {
