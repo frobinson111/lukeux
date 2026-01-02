@@ -439,6 +439,17 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     setFollowupAssetPayloads((prev) => dedupePayloads(prev, newPayloads));
   }
 
+  const MAX_IMAGE_PROMPT = 900;
+  function buildImagePromptFromResponse(resp: string) {
+    // Strip code fences and heavy markdown so image prompts stay concise.
+    let text = resp.replace(/```[\s\S]*?```/g, " ");
+    text = text.replace(/[#>*`_]/g, " ").replace(/\s+/g, " ").trim();
+    if (text.length > MAX_IMAGE_PROMPT) {
+      text = `${text.slice(0, MAX_IMAGE_PROMPT)}...`;
+    }
+    return text;
+  }
+
   function handleUploadClick() {
     fileInputRef.current?.click();
   }
@@ -1614,8 +1625,29 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                   </div>
                   {imageSectionOpen && (
                     <>
-                      <label className="block text-xs font-semibold uppercase text-slate-700">
-                        <span className="block">Prompt</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-semibold uppercase text-slate-700">
+                          <span>Prompt</span>
+                          <button
+                            type="button"
+                            className="text-[11px] font-semibold text-slate-600 hover:text-slate-900"
+                            onClick={() => {
+                              if (!lastResponse) {
+                                setImageError("Generate a response first to prefill.");
+                                return;
+                              }
+                              const filled = buildImagePromptFromResponse(lastResponse);
+                              if (!filled) {
+                                setImageError("No usable text in the last response to prefill.");
+                                return;
+                              }
+                              setImageError(null);
+                              setImagePrompt(filled);
+                            }}
+                          >
+                            Use last response
+                          </button>
+                        </div>
                         <textarea
                           value={imagePrompt}
                           onChange={(e) => setImagePrompt(e.target.value)}
@@ -1623,7 +1655,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           rows={2}
                           placeholder="Describe the image you want"
                         />
-                      </label>
+                      </div>
                       <button
                         type="button"
                         onClick={async () => {
