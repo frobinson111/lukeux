@@ -1,12 +1,13 @@
-export const dynamic = "force-dynamic";
 "use client";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import dynamic from "next/dynamic";
 
 type ProjectFolder = { id: string; name: string; open: boolean; sortOrder?: number };
 type HistoryItem = { id: string; title: string; content: string; templateIndex: number | null; projectId: string | null };
