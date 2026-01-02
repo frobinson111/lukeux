@@ -994,7 +994,25 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                 <span className="shrink-0">{template ? template.category : "Define Your UX Objective"}</span>
                 <select
                   value={templateIndex ?? ""}
-                  onChange={(e) => setTemplateIndex(e.target.value === "" ? null : Number(e.target.value))}
+                  onChange={(e) => {
+                    const idx = e.target.value === "" ? null : Number(e.target.value);
+                    setTemplateIndex(idx);
+                    const nextTemplate = idx !== null ? templateList[idx] : null;
+                    setEditablePrompt(nextTemplate?.prompt || "");
+                    setTaskId(null);
+                    setThreadId(null);
+                    setLastResponse(null);
+                    setStatus(null);
+                    setFiles([]);
+                    setAssetPayloads([]);
+                    setFollowupFiles([]);
+                    setFollowupAssetPayloads([]);
+                    setFollowupText("");
+                    setImages([]);
+                    setImageError(null);
+                    setImagePrompt("");
+                    setResultsCollapsed(false);
+                  }}
                   className="flex-1 w-full rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none appearance-none"
                   style={{
                     backgroundImage: "url('/images/rotate.svg')",
