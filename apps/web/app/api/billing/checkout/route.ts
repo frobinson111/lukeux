@@ -18,8 +18,8 @@ export async function POST() {
     mode: "subscription",
     customer: user.stripeCustomerId || undefined,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/billing/success`,
-    cancel_url: `${appUrl}/billing/cancel`,
+    success_url: `${appUrl}/app/billing/success`,
+    cancel_url: `${appUrl}/app/billing/cancel`,
     subscription_data: {
       metadata: { userId: user.id }
     },
