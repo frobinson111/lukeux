@@ -100,6 +100,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [images, setImages] = useState<string[]>([]);
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
   const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
+  const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const MAX_IMAGE_DATAURL = 50_000; // chars
   const template = templateIndex !== null ? templateList[templateIndex] : null;
@@ -1603,13 +1604,53 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                     )}
                   </div>
                 </div>
-                <div className="mt-4 space-y-3">
-                  <p className="text-sm font-bold text-slate-900">Design Feedback</p>
-                  <div ref={responseRef} className="ai-response max-w-none space-y-2 text-[15px] leading-[1.65] text-slate-900">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                      {lastResponse}
-                    </ReactMarkdown>
+                <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900">Response Output</p>
+                    <button
+                      type="button"
+                      onClick={() => setResultsCollapsed((v) => !v)}
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+                      aria-expanded={!resultsCollapsed}
+                    >
+                      {resultsCollapsed ? "Expand" : "Collapse"}
+                      <span aria-hidden="true">{resultsCollapsed ? "▸" : "▾"}</span>
+                    </button>
                   </div>
+                  {!resultsCollapsed && (
+                    <div className="space-y-4">
+                      {lastResponse && (
+                        <div ref={responseRef} className="ai-response max-w-none space-y-2 text-[15px] leading-[1.65] text-slate-900">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            {lastResponse}
+                          </ReactMarkdown>
+                        </div>
+                      )}
+                      {images.length > 0 && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {images.map((src, idx) => (
+                            <div key={idx} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm">
+                              <Image src={src} alt={`Generated ${idx + 1}`} width={512} height={512} className="h-auto w-full rounded-md object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const link = document.createElement("a");
+                                  link.href = src;
+                                  link.download = `generated-${idx + 1}.png`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                              >
+                                Download
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
                   <div className="flex items-center justify-between">
@@ -1680,7 +1721,8 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                               return;
                             }
                             setImages(json.images || []);
-                            scrollToTopOfResponse();
+                          setResultsCollapsed(false);
+                          scrollToTopOfResponse();
                           } catch (err) {
                             setImageError("Image generation failed.");
                           } finally {
@@ -1692,29 +1734,6 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       >
                         {imageLoading ? "Generating..." : "Generate Images"}
                       </button>
-                      {images.length > 0 && (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          {images.map((src, idx) => (
-                            <div key={idx} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm">
-                              <Image src={src} alt={`Generated ${idx + 1}`} width={512} height={512} className="h-auto w-full rounded-md object-cover" />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const link = document.createElement("a");
-                                  link.href = src;
-                                  link.download = `generated-${idx + 1}.png`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                }}
-                                className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                              >
-                                Download
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
