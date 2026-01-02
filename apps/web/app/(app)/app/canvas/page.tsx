@@ -1138,10 +1138,35 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                 </div>
                 {files.length > 0 && (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                    <p className="font-semibold">Attached files</p>
-                    <ul className="mt-1 list-disc pl-4">
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="font-semibold">Attached files</p>
+                      <button
+                        type="button"
+                        className="text-[11px] font-semibold text-slate-600 hover:text-red-600"
+                        onClick={() => {
+                          setFiles([]);
+                          setAssetPayloads([]);
+                        }}
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    <ul className="mt-1 space-y-1">
                       {files.map((file) => (
-                        <li key={file.name}>{file.name}</li>
+                        <li key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-2">
+                          <span className="truncate">{file.name}</span>
+                          <button
+                            type="button"
+                            className="rounded-full px-2 py-[2px] text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                            onClick={() => {
+                              setFiles((prev) => prev.filter((f) => !(f.name === file.name && f.size === file.size)));
+                              setAssetPayloads((prev) => prev.filter((p) => p.name !== file.name));
+                            }}
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            Remove
+                          </button>
+                        </li>
                       ))}
                     </ul>
                   </div>
