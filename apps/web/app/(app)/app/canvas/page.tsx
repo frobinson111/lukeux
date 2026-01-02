@@ -1,13 +1,11 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import dynamic from "next/dynamic";
 
 type ProjectFolder = { id: string; name: string; open: boolean; sortOrder?: number };
 type HistoryItem = { id: string; title: string; content: string; templateIndex: number | null; projectId: string | null };
@@ -399,24 +397,46 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     return payloads;
   }
 
+  const dedupeFiles = (prev: File[], next: File[]) => {
+    const seen = new Set(prev.map((f) => `${f.name}:${f.size}`));
+    const merged = [...prev];
+    next.forEach((f) => {
+      const key = `${f.name}:${f.size}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(f);
+      }
+    });
+    return merged;
+  };
+
+  const dedupePayloads = (prev: AssetPayload[], next: AssetPayload[]) => {
+    const seen = new Set(prev.map((p) => `${p.name}:${p.type}:${p.content.length}`));
+    const merged = [...prev];
+    next.forEach((p) => {
+      const key = `${p.name}:${p.type}:${p.content.length}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(p);
+      }
+    });
+    return merged;
+  };
+
   async function handleUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files ?? []);
-    setFiles(selected);
-    if (!selected.length) {
-      setAssetPayloads([]);
-      return;
-    }
-    setAssetPayloads(await toAssetPayloads(selected));
+    if (!selected.length) return;
+    const newPayloads = await toAssetPayloads(selected);
+    setFiles((prev) => dedupeFiles(prev, selected));
+    setAssetPayloads((prev) => dedupePayloads(prev, newPayloads));
   }
 
   async function handleFollowupUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files ?? []);
-    setFollowupFiles(selected);
-    if (!selected.length) {
-      setFollowupAssetPayloads([]);
-      return;
-    }
-    setFollowupAssetPayloads(await toAssetPayloads(selected));
+    if (!selected.length) return;
+    const newPayloads = await toAssetPayloads(selected);
+    setFollowupFiles((prev) => dedupeFiles(prev, selected));
+    setFollowupAssetPayloads((prev) => dedupePayloads(prev, newPayloads));
   }
 
   function handleUploadClick() {
