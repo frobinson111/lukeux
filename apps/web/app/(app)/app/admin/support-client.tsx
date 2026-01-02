@@ -16,7 +16,8 @@ export default function SupportAdmin({ requests }: { requests: SupportRow[] }) {
           <thead className="bg-slate-50 text-left text-[12px] uppercase tracking-wide text-slate-600">
             <tr>
               <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">Subject</th>
+              <th className="px-3 py-2">Type</th>
+              <th className="px-3 py-2">Message</th>
               <th className="px-3 py-2">Created</th>
             </tr>
           </thead>
@@ -24,7 +25,8 @@ export default function SupportAdmin({ requests }: { requests: SupportRow[] }) {
             {requests.map((r) => (
               <tr key={r.id} className="border-t border-slate-100">
                 <td className="px-3 py-2 text-slate-900">{r.email || "—"}</td>
-                <td className="px-3 py-2 text-slate-700">{r.subject || "—"}</td>
+                <td className="px-3 py-2 text-slate-700">{r.requestType || "—"}</td>
+                <td className="px-3 py-2 text-slate-700 line-clamp-2">{r.message || "—"}</td>
                 <td className="px-3 py-2 text-slate-500">
                   {r.createdAt instanceof Date ? r.createdAt.toISOString().slice(0, 10) : r.createdAt}
                 </td>
