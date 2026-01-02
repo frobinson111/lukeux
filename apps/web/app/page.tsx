@@ -852,7 +852,7 @@ export default function HomePage() {
                         Unlimited use for designers doing serious work under real constraints.
                       </p>
                       <div className="flex items-baseline gap-2 text-slate-900">
-                        <span className="text-4xl font-black">$60</span>
+                        <span className="text-4xl font-black">$48</span>
                         <span className="text-sm font-semibold text-slate-700">/ month</span>
                       </div>
                     </div>
