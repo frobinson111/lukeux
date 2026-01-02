@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate --schema=prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Add tests (vitest/playwright)\" && exit 0"
+    "test": "echo \"Add tests (vitest/playwright)\" && exit 0",
+    "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "5.18.0",
@@ -17,12 +18,7 @@
     "@types/stripe": "^8.0.416",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
-    "docx": "^9.5.1",
-    "html-to-image": "^1.11.13",
-    "jspdf": "^3.0.4",
-    "mammoth": "^1.11.0",
     "next": "14.2.5",
-    "nodemailer": "^7.0.12",
     "openai": "^6.15.0",
     "prisma": "5.18.0",
     "react": "18.3.1",
@@ -30,12 +26,11 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "stripe": "^20.1.0",
-    "xlsx": "^0.18.5",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "mammoth": "^1.6.0"
   },
   "devDependencies": {
     "@types/node": "20.14.10",
-    "@types/nodemailer": "^7.0.4",
     "@types/react": "18.3.10",
     "@types/react-dom": "18.3.0",
     "autoprefixer": "10.4.20",
