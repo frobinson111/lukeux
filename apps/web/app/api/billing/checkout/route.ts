@@ -26,5 +26,10 @@ export async function POST() {
     metadata: { userId: user.id }
   });
 
-  return NextResponse.json({ url: session.url });
+  if (!session.url) {
+    return NextResponse.json({ error: "Unable to start checkout" }, { status: 500 });
+  }
+
+  // Redirect directly so form submissions send the user to Stripe Checkout.
+  return NextResponse.redirect(session.url, { status: 303 });
 }
