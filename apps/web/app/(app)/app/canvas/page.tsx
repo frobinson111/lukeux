@@ -1619,7 +1619,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                       >
                         <Image src="/images/png-icon.svg" alt="Images" width={18} height={18} className="h-4 w-4" />
                       </button>
-                      <p className="text-sm font-bold text-slate-900">Image Generation</p>
+                      <p className="text-sm font-bold text-slate-900">Image &amp; Mockup Generation</p>
                     </div>
                     {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
                   </div>
@@ -1653,7 +1653,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                           onChange={(e) => setImagePrompt(e.target.value)}
                           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
                           rows={2}
-                          placeholder="Describe the image you want"
+                          placeholder="Copy any section to generate an image or mockup."
                         />
                       </div>
                       <button
