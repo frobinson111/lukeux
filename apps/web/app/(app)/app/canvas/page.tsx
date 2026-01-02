@@ -1722,7 +1722,6 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                             }
                             setImages(json.images || []);
                           setResultsCollapsed(false);
-                          scrollToTopOfResponse();
                           } catch (err) {
                             setImageError("Image generation failed.");
                           } finally {
