@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { requireUser } from "../../../../lib/auth";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET() {
   const user = await requireUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPERUSER")) {
