@@ -1194,11 +1194,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
                   <button
                     type="button"
                     onClick={handleUploadClick}
-                    className="flex h-16 w-16 items-center justify-center rounded-full border border-slate-300 bg-white text-3xl font-semibold text-slate-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow disabled:opacity-60"
-                    style={{
-                      boxShadow:
-                        "var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)"
-                    }}
+                    className="flex h-16 w-16 items-center justify-center rounded-full border border-black bg-white text-3xl font-semibold text-black shadow-[0_2px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_3px_0_#111] disabled:opacity-60"
                   >
                     +
                   </button>
