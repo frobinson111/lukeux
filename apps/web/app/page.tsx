@@ -326,7 +326,7 @@ export default function HomePage() {
     about: {
       title: "About",
       body:
-        "Luke UX is a desktop-first UX copilot built for designers who take the work seriously. It doesn’t replace judgment or automate taste. It sharpens thinking, exposes blind spots, and pressures decisions until they hold up. AI won’t make your designs better by itself. It will make your thinking clearer, your blind spots louder, and your standards impossible to ignore.\n\nThis is a tool for people who still believe craft matters and are willing to be challenged by it."
+        "Luke UX is a desktop-first UX copilot built for designers who take the work seriously. It doesn’t replace judgment or automate taste. It sharpens thinking, exposes blind spots, and pressures decisions until they hold up.\n\n“AI won’t make your designs better by itself. It will make your thinking clearer, your blind spots louder, and your standards impossible to ignore.”\n-Frank Robinson III\nSenior Product Designer, UX & AI"
     },
     features: {
       title: "Features",
