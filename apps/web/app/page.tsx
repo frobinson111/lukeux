@@ -422,7 +422,7 @@ export default function HomePage() {
               <Image src="/images/lukeux-logo.svg" alt="Luke UX" width={200} height={48} className="h-12 w-auto" priority />
             </div>
             <p className="max-w-xl text-lg leading-relaxed text-slate-800">
-              Luke UX sharpens thinking, accelerates decisions, and exposes blind spots without diluting the craft.
+              <b>Before work ships.</b> Luke UX makes your thinking clearer, your blind spots louder, and your standards impossible to ignore.
             </p>
             <div className="relative mt-8 flex justify-center">
               <div className="relative h-96 w-80">
