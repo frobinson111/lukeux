@@ -25,14 +25,19 @@ export async function assertCanGenerate(input: GenerationCheck) {
   }
 }
 
+function isValidObjectId(id?: string | null) {
+  return typeof id === "string" && id.length === 24 && /^[a-fA-F0-9]{24}$/.test(id);
+}
+
 export async function logUsage(
   userId: string,
   opts: { type: "GENERATION" | "FOLLOWUP" | "IMAGE"; taskId?: string | null; model?: string }
 ) {
+  const safeTaskId = isValidObjectId(opts.taskId) ? opts.taskId : undefined;
   await prisma.usageLedger.create({
     data: {
       userId,
-      taskId: opts.taskId || undefined,
+      taskId: safeTaskId,
       type: opts.type,
       model: opts.model
     }
