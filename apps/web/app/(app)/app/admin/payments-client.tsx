@@ -27,3 +27,4 @@ export default function PaymentsAdmin({ config }: { config: PaymentConfigRow }) 
   );
 }
 
+

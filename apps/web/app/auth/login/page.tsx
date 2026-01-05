@@ -6,8 +6,6 @@ import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,9 +14,10 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
+    const formData = new FormData(event.currentTarget);
     const payload = {
-      email: email.trim(),
-      password
+      email: String(formData.get("email") || "").trim(),
+      password: String(formData.get("password") || "")
     };
 
     const res = await fetch("/api/auth/login", {
@@ -29,8 +28,7 @@ export default function LoginPage() {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = data.error || "Unable to sign in";
-      setError(msg);
+      setError(data.error || "Unable to sign in");
       setLoading(false);
       return;
     }
@@ -42,7 +40,7 @@ export default function LoginPage() {
     <div className="space-y-4">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
-        <p className="text-sm text-slate-600">Welcome back to Luke UX.</p>
+        <p className="text-sm text-slate-600">Email verification required before first login.</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
@@ -55,8 +53,6 @@ export default function LoginPage() {
             autoComplete="email"
             required
             aria-required="true"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
           />
         </label>
 
@@ -69,8 +65,6 @@ export default function LoginPage() {
             autoComplete="current-password"
             required
             aria-required="true"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
           />
         </label>
 

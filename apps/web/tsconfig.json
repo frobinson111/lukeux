@@ -3,9 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@luke-ux/shared": [
-        "../../packages/shared/src"
-      ]
+      "@luke-ux/shared": ["../../packages/shared/src"]
     },
     "plugins": [
       {
@@ -23,10 +21,5 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "prisma/prisma.config.ts",
-    "app/api/billing/webhook/route.ts"
-  ]
+  "exclude": ["node_modules"]
 }

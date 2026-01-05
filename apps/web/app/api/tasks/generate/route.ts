@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { requireUser } from "../../../../lib/auth";
 import { callLlm } from "../../../../lib/llm/service";
-import { assertCanGenerate, logGenerationUsage } from "../../../../lib/usage";
+import { assertCanGenerate, logUsage } from "../../../../lib/usage";
 
 export async function POST(req: Request) {
   const user = await requireUser();
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   const response = await callLlm({ prompt: fullPrompt, model, mode: selectedMode as any });
-  await logGenerationUsage(user.id, null, model);
+  await logUsage(user.id, { type: "GENERATION", taskId, model });
   return NextResponse.json({
     content: response.content,
     tokensIn: response.tokensIn,

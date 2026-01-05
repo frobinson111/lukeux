@@ -5,7 +5,18 @@ import Image from "next/image";
 import TemplatesAdmin from "./templates-client";
 import KeysAdmin from "./keys-client";
 import PaymentsAdmin from "./payments-client";
-import type { UserRow, TemplateRow, UsageRow, EventRow, KeyRow, CategoryRow, PaymentConfigRow, SupportRow, FeedbackRow } from "./page";
+import type {
+  UserRow,
+  TemplateRow,
+  UsageRow,
+  EventRow,
+  KeyRow,
+  CategoryRow,
+  PaymentConfigRow,
+  SupportRow,
+  FeedbackRow,
+  UsageTotals
+} from "./page";
 import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
 
@@ -23,7 +34,8 @@ export default function AdminClient({
   categories,
   payments,
   support,
-  feedback
+  feedback,
+  usageTotals
 }: {
   userRole: string;
   users: UserRow[];
@@ -36,6 +48,7 @@ export default function AdminClient({
   payments: PaymentConfigRow;
   support: SupportRow[];
   feedback: FeedbackRow[];
+  usageTotals: UsageTotals;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [page, setPage] = useState(1);
@@ -59,9 +72,12 @@ export default function AdminClient({
       apiKeysTotal: keys.length,
       apiKeysActive: keys.filter((k) => k.isActive).length,
       recentUsageCount: usage.length,
-      recentEventsCount: events.length
+      recentEventsCount: events.length,
+      initialResponses: usageTotals.initialCount,
+      followupResponses: usageTotals.followupCount,
+      imagesGenerated: usageTotals.imageCount
     }),
-    [usersState, templates, keys, usage, events]
+    [usersState, templates, keys, usage, events, usageTotals]
   );
 
   const menu: { id: Tab; label: string }[] = [
@@ -161,11 +177,14 @@ export default function AdminClient({
 
           {tab === "overview" && (
             <section className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 <StatCard label="Users" value={stats.usersTotal} helper={`${stats.admins} admins`} />
                 <StatCard label="Pro Users" value={stats.pros} helper="Plan: PRO" />
                 <StatCard label="Templates" value={stats.templatesTotal} helper={`${stats.templatesActive} active`} />
                 <StatCard label="LLM Keys" value={stats.apiKeysTotal} helper={`${stats.apiKeysActive} active`} />
+                <StatCard label="Initial Responses" value={stats.initialResponses} helper="Total generated" />
+                <StatCard label="Follow-up Responses" value={stats.followupResponses} helper="Total refinements" />
+                <StatCard label="Images/Mockups" value={stats.imagesGenerated} helper="Total generated" />
                 <StatCard label="Recent Usage" value={stats.recentUsageCount} helper="last 20" />
                 <StatCard label="Recent Events" value={stats.recentEventsCount} helper="last 20" />
               </div>

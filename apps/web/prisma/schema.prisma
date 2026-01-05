@@ -33,6 +33,8 @@ enum TaskStatus {
 
 enum UsageType {
   GENERATION
+  FOLLOWUP
+  IMAGE
 }
 
 enum FeatureFlagScope {

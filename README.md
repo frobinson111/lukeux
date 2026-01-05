@@ -13,10 +13,6 @@ Desktop-only, production-grade UX design copilot. This repo is isolated from fuk
 4. Generate Prisma client: `npm exec -w @luke-ux/web prisma generate -- --schema prisma/schema.prisma`.
 5. Run the app: `npm run dev` (root).
 
-## Branching / backups
-- Snapshot branch: `backup/lukeux` (created as a restore point after initial setup).
-- Working branch: `main` (current).
-
 ## Environment variables
 - `DATABASE_URL` – Postgres connection (Railway/local per env).
 - `SESSION_SECRET` – Long random string for session signing.

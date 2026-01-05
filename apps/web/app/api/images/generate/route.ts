@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
 import { requireUser } from "../../../../lib/auth";
+import { logUsage } from "../../../../lib/usage";
 
 const schema = z.object({
   prompt: z.string().min(1),
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
         })
         ?.filter(Boolean) ?? [];
 
+    await logUsage(user.id, { type: "IMAGE", taskId: null, model: "gpt-image-1" });
     return NextResponse.json({ images });
   } catch (err: any) {
     const message = err?.message || "Image generation failed";

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
-function VerifyForm() {
+export default function VerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialToken = useMemo(() => searchParams.get("token") || "", [searchParams]);
@@ -84,13 +84,5 @@ function VerifyForm() {
         </Link>
       </p>
     </div>
-  );
-}
-
-export default function VerifyPage() {
-  return (
-    <Suspense fallback={<div className="text-sm text-slate-600">Loading…</div>}>
-      <VerifyForm />
-    </Suspense>
   );
 }

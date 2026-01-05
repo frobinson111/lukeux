@@ -25,13 +25,16 @@ export async function assertCanGenerate(input: GenerationCheck) {
   }
 }
 
-export async function logGenerationUsage(userId: string, taskId: string | null, model?: string) {
+export async function logUsage(
+  userId: string,
+  opts: { type: "GENERATION" | "FOLLOWUP" | "IMAGE"; taskId?: string | null; model?: string }
+) {
   await prisma.usageLedger.create({
     data: {
       userId,
-      taskId: taskId || undefined,
-      type: "GENERATION",
-      model
+      taskId: opts.taskId || undefined,
+      type: opts.type,
+      model: opts.model
     }
   });
 }

@@ -50,6 +50,12 @@ export type EventRow = {
   userEmail: string | null;
 };
 
+export type UsageTotals = {
+  initialCount: number;
+  followupCount: number;
+  imageCount: number;
+};
+
 export type KeyRow = {
   id: string;
   provider: string;
@@ -106,8 +112,11 @@ export default async function AdminPage() {
   }
 
   const prismaAny = prisma as any;
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
 
-  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows] = await Promise.all([
+  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows, initialCount, followupCount, imageCount] =
+    await Promise.all([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -163,7 +172,10 @@ export default async function AdminPage() {
       orderBy: { createdAt: "desc" },
       take: 200,
       include: { user: { select: { email: true, firstName: true, lastName: true } } }
-    })
+    }),
+    prismaAny.usageLedger.count({ where: { type: "GENERATION", createdAt: { gte: startOfToday } } }),
+    prismaAny.usageLedger.count({ where: { type: "FOLLOWUP", createdAt: { gte: startOfToday } } }),
+    prismaAny.usageLedger.count({ where: { type: "IMAGE", createdAt: { gte: startOfToday } } })
   ]);
 
   const secret = process.env.STRIPE_SECRET_KEY || "";
@@ -199,6 +211,12 @@ export default async function AdminPage() {
     createdAt: k.createdAt
   }));
 
+  const usageTotals: UsageTotals = {
+    initialCount: initialCount as number,
+    followupCount: followupCount as number,
+    imageCount: imageCount as number
+  };
+
   return (
     <AdminClient
       userRole={user.role}
@@ -228,6 +246,7 @@ export default async function AdminPage() {
           userName: f.user ? `${f.user.firstName ?? ""} ${f.user.lastName ?? ""}`.trim() || null : null
         })) as FeedbackRow[]
       }
+      usageTotals={usageTotals}
     />
   );
 }
