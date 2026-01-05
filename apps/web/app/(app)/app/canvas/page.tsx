@@ -43,7 +43,7 @@ const milestones = [3, 10, 20];
 type FeedbackType = "LIKE" | "DISLIKE" | "SUGGESTION";
 const FEEDBACK_MAX_LEN = 1000;
 
-export default function CanvasPage({ firstName, templates = [] }: { firstName?: string; templates?: Template[] }) {
+export default function CanvasPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -56,7 +56,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const [followupAssetPayloads, setFollowupAssetPayloads] = useState<AssetPayload[]>([]);
   const [followupText, setFollowupText] = useState("");
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
-  const [templateList, setTemplateList] = useState<Template[]>(templates ?? []);
+  const [templateList, setTemplateList] = useState<Template[]>([]);
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const followupFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [firstNameLocal, setFirstNameLocal] = useState(firstName || "");
+  const [firstNameLocal, setFirstNameLocal] = useState("");
 
   const groupedTemplates = useMemo(() => {
     const groups: Record<string, { category: string; items: { t: Template; idx: number }[] }> = {};
@@ -203,16 +203,6 @@ export default function CanvasPage({ firstName, templates = [] }: { firstName?: 
     }
     loadUser();
   }, [firstNameLocal]);
-
-  useEffect(() => {
-    // apply server-provided templates only when they have data
-    const list = templates ?? [];
-    if (!list.length) return;
-    setTemplateList(list);
-    if (templateIndex !== null && templateIndex >= list.length) {
-      setTemplateIndex(null);
-    }
-  }, [templates, templateIndex]);
 
   useEffect(() => {
     async function loadTemplates() {
