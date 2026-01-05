@@ -3,9 +3,9 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 
-export default function ResetPage() {
+function ResetForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialToken = useMemo(() => searchParams.get("token") || "", [searchParams]);
@@ -119,5 +119,13 @@ export default function ResetPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function ResetPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetForm />
+    </Suspense>
   );
 }
