@@ -1,9 +1,9 @@
 import OpenAI from "openai";
-import type { LlmProvider, LlmRequest, LlmResponse } from "@luke-ux/shared";
+import type { LlmMode, LlmProvider, LlmRequest, LlmResponse } from "@luke-ux/shared";
 
 export class OpenAiProvider implements LlmProvider {
   readonly name = "openai" as const;
-  readonly supportsModes = ["auto", "instant", "thinking"] as const;
+  readonly supportsModes: LlmMode[] = ["auto", "instant", "thinking"];
 
   private client: OpenAI;
 
