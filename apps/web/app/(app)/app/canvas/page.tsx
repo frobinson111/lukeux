@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dynamic from "next/dynamic";
+import { PromoModal } from "../components/promo-modal";
 
 type ProjectFolder = { id: string; name: string; open: boolean; sortOrder?: number };
 type HistoryItem = { id: string; title: string; content: string; templateIndex: number | null; projectId: string | null };
@@ -359,6 +360,7 @@ export default function CanvasPage() {
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [currentHistoryEntryId, setCurrentHistoryEntryId] = useState<string | null>(null);
   const [recommendationFeedbacks, setRecommendationFeedbacks] = useState<Record<number, "UP" | "DOWN" | null>>({});
+  const [showPromoModal, setShowPromoModal] = useState(false);
   const responseRef = useRef<HTMLDivElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
   const mockupSectionRef = useRef<HTMLDivElement | null>(null);
@@ -589,6 +591,25 @@ export default function CanvasPage() {
       localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
     }
   }, [lastResponse]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Promo modal trigger - show after 5 seconds if not already completed/dismissed
+  useEffect(() => {
+    const hasCompleted = localStorage.getItem("promo_signup_completed");
+    const hasDismissed = localStorage.getItem("promo_modal_dismissed");
+    
+    if (hasCompleted || hasDismissed) return;
+    
+    const timer = setTimeout(() => {
+      setShowPromoModal(true);
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handlePromoModalClose = () => {
+    setShowPromoModal(false);
+    localStorage.setItem("promo_modal_dismissed", Date.now().toString());
+  };
 
   const allowedTextTypes = new Set([
     "text/plain",
@@ -2347,6 +2368,15 @@ export default function CanvasPage() {
           </section>
         </main>
       </div>
+
+      {/* Promo Modal */}
+      <PromoModal
+        isOpen={showPromoModal}
+        onClose={handlePromoModalClose}
+        onSuccess={() => {
+          // Modal will close automatically after success message
+        }}
+      />
     </div>
   );
 }

@@ -1,0 +1,60 @@
+SCENARIO 2: QUICKPAY BUSINESS BANKING PLATFORM
+================================================================================
+
+PRODUCT/SERVICE:
+Web-based business banking platform for small business owners
+
+TARGET AUDIENCE:
+Small business owners managing accounts, payments, and payroll
+
+--------------------------------------------------------------------------------
+RESEARCH INPUTS (Copy this into your AI prompt)
+--------------------------------------------------------------------------------
+Research Methodology:
+• 20 contextual inquiry sessions
+• 15 remote moderated usability tests
+• Card sorting exercise (n=25)
+• Analytics review of existing platform
+
+Participant Profile:
+• All participants were business owners for 5+ years
+• Company size: 10-50 employees
+• All used desktop computers with large monitors (24" or larger)
+• High-speed broadband internet (100+ Mbps)
+• Sessions conducted during regular business hours (9am-5pm)
+• All participants managed their own accounting
+• 100% had prior experience with at least 2 other banking platforms
+• All held bachelor's degrees in business or related fields
+• Age range: 35-52
+
+Research Environment:
+• All sessions in private offices
+• Participants used their own computers
+• Full keyboard and mouse access
+• No interruptions during 60-90 minute sessions
+
+Tasks Evaluated:
+• Reviewing account balances and transaction history
+• Initiating ACH transfers
+• Processing payroll for employees
+• Generating quarterly financial reports
+• Setting up automated bill payments
+
+Results:
+• Task success rate: 85%
+• Average time on task met benchmarks
+• Participants valued detailed transaction filters and bulk operations
+
+--------------------------------------------------------------------------------
+EXPECTED GAPS (Use this to validate AI output)
+--------------------------------------------------------------------------------
+1. New business owners with less than 1 year experience not represented
+2. No participants who delegate banking tasks to employees or bookkeepers
+3. Mobile-only users excluded (critical for business owners working off-site)
+4. No testing in high-pressure scenarios (urgent payments, payroll deadlines)
+5. Participants with lower financial literacy or no business education excluded
+6. No users with dyscalculia or difficulties processing numerical information
+7. Shared computer environments not considered (security/privacy implications)
+8. Slow or unstable internet connections not tested
+9. No participants using assistive technologies (screen magnification, voice control)
+10. Non-native English speakers excluded despite serving immigrant business owners

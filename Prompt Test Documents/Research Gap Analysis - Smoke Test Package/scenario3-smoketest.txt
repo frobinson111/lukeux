@@ -1,0 +1,66 @@
+SCENARIO 3: LEARNHUB ONLINE EDUCATION PLATFORM
+================================================================================
+
+PRODUCT/SERVICE:
+E-learning platform for professional certification courses
+
+TARGET AUDIENCE:
+Working professionals seeking career advancement
+
+--------------------------------------------------------------------------------
+RESEARCH INPUTS (Copy this into your AI prompt)
+--------------------------------------------------------------------------------
+Research Methodology:
+• 18 one-on-one interviews
+• 10 diary studies (2 weeks each)
+• Tree testing for navigation structure
+• A/B testing on 3 course page designs (n=500)
+
+Participant Characteristics:
+• Currently employed full-time in corporate settings
+• Age: 26-38 years old
+• All pursuing certification in tech-related fields (project management, data analytics, UX design)
+• Median household income: $85,000
+• Education: All had existing bachelor's degrees
+• 100% described themselves as "digitally savvy"
+• All owned laptops and had dedicated home office spaces
+• Reliable high-speed internet access
+• All participants had completed at least one online course previously
+• Native English speakers only
+• Recruitment through LinkedIn and professional networks
+
+Study Conditions:
+• Diary study entries made during evenings or weekends at participants' convenience
+• Interviews conducted via Zoom with video on
+• All participants used visual course materials (videos, slides, infographics)
+• Average study environment: quiet, minimal distractions
+• Participants had flexibility to pause and resume courses
+
+Platform Usage Evaluated:
+• Course discovery and enrollment
+• Video lecture viewing and note-taking
+• Completing quizzes and assignments
+• Participating in discussion forums
+• Downloading certificates upon completion
+
+Findings:
+• 89% completed their enrolled course
+• Strong preference for video content over text
+• Participants valued self-paced learning structure
+• Discussion forums had low engagement (22% participation)
+
+--------------------------------------------------------------------------------
+EXPECTED GAPS (Use this to validate AI output)
+--------------------------------------------------------------------------------
+1. No participants juggling multiple jobs or inflexible work schedules
+2. Learners with hearing impairments or who need captions/transcripts not included
+3. Non-traditional learners without prior degrees excluded
+4. No participants with learning disabilities (dyslexia, ADHD)
+5. Older workers (50+) seeking career transitions not represented
+6. Limited internet bandwidth or data cap constraints not considered
+7. Shared device usage (family computers) not evaluated
+8. Non-English speakers or ESL learners excluded
+9. No participants in caregiving roles with interrupted study time
+10. Testing excluded learning in transit or on mobile devices
+11. Participants with neurodivergent cognitive styles not represented
+12. No evaluation of accessibility for visual course materials for blind/low-vision users

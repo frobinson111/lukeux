@@ -1,0 +1,49 @@
+SCENARIO 1: HEALTHTRACK MOBILE APP
+================================================================================
+
+PRODUCT/SERVICE:
+Mobile health tracking application for medication reminders and symptom logging
+
+TARGET AUDIENCE:
+Adults managing chronic conditions
+
+--------------------------------------------------------------------------------
+RESEARCH INPUTS (Copy this into your AI prompt)
+--------------------------------------------------------------------------------
+Research Methodology:
+• 12 user interviews conducted
+• 8 usability testing sessions
+• Online survey (n=156)
+
+Participant Demographics:
+• Age range: 28-45 years old
+• All participants owned smartphones (iPhone or Android flagship models)
+• 100% native English speakers
+• All sessions conducted in participants' homes during weekday afternoons
+• Average income: $75,000-$120,000
+• All participants had college degrees or higher
+• Technology proficiency: Self-reported as "comfortable" to "expert"
+
+Research Activities:
+• Participants completed 5 tasks including setting medication reminders, logging symptoms, and viewing health reports
+• Tasks performed in quiet, well-lit environments
+• Average session duration: 45 minutes
+• All participants used touchscreen gestures fluently
+• No time constraints imposed during testing
+
+Key Findings:
+• 92% found the interface "intuitive"
+• Average task completion rate: 87%
+• Participants appreciated the detailed data visualization features
+
+--------------------------------------------------------------------------------
+EXPECTED GAPS (Use this to validate AI output)
+--------------------------------------------------------------------------------
+1. No participants with vision impairments or who use screen readers
+2. Older adults (65+) who are primary users of chronic condition management apps were excluded
+3. No participants with motor impairments or tremors common in chronic conditions
+4. No testing under distraction or stress (e.g., during symptom flare-ups)
+5. Budget/lower-end smartphones not represented
+6. Non-English speakers excluded despite health apps serving diverse populations
+7. No participants with cognitive impairments or memory issues
+8. Testing excluded real-world scenarios like medication reminders during sleep or work

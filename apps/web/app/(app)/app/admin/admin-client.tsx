@@ -20,8 +20,9 @@ import type {
 import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
 import RecommendationFeedbackAdmin, { type RecommendationFeedbackRow, type TemplateStat, type FeedbackSummary } from "./recommendation-feedback-client";
+import { PromoSignupsClient } from "./promo-signups-client";
 
-const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "usage", "events"] as const;
+const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "promo", "usage", "events"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminClient({
@@ -113,6 +114,7 @@ export default function AdminClient({
     { id: "payments", label: "Payments" },
     { id: "feedback", label: "Feedback & Enquirer" },
     { id: "rec-feedback", label: "Rec Feedback" },
+    { id: "promo", label: "Promo Signups" },
     { id: "usage", label: "Usage" },
     { id: "events", label: "Events" }
   ];
@@ -375,6 +377,19 @@ export default function AdminClient({
                 summary={recSummary}
                 templateStats={recTemplateStats}
               />
+            </section>
+          )}
+
+          {tab === "promo" && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎁</span>
+                <h2 className="text-lg font-semibold text-slate-900">Promo Signups</h2>
+              </div>
+              <p className="text-sm text-slate-600">
+                Manage promotional signups for the 3-month free access offer to Senior UX Designers.
+              </p>
+              <PromoSignupsClient />
             </section>
           )}
 

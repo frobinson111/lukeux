@@ -354,3 +354,18 @@ model ApiKey {
 
   @@index([provider, isActive])
 }
+
+model PromoSignup {
+  id              String    @id @map("_id") @default(auto()) @db.ObjectId
+  firstName       String
+  lastName        String
+  email           String    @unique
+  yearsExperience String    // "5-7", "8-10", "11-15", "15+"
+  status          String    @default("PENDING") // PENDING, ACTIVATED, EXPIRED
+  activatedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+}
