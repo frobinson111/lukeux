@@ -40,6 +40,234 @@ const modes = ["auto", "instant", "thinking"] as const;
 const detailLevels = ["brief", "standard", "in-depth"] as const;
 type AssetPayload = { name: string; type: string; content: string };
 const milestones = [3, 10, 20];
+
+// Custom markdown components for styled output
+const styledMarkdownComponents: Components = {
+  h1: ({ node, ...props }) => (
+    <h1 className="mb-4 mt-6 text-xl font-bold text-[#111827]" {...props} />
+  ),
+  h2: ({ node, ...props }) => (
+    <h2 className="mb-3 mt-5 text-lg font-bold text-[#111827]" {...props} />
+  ),
+  h3: ({ node, ...props }) => (
+    <h3 className="mb-2 mt-4 text-base font-semibold text-[#111827]" {...props} />
+  ),
+  h4: ({ node, ...props }) => (
+    <h4 className="mb-2 mt-3 text-[15px] font-semibold text-[#111827]" {...props} />
+  ),
+  p: ({ node, ...props }) => (
+    <p className="mb-4 text-[15px] leading-relaxed text-[#374151]" {...props} />
+  ),
+  ul: (props) => (
+    <ul className="mb-4 ml-0 list-none space-y-2" {...(props as any)} />
+  ),
+  ol: (props) => (
+    <ol className="mb-4 ml-0 list-none space-y-3 counter-reset-list" {...(props as any)} />
+  ),
+  li: ({ node, children, ...props }) => {
+    // Check if parent is ol (numbered) by checking if the content starts with number pattern
+    const content = String(children);
+    const isNumbered = /^\d+\)/.test(content.trim());
+    
+    if (isNumbered) {
+      // Extract number and rest of content
+      const match = content.match(/^(\d+)\)\s*(.*)/s);
+      const num = match ? match[1] : "";
+      const text = match ? match[2] : content;
+      
+      return (
+        <li className="relative pl-10 text-[15px] leading-relaxed text-[#374151]" {...props}>
+          <span className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6] text-xs font-semibold text-white">
+            {num}
+          </span>
+          <span>{text}</span>
+        </li>
+      );
+    }
+    
+    return (
+      <li className="relative pl-6 text-[15px] leading-relaxed text-[#374151]" {...props}>
+        <span className="absolute left-0 top-1.5 h-1.5 w-1.5 rounded-full bg-[#3b82f6]"></span>
+        {children}
+      </li>
+    );
+  },
+  strong: ({ node, ...props }) => (
+    <strong className="font-semibold text-[#111827]" {...props} />
+  ),
+  em: ({ node, ...props }) => (
+    <em className="italic text-[#4b5563]" {...props} />
+  ),
+  blockquote: ({ node, ...props }) => (
+    <blockquote className="my-4 border-l-4 border-[#3b82f6] bg-[#f8fafc] py-2 pl-4 text-[15px] italic text-[#4b5563]" {...props} />
+  ),
+  code: (p) => {
+    const { inline, className, children, ...rest } = p as any;
+    if (inline) {
+      return (
+        <code className="rounded bg-[#f1f5f9] px-1.5 py-0.5 text-[13px] font-medium text-[#0f172a]" {...rest}>
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code className={`block overflow-x-auto rounded-lg bg-[#1e293b] px-4 py-3 text-[13px] text-[#e2e8f0] ${className || ""}`} {...rest}>
+        {children}
+      </code>
+    );
+  },
+  hr: ({ node, ...props }) => (
+    <hr className="my-6 border-t border-[#e5e7eb]" {...props} />
+  ),
+};
+
+function StructuredAnalysisOutput({ 
+  response, 
+  selectedIndex, 
+  onSelectRecommendation 
+}: { 
+  response: string;
+  selectedIndex: number | null;
+  onSelectRecommendation: (index: number | null, title: string, content: string) => void;
+}) {
+  // Parse numbered findings from the response
+  const parseNumberedFindings = (text: string) => {
+    const findings: { num: string; title: string; content: string }[] = [];
+    // Match patterns like "1) **Title:** content" or "1. **Title** content"
+    const pattern = /(\d+)\)\s*\*\*([^*]+)\*\*[:\s]*([\s\S]*?)(?=(?:\d+\)\s*\*\*)|$)/g;
+    let match;
+    
+    while ((match = pattern.exec(text)) !== null) {
+      findings.push({
+        num: match[1],
+        title: match[2].trim().replace(/:$/, ''),
+        content: match[3].trim(),
+      });
+    }
+    
+    return findings;
+  };
+
+  // Custom markdown components for content rendering
+  const contentMarkdownComponents: Components = {
+    p: ({ children }) => (
+      <p className="mb-3 last:mb-0 text-[15px] leading-relaxed text-[#4b5563]">{children}</p>
+    ),
+    strong: ({ children }) => (
+      <strong className="font-semibold text-[#111827]">{children}</strong>
+    ),
+    em: ({ children }) => (
+      <em className="italic">{children}</em>
+    ),
+    ul: ({ children }) => (
+      <ul className="mb-3 last:mb-0 space-y-1.5 pl-0 list-none">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="mb-3 last:mb-0 space-y-1.5 pl-0 list-none">{children}</ol>
+    ),
+    li: ({ children }) => (
+      <li className="flex items-start gap-2 text-[15px] leading-relaxed text-[#4b5563]">
+        <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#9ca3af]"></span>
+        <span>{children}</span>
+      </li>
+    ),
+  };
+
+  const findings = parseNumberedFindings(response);
+  const hasNumberedFindings = findings.length > 0;
+
+  const handleCheckboxChange = (idx: number, title: string, content: string) => {
+    if (selectedIndex === idx) {
+      // Deselect if already selected
+      onSelectRecommendation(null, '', '');
+    } else {
+      // Select this recommendation
+      onSelectRecommendation(idx, title, content);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Render numbered findings with card styling matching the screenshot */}
+      {hasNumberedFindings ? (
+        <div className="space-y-4">
+          {findings.map((finding, idx) => {
+            const isSelected = selectedIndex === idx;
+            return (
+              <div 
+                key={idx} 
+                className={`rounded-xl bg-white p-6 transition-all ${
+                  isSelected 
+                    ? 'border-2 border-[#3b82f6] shadow-md' 
+                    : 'border border-[#e5e7eb]'
+                }`}
+                style={{ boxShadow: isSelected ? "0 4px 12px rgba(59,130,246,0.15)" : "0 1px 3px rgba(0,0,0,0.04)" }}
+              >
+                <div className="flex items-start gap-4">
+                  {/* Blue circular number badge */}
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#3b82f6]">
+                    <span className="text-sm font-semibold text-white">{finding.num}</span>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 pt-0.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <h4 className="mb-3 text-[16px] font-semibold text-[#111827]">
+                        {finding.title}
+                      </h4>
+                      {/* Checkbox for mockup selection */}
+                      <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
+                        <span className="whitespace-nowrap">Generate mockup</span>
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCheckboxChange(idx, finding.title, finding.content)}
+                            className="sr-only"
+                            aria-label={`Select ${finding.title} for mockup generation`}
+                          />
+                          <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
+                            isSelected 
+                              ? 'border-[#3b82f6] bg-[#3b82f6]' 
+                              : 'border-slate-300 bg-white hover:border-slate-400'
+                          }`}>
+                            {isSelected && (
+                              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                    <div className="text-[15px] leading-relaxed text-[#4b5563]">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={contentMarkdownComponents}>
+                        {finding.content}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Fallback to styled markdown rendering */
+        <div 
+          className="rounded-xl border border-[#e5e7eb] bg-white p-6"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+        >
+          <div className="prose prose-slate max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={styledMarkdownComponents}>
+              {response}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type FeedbackType = "LIKE" | "DISLIKE" | "SUGGESTION";
 const FEEDBACK_MAX_LEN = 1000;
 
@@ -82,6 +310,7 @@ export default function CanvasPage() {
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const responseRef = useRef<HTMLDivElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
+  const mockupSectionRef = useRef<HTMLDivElement | null>(null);
   const scrollToStatus = () => {
     if (!statusRef.current) return;
     requestAnimationFrame(() => {
@@ -101,6 +330,7 @@ export default function CanvasPage() {
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
   const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const MAX_IMAGE_DATAURL = 50_000; // chars
   const template = templateIndex !== null ? templateList[templateIndex] : null;
@@ -642,6 +872,7 @@ export default function CanvasPage() {
         setThreadId(data?.threadId || null);
         const resp = data?.content || null;
         setLastResponse(resp);
+        setSelectedRecommendation(null); // Reset selection when new analysis is generated
         if (resp) await addToHistory(resp);
       }
     } catch (err) {
@@ -1048,28 +1279,28 @@ export default function CanvasPage() {
 
                   <div className={`space-y-2 px-5 py-4 text-sm ${inputsCollapsed ? "hidden" : ""}`}>
                     {template.guidanceUseAiTo && (
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-blue-900">
-                      <span className="inline-block rounded-sm bg-blue-900 px-2 py-0.5 text-[11px] font-semibold uppercase text-white">
-                        Use AI to
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#3b82f6] bg-white px-5 py-4 text-slate-800">
+                      <span className="inline-block text-[11px] font-semibold uppercase text-[#1e40af]">
+                        What LukeUX will check:
                       </span>
                         <p className="mt-2">{template.guidanceUseAiTo}</p>
                     </div>
                     )}
                     {template.guidanceExample && (
-                    <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold uppercase text-slate-600">Example</span>
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#f59e0b] bg-white px-5 py-4 text-slate-800">
+                      <span className="inline-block text-[11px] font-semibold uppercase text-[#92400e]">Example of the problem:</span>
                         <p className="mt-1">{template.guidanceExample}</p>
                     </div>
                     )}
                     {template.guidanceOutcome && (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-900">
-                      <span className="inline-block text-[11px] font-semibold uppercase">Outcome</span>
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#10b981] bg-white px-5 py-4 text-slate-800">
+                      <span className="inline-block text-[11px] font-semibold uppercase text-[#065f46]">How LukeUX Helps:</span>
                         <p className="mt-1">{template.guidanceOutcome}</p>
                     </div>
                     )}
                     {template.assets && (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900">
-                      <span className="inline-block text-[11px] font-semibold uppercase text-slate-700">Core Input Assets</span>
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#6b7280] bg-white px-5 py-4 text-slate-800">
+                      <span className="inline-block text-[11px] font-semibold uppercase text-[#374151]">Upload These Files:</span>
                         <p className="mt-1 whitespace-pre-line">{template.assets}</p>
                     </div>
                     )}
@@ -1156,7 +1387,7 @@ export default function CanvasPage() {
             {template && !inputsCollapsed && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-center">
-                  <p className="text-xs font-semibold uppercase text-slate-600">Upload Core Assets</p>
+                  <p className="text-xs font-semibold uppercase text-slate-600">Upload Your Files:</p>
                   <p className="text-xs text-slate-500">PDF, DOCX, CSV, XLSX, PNG, JPG, SVG, TXT, MD</p>
                 </div>
                 {files.length > 0 && (
@@ -1201,7 +1432,7 @@ export default function CanvasPage() {
                     multiple
                     className="hidden"
                     onChange={handleUploadSelect}
-                    aria-label="Upload core assets"
+                    aria-label="Upload your files"
                   />
                   <button
                     type="button"
@@ -1216,7 +1447,7 @@ export default function CanvasPage() {
                     disabled={loading || !template}
                     className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 md:w-80"
                   >
-                    {loading ? "Working..." : "Generate Output"}
+                    {loading ? "Working..." : "Run Affordance Check"}
                   </button>
                 </div>
               </div>
@@ -1614,24 +1845,48 @@ export default function CanvasPage() {
                 </div>
                 <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-900">Response Output</p>
+                    <p className="text-sm font-bold text-slate-900">Recommended Actions</p>
                     <button
                       type="button"
                       onClick={() => setResultsCollapsed((v) => !v)}
-                      className="flex items-center gap-1 text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+                      className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                       aria-expanded={!resultsCollapsed}
+                      aria-label={resultsCollapsed ? "Expand results" : "Collapse results"}
                     >
-                      {resultsCollapsed ? "Expand" : "Collapse"}
-                      <span aria-hidden="true">{resultsCollapsed ? "▸" : "▾"}</span>
+                      <svg 
+                        className={`h-5 w-5 transition-transform ${resultsCollapsed ? "" : "rotate-180"}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor" 
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
                     </button>
                   </div>
                   {!resultsCollapsed && (
                     <div className="space-y-4">
                       {lastResponse && (
-                        <div ref={responseRef} className="ai-response max-w-none space-y-2 text-[15px] leading-[1.65] text-slate-900">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                            {lastResponse}
-                          </ReactMarkdown>
+                        <div ref={responseRef} className="ai-response max-w-none">
+                          <StructuredAnalysisOutput 
+                            response={lastResponse} 
+                            selectedIndex={selectedRecommendation}
+                            onSelectRecommendation={(idx, title, content) => {
+                              setSelectedRecommendation(idx);
+                              if (idx !== null) {
+                                // Auto-populate the image prompt with the recommendation
+                                setImagePrompt(`Create a UI mockup showing: ${title}. ${content.replace(/\*\*/g, '').substring(0, 200)}`);
+                                // Auto-expand the mockup section
+                                setImageSectionOpen(true);
+                                // Scroll to mockup section after a brief delay to allow expansion
+                                setTimeout(() => {
+                                  mockupSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 100);
+                              } else {
+                                setImagePrompt('');
+                              }
+                            }}
+                          />
                         </div>
                       )}
                       {images.length > 0 && (
@@ -1660,51 +1915,41 @@ export default function CanvasPage() {
                     </div>
                   )}
                 </div>
-                <div className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
+                <div ref={mockupSectionRef} className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
                   <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900">Mockup Example</p>
                     <div className="flex items-center gap-2">
+                      {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
                       <button
                         type="button"
                         onClick={() => setImageSectionOpen((v) => !v)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:-translate-y-[1px] hover:shadow"
-                        aria-label="Toggle image generation"
+                        className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                        aria-expanded={imageSectionOpen}
+                        aria-label={imageSectionOpen ? "Collapse image generation" : "Expand image generation"}
                       >
-                        <Image src="/images/png-icon.svg" alt="Images" width={18} height={18} className="h-4 w-4" />
+                        <svg 
+                          className={`h-5 w-5 transition-transform ${imageSectionOpen ? "rotate-180" : ""}`} 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor" 
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
                       </button>
-                      <p className="text-sm font-bold text-slate-900">Image &amp; Mockup Generation</p>
                     </div>
-                    {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
                   </div>
                   {imageSectionOpen && (
                     <>
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs font-semibold uppercase text-slate-700">
-                          <span>Prompt</span>
-                          <button
-                            type="button"
-                            className="text-[11px] font-semibold text-slate-600 hover:text-slate-900"
-                            onClick={() => {
-                              if (!lastResponse) {
-                                setImageError("Generate a response first to prefill.");
-                                return;
-                              }
-                              const filled = buildImagePromptFromResponse(lastResponse);
-                              if (!filled) {
-                                setImageError("No usable text in the last response to prefill.");
-                                return;
-                              }
-                              setImageError(null);
-                              setImagePrompt(filled);
-                            }}
-                          >
-                            Use last response
-                          </button>
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                          <span>Or describe your own scenario:</span>
                         </div>
                         <textarea
                           value={imagePrompt}
                           onChange={(e) => setImagePrompt(e.target.value)}
                           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                          rows={2}
+                          rows={5}
                           placeholder="Copy any section to generate an image or mockup."
                         />
                       </div>
@@ -1739,7 +1984,7 @@ export default function CanvasPage() {
                         disabled={imageLoading}
                         className="w-full rounded-[14px] bg-black px-4 py-3 text-sm font-bold uppercase text-white shadow-[0_4px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_6px_0_#111] disabled:opacity-60"
                       >
-                        {imageLoading ? "Generating..." : "Generate Images"}
+                        {imageLoading ? "Generating..." : "Generate Visual Example"}
                       </button>
                     </>
                   )}
@@ -1779,6 +2024,7 @@ export default function CanvasPage() {
                           setStatus(json?.error || "Iteration failed.");
                         } else {
                           setLastResponse(json?.content || null);
+                          setSelectedRecommendation(null); // Reset selection on new response
                           setStatus("Iteration completed.");
                           setFollowupText("");
                         }
@@ -1807,6 +2053,7 @@ export default function CanvasPage() {
                           setTaskId(json?.taskId || null);
                           setThreadId(json?.threadId || null);
                           setLastResponse(json?.content || null);
+                          setSelectedRecommendation(null); // Reset selection on new response
                           setFollowupText("");
                         }
                       }
