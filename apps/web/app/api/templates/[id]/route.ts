@@ -1,2 +1,127 @@
 export const dynamic = "force-dynamic";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "../../../../lib/prisma";
+import { getCurrentUser } from "../../../../lib/auth";
+import { z } from "zod";
+
+const updateTemplateSchema = z.object({
+  category: z.string().min(1).optional(),
+  subcategory: z.string().min(1).optional(),
+  title: z.string().min(1).optional(),
+  prompt: z.string().min(1).optional(),
+  guidanceUseAiTo: z.string().nullable().optional(),
+  guidanceExample: z.string().nullable().optional(),
+  guidanceOutcome: z.string().nullable().optional(),
+  assets: z.string().nullable().optional(),
+  allowedModes: z.array(z.string()).optional(),
+  allowedModels: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+  templateCategoryId: z.string().nullable().optional(),
+});
+
+// GET - Get a single template by ID
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const template = await prisma.taskTemplate.findUnique({
+      where: { id: params.id },
+      include: { templateCategory: true }
+    });
+
+    if (!template) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ template });
+  } catch (error) {
+    console.error("Failed to fetch template:", error);
+    return NextResponse.json({ error: "Failed to fetch template" }, { status: 500 });
+  }
+}
+
+// PATCH - Update a template (admin only)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "ADMIN" && user.role !== "SUPERUSER")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existing = await prisma.taskTemplate.findUnique({
+      where: { id: params.id }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const parsed = updateTemplateSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid template data", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const template = await prisma.taskTemplate.update({
+      where: { id: params.id },
+      data: {
+        ...(parsed.data.category !== undefined && { category: parsed.data.category }),
+        ...(parsed.data.subcategory !== undefined && { subcategory: parsed.data.subcategory }),
+        ...(parsed.data.title !== undefined && { title: parsed.data.title }),
+        ...(parsed.data.prompt !== undefined && { prompt: parsed.data.prompt }),
+        ...(parsed.data.guidanceUseAiTo !== undefined && { guidanceUseAiTo: parsed.data.guidanceUseAiTo }),
+        ...(parsed.data.guidanceExample !== undefined && { guidanceExample: parsed.data.guidanceExample }),
+        ...(parsed.data.guidanceOutcome !== undefined && { guidanceOutcome: parsed.data.guidanceOutcome }),
+        ...(parsed.data.assets !== undefined && { assets: parsed.data.assets }),
+        ...(parsed.data.allowedModes !== undefined && { allowedModes: parsed.data.allowedModes }),
+        ...(parsed.data.allowedModels !== undefined && { allowedModels: parsed.data.allowedModels }),
+        ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
+        ...(parsed.data.templateCategoryId !== undefined && { templateCategoryId: parsed.data.templateCategoryId }),
+      }
+    });
+
+    return NextResponse.json({ template });
+  } catch (error) {
+    console.error("Failed to update template:", error);
+    return NextResponse.json({ error: "Failed to update template" }, { status: 500 });
+  }
+}
+
+// DELETE - Delete a template (admin only)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || (user.role !== "ADMIN" && user.role !== "SUPERUSER")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existing = await prisma.taskTemplate.findUnique({
+      where: { id: params.id }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    }
+
+    await prisma.taskTemplate.delete({
+      where: { id: params.id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete template:", error);
+    return NextResponse.json({ error: "Failed to delete template" }, { status: 500 });
+  }
+}
 

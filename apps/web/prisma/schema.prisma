@@ -74,6 +74,7 @@ model User {
   apiKeys            ApiKey[]
   supportRequests    SupportRequest[]
   feedbacks          Feedback[]
+  recommendationFeedbacks RecommendationFeedback[]
 }
 
 model OAuthAccount {
@@ -186,8 +187,29 @@ model HistoryEntry {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  recommendationFeedbacks RecommendationFeedback[]
+
   @@index([userId])
   @@index([projectId])
+  @@index([createdAt])
+}
+
+model RecommendationFeedback {
+  id                String       @id @map("_id") @default(auto()) @db.ObjectId
+  userId            String       @db.ObjectId
+  user              User         @relation(fields: [userId], references: [id])
+  historyEntryId    String       @db.ObjectId
+  historyEntry      HistoryEntry @relation(fields: [historyEntryId], references: [id])
+  recommendationNum Int
+  feedback          String       // "UP" or "DOWN"
+  templateId        String?
+  templateTitle     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([userId, historyEntryId, recommendationNum])
+  @@index([userId])
+  @@index([historyEntryId])
   @@index([createdAt])
 }
 

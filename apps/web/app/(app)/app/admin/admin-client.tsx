@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import TemplatesAdmin from "./templates-client";
 import KeysAdmin from "./keys-client";
@@ -19,8 +19,9 @@ import type {
 } from "./page";
 import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
+import RecommendationFeedbackAdmin, { type RecommendationFeedbackRow, type TemplateStat, type FeedbackSummary } from "./recommendation-feedback-client";
 
-const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "usage", "events"] as const;
+const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "usage", "events"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminClient({
@@ -55,6 +56,29 @@ export default function AdminClient({
   const pageSize = 8;
   const [usersState, setUsersState] = useState(users);
   const [status, setStatus] = useState<string | null>(null);
+  
+  // Recommendation feedback state (loaded on demand)
+  const [recFeedbacks, setRecFeedbacks] = useState<RecommendationFeedbackRow[]>([]);
+  const [recSummary, setRecSummary] = useState<FeedbackSummary>({ totalUp: 0, totalDown: 0, total: 0, ratio: 0 });
+  const [recTemplateStats, setRecTemplateStats] = useState<TemplateStat[]>([]);
+  const [recFeedbackLoaded, setRecFeedbackLoaded] = useState(false);
+
+  // Load recommendation feedback when tab is selected
+  useEffect(() => {
+    if (tab === "rec-feedback" && !recFeedbackLoaded) {
+      fetch("/api/admin/recommendation-feedback")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.feedbacks) {
+            setRecFeedbacks(data.feedbacks);
+            setRecSummary(data.summary);
+            setRecTemplateStats(data.templateStats);
+            setRecFeedbackLoaded(true);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [tab, recFeedbackLoaded]);
 
   const totalPages = Math.max(1, Math.ceil(usersState.length / pageSize));
   const pagedUsers = useMemo(() => {
@@ -88,6 +112,7 @@ export default function AdminClient({
     { id: "keys", label: "LLM API Keys" },
     { id: "payments", label: "Payments" },
     { id: "feedback", label: "Feedback & Enquirer" },
+    { id: "rec-feedback", label: "Rec Feedback" },
     { id: "usage", label: "Usage" },
     { id: "events", label: "Events" }
   ];
@@ -333,6 +358,23 @@ export default function AdminClient({
               </div>
               <SupportAdmin requests={support} />
               <FeedbackAdmin feedback={feedback} />
+            </section>
+          )}
+
+          {tab === "rec-feedback" && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">👍👎</span>
+                <h2 className="text-lg font-semibold text-slate-900">Recommendation Feedback</h2>
+              </div>
+              <p className="text-sm text-slate-600">
+                Track how users rate AI recommendations. Use this data to improve prompts for templates with low helpful rates.
+              </p>
+              <RecommendationFeedbackAdmin
+                feedbacks={recFeedbacks}
+                summary={recSummary}
+                templateStats={recTemplateStats}
+              />
             </section>
           )}
 

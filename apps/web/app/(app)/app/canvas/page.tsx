@@ -124,11 +124,21 @@ const styledMarkdownComponents: Components = {
 function StructuredAnalysisOutput({ 
   response, 
   selectedIndex, 
-  onSelectRecommendation 
+  onSelectRecommendation,
+  historyEntryId,
+  templateId,
+  templateTitle,
+  feedbacks,
+  onFeedbackChange
 }: { 
   response: string;
   selectedIndex: number | null;
   onSelectRecommendation: (index: number | null, title: string, content: string) => void;
+  historyEntryId: string | null;
+  templateId: string | null;
+  templateTitle: string | null;
+  feedbacks: Record<number, "UP" | "DOWN" | null>;
+  onFeedbackChange: (recommendationNum: number, feedback: "UP" | "DOWN" | null) => void;
 }) {
   // Parse numbered findings from the response
   const parseNumberedFindings = (text: string) => {
@@ -215,30 +225,69 @@ function StructuredAnalysisOutput({
                       <h4 className="mb-3 text-[16px] font-semibold text-[#111827]">
                         {finding.title}
                       </h4>
-                      {/* Checkbox for mockup selection */}
-                      <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
-                        <span className="whitespace-nowrap">Generate mockup</span>
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleCheckboxChange(idx, finding.title, finding.content)}
-                            className="sr-only"
-                            aria-label={`Select ${finding.title} for mockup generation`}
-                          />
-                          <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
-                            isSelected 
-                              ? 'border-[#3b82f6] bg-[#3b82f6]' 
-                              : 'border-slate-300 bg-white hover:border-slate-400'
-                          }`}>
-                            {isSelected && (
-                              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
+                      <div className="flex items-center gap-3">
+                        {/* Thumbs up/down feedback buttons */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              const currentFeedback = feedbacks[idx + 1];
+                              onFeedbackChange(idx + 1, currentFeedback === "UP" ? null : "UP");
+                            }}
+                            className={`group flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+                              feedbacks[idx + 1] === "UP"
+                                ? 'bg-green-100 text-green-600'
+                                : 'text-slate-400 hover:bg-slate-100 hover:text-green-600'
+                            }`}
+                            aria-label={`${feedbacks[idx + 1] === "UP" ? 'Remove helpful' : 'Mark as helpful'} for ${finding.title}`}
+                            title="Helpful"
+                          >
+                            <svg className="h-4 w-4" fill={feedbacks[idx + 1] === "UP" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const currentFeedback = feedbacks[idx + 1];
+                              onFeedbackChange(idx + 1, currentFeedback === "DOWN" ? null : "DOWN");
+                            }}
+                            className={`group flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+                              feedbacks[idx + 1] === "DOWN"
+                                ? 'bg-red-100 text-red-600'
+                                : 'text-slate-400 hover:bg-slate-100 hover:text-red-600'
+                            }`}
+                            aria-label={`${feedbacks[idx + 1] === "DOWN" ? 'Remove not helpful' : 'Mark as not helpful'} for ${finding.title}`}
+                            title="Not helpful"
+                          >
+                            <svg className="h-4 w-4" fill={feedbacks[idx + 1] === "DOWN" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                            </svg>
+                          </button>
                         </div>
-                      </label>
+                        {/* Checkbox for mockup selection */}
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
+                          <span className="whitespace-nowrap">Generate mockup</span>
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleCheckboxChange(idx, finding.title, finding.content)}
+                              className="sr-only"
+                              aria-label={`Select ${finding.title} for mockup generation`}
+                            />
+                            <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
+                              isSelected 
+                                ? 'border-[#3b82f6] bg-[#3b82f6]' 
+                                : 'border-slate-300 bg-white hover:border-slate-400'
+                            }`}>
+                              {isSelected && (
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      </div>
                     </div>
                     <div className="text-[15px] leading-relaxed text-[#4b5563]">
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={contentMarkdownComponents}>
@@ -308,6 +357,8 @@ export default function CanvasPage() {
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [currentHistoryEntryId, setCurrentHistoryEntryId] = useState<string | null>(null);
+  const [recommendationFeedbacks, setRecommendationFeedbacks] = useState<Record<number, "UP" | "DOWN" | null>>({});
   const responseRef = useRef<HTMLDivElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
   const mockupSectionRef = useRef<HTMLDivElement | null>(null);
@@ -740,8 +791,54 @@ export default function CanvasPage() {
       }
       const entry = data.history as HistoryItem;
       setHistory((prev) => [entry, ...prev]);
+      // Store the new history entry ID and reset feedbacks
+      setCurrentHistoryEntryId(entry.id);
+      setRecommendationFeedbacks({});
     } catch (err) {
       setStatus("Failed to save history.");
+    }
+  }
+
+  // Handler for recommendation feedback (thumbs up/down)
+  async function handleRecommendationFeedback(recommendationNum: number, feedback: "UP" | "DOWN" | null) {
+    if (!currentHistoryEntryId) return;
+    
+    // Optimistically update UI
+    setRecommendationFeedbacks(prev => ({
+      ...prev,
+      [recommendationNum]: feedback
+    }));
+
+    try {
+      const res = await fetch("/api/feedback/recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          historyEntryId: currentHistoryEntryId,
+          recommendationNum,
+          feedback,
+          templateId: template?.id || null,
+          templateTitle: template?.title || null
+        })
+      });
+      
+      if (!res.ok) {
+        // Revert on error
+        setRecommendationFeedbacks(prev => {
+          const newFeedbacks = { ...prev };
+          delete newFeedbacks[recommendationNum];
+          return newFeedbacks;
+        });
+        console.error("Failed to save recommendation feedback");
+      }
+    } catch (err) {
+      // Revert on error
+      setRecommendationFeedbacks(prev => {
+        const newFeedbacks = { ...prev };
+        delete newFeedbacks[recommendationNum];
+        return newFeedbacks;
+      });
+      console.error("Failed to save recommendation feedback", err);
     }
   }
 
@@ -835,13 +932,31 @@ export default function CanvasPage() {
     }
   }
 
-  function loadHistory(id: string) {
+  async function loadHistory(id: string) {
     const item = history.find((h) => h.id === id);
     if (!item) return;
     setTemplateIndex(item.templateIndex);
     setLastResponse(item.content);
     setStatus("Loaded from history");
     setHistoryMenu(null);
+    
+    // Set the current history entry ID and fetch existing feedbacks
+    setCurrentHistoryEntryId(id);
+    try {
+      const feedbackRes = await fetch(`/api/feedback/recommendation?historyEntryId=${id}`);
+      if (feedbackRes.ok) {
+        const feedbackData = await feedbackRes.json();
+        const feedbackMap: Record<number, "UP" | "DOWN" | null> = {};
+        for (const fb of feedbackData.feedbacks || []) {
+          feedbackMap[fb.recommendationNum] = fb.feedback;
+        }
+        setRecommendationFeedbacks(feedbackMap);
+      } else {
+        setRecommendationFeedbacks({});
+      }
+    } catch {
+      setRecommendationFeedbacks({});
+    }
   }
 
   async function handleGenerate() {
@@ -1886,6 +2001,11 @@ export default function CanvasPage() {
                                 setImagePrompt('');
                               }
                             }}
+                            historyEntryId={currentHistoryEntryId}
+                            templateId={template?.id || null}
+                            templateTitle={template?.title || null}
+                            feedbacks={recommendationFeedbacks}
+                            onFeedbackChange={handleRecommendationFeedback}
                           />
                         </div>
                       )}
