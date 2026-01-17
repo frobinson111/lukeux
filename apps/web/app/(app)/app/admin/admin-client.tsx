@@ -109,7 +109,7 @@ export default function AdminClient({
     { id: "overview", label: "Overview" },
     { id: "users", label: "Users & Limits" },
     { id: "limits", label: "Plan Limits" },
-    { id: "templates", label: "Templates" },
+    { id: "templates", label: "UX Objective" },
     { id: "keys", label: "LLM API Keys" },
     { id: "payments", label: "Payments" },
     { id: "feedback", label: "Feedback & Enquirer" },
@@ -195,7 +195,7 @@ export default function AdminClient({
           <header className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-              <p className="text-sm text-slate-600 mt-1">Manage users, templates, keys, usage, and events.</p>
+              <p className="text-sm text-slate-600 mt-1">Manage users, UX objectives, keys, usage, and events.</p>
             </div>
             <div className="rounded-full bg-black px-3 py-1 text-xs font-bold uppercase text-white shadow-[0_2px_0_#111]">
               {userRole}
@@ -207,7 +207,7 @@ export default function AdminClient({
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 <StatCard label="Users" value={stats.usersTotal} helper={`${stats.admins} admins`} />
                 <StatCard label="Pro Users" value={stats.pros} helper="Plan: PRO" />
-                <StatCard label="Templates" value={stats.templatesTotal} helper={`${stats.templatesActive} active`} />
+                <StatCard label="UX Objectives" value={stats.templatesTotal} helper={`${stats.templatesActive} active`} />
                 <StatCard label="LLM Keys" value={stats.apiKeysTotal} helper={`${stats.apiKeysActive} active`} />
                 <StatCard label="Initial Responses" value={stats.initialResponses} helper="Total generated" />
                 <StatCard label="Follow-up Responses" value={stats.followupResponses} helper="Total refinements" />
@@ -337,8 +337,8 @@ export default function AdminClient({
           {tab === "templates" && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
-                <Image src="/images/help.svg" alt="Templates" width={18} height={18} className="h-5 w-5" />
-                <h2 className="text-lg font-semibold text-slate-900">Templates</h2>
+                <Image src="/images/help.svg" alt="UX Objective" width={18} height={18} className="h-5 w-5" />
+                <h2 className="text-lg font-semibold text-slate-900">UX Objective</h2>
               </div>
               <TemplatesAdmin initialTemplates={templates} availableModels={availableModels} categories={categories} />
             </section>
