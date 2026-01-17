@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const templateSchema = z.object({
   category: z.string().min(1),
-  subcategory: z.string().min(1),
+  subcategory: z.string().optional(), // Made optional - can be empty
   title: z.string().min(1),
   prompt: z.string().min(1),
   guidanceUseAiTo: z.string().nullable().optional(),
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const template = await prisma.taskTemplate.create({
       data: {
         category: parsed.data.category,
-        subcategory: parsed.data.subcategory,
+        subcategory: parsed.data.subcategory || "", // Default to empty string if not provided
         title: parsed.data.title,
         prompt: parsed.data.prompt,
         guidanceUseAiTo: parsed.data.guidanceUseAiTo || null,

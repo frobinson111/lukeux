@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const updateTemplateSchema = z.object({
   category: z.string().min(1).optional(),
-  subcategory: z.string().min(1).optional(),
+  subcategory: z.string().optional(), // Allow empty string for optional subcategory
   title: z.string().min(1).optional(),
   prompt: z.string().min(1).optional(),
   guidanceUseAiTo: z.string().nullable().optional(),
