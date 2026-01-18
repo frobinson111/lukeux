@@ -2113,78 +2113,6 @@ export default function CanvasPage() {
                     </div>
                   )}
                 </div>
-                <div ref={mockupSectionRef} className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-900">Mockup Example</p>
-                    <div className="flex items-center gap-2">
-                      {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
-                      <button
-                        type="button"
-                        onClick={() => setImageSectionOpen((v) => !v)}
-                        className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                        aria-expanded={imageSectionOpen}
-                        aria-label={imageSectionOpen ? "Collapse image generation" : "Expand image generation"}
-                      >
-                        <svg 
-                          className={`h-5 w-5 transition-transform ${imageSectionOpen ? "rotate-180" : ""}`} 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor" 
-                          strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  {imageSectionOpen && (
-                    <>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                          <span>Or describe your own scenario:</span>
-                        </div>
-                        <textarea
-                          value={imagePrompt}
-                          onChange={(e) => setImagePrompt(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                          rows={5}
-                          placeholder="Copy any section to generate an image or mockup."
-                        />
-                      </div>
-                      <div className="flex justify-center mt-4">
-                        <ProgressButton
-                          imageLoading={imageLoading}
-                          onClick={async () => {
-                            if (!imagePrompt.trim()) {
-                              setImageError("Enter a prompt.");
-                              return;
-                            }
-                            setImageError(null);
-                            setImageLoading(true);
-                            try {
-                              const res = await fetch("/api/images/generate", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
-                              });
-                              const json = await res.json().catch(() => null);
-                              if (!res.ok) {
-                                setImageError(json?.error || "Image generation failed.");
-                                return;
-                              }
-                              setImages(json.images || []);
-                              setResultsCollapsed(false);
-                            } catch (err) {
-                              setImageError("Image generation failed.");
-                            } finally {
-                              setImageLoading(false);
-                            }
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
                 <form
                   className="mt-4 space-y-3"
                   onSubmit={async (e) => {
@@ -2314,6 +2242,78 @@ export default function CanvasPage() {
                     </div>
                   </div>
                 </form>
+                <div ref={mockupSectionRef} className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900">Generate Mockups</p>
+                    <div className="flex items-center gap-2">
+                      {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
+                      <button
+                        type="button"
+                        onClick={() => setImageSectionOpen((v) => !v)}
+                        className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                        aria-expanded={imageSectionOpen}
+                        aria-label={imageSectionOpen ? "Collapse image generation" : "Expand image generation"}
+                      >
+                        <svg 
+                          className={`h-5 w-5 transition-transform ${imageSectionOpen ? "rotate-180" : ""}`} 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor" 
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {imageSectionOpen && (
+                    <>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                          <span>Or describe your own scenario:</span>
+                        </div>
+                        <textarea
+                          value={imagePrompt}
+                          onChange={(e) => setImagePrompt(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                          rows={5}
+                          placeholder="Copy any section to generate an image or mockup."
+                        />
+                      </div>
+                      <div className="flex justify-center mt-4">
+                        <ProgressButton
+                          imageLoading={imageLoading}
+                          onClick={async () => {
+                            if (!imagePrompt.trim()) {
+                              setImageError("Enter a prompt.");
+                              return;
+                            }
+                            setImageError(null);
+                            setImageLoading(true);
+                            try {
+                              const res = await fetch("/api/images/generate", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
+                              });
+                              const json = await res.json().catch(() => null);
+                              if (!res.ok) {
+                                setImageError(json?.error || "Image generation failed.");
+                                return;
+                              }
+                              setImages(json.images || []);
+                              setResultsCollapsed(false);
+                            } catch (err) {
+                              setImageError("Image generation failed.");
+                            } finally {
+                              setImageLoading(false);
+                            }
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
