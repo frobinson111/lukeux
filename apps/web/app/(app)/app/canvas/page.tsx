@@ -36,31 +36,8 @@ function LoadingDots() {
   );
 }
 
-// Button with progress bar and percent
+// Button with loading message and time estimate
 function ProgressButton({ imageLoading, onClick }: { imageLoading: boolean; onClick: () => void }) {
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (imageLoading) {
-      setProgress(0);
-      let current = 0;
-      intervalRef.current = setInterval(() => {
-        current = Math.min(current + Math.random() * 10 + 5, 95); // Simulate progress
-        setProgress(Math.floor(current));
-      }, 200);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setProgress(100);
-      // Optionally reset after a short delay
-      const timeout = setTimeout(() => setProgress(0), 500);
-      return () => clearTimeout(timeout);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [imageLoading]);
-
   return (
     <div className="flex flex-col items-center w-full md:w-80">
       <button
@@ -73,13 +50,17 @@ function ProgressButton({ imageLoading, onClick }: { imageLoading: boolean; onCl
       >
         {imageLoading ? (
           <>
-            Generating…
+            Generating image…
           </>
         ) : (
           "Generate Visual Example"
         )}
       </button>
-      {imageLoading && <ProgressBar progress={progress} />}
+      {imageLoading && (
+        <p className="mt-3 text-center text-xs text-slate-600">
+          This can take up to ~30–60s depending on load.
+        </p>
+      )}
     </div>
   );
 }
