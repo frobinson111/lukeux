@@ -1476,25 +1476,25 @@ export default function CanvasPage() {
                       <span className="inline-block text-[11px] font-semibold uppercase text-[#1e40af]">
                         What LukeUX will check:
                       </span>
-                        <div className="mt-2 min-h-[100px] prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceUseAiTo }} />
+                        <div className="mt-2 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceUseAiTo }} />
                     </div>
                     )}
                     {template.guidanceExample && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#f59e0b] bg-white px-5 py-4 text-slate-800">
                       <span className="inline-block text-[11px] font-semibold uppercase text-[#92400e]">Example of the problem:</span>
-                        <div className="mt-1 min-h-[100px] prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceExample }} />
+                        <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceExample }} />
                     </div>
                     )}
                     {template.guidanceOutcome && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#10b981] bg-white px-5 py-4 text-slate-800">
                       <span className="inline-block text-[11px] font-semibold uppercase text-[#065f46]">How LukeUX Helps:</span>
-                        <div className="mt-1 min-h-[100px] prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceOutcome }} />
+                        <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceOutcome }} />
                     </div>
                     )}
                     {template.assets && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#6b7280] bg-white px-5 py-4 text-slate-800">
                       <span className="inline-block text-[11px] font-semibold uppercase text-[#374151]">Upload These Files:</span>
-                        <div className="mt-1 min-h-[100px] [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:space-y-1 [&_li]:my-0 [&_p]:my-1" dangerouslySetInnerHTML={{ __html: template.assets }} />
+                        <div className="mt-1 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:space-y-1 [&_li]:my-0 [&_p]:my-1" dangerouslySetInnerHTML={{ __html: template.assets }} />
                     </div>
                     )}
                   </div>
