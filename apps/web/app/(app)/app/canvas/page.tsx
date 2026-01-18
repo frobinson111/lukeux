@@ -1,12 +1,88 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dynamic from "next/dynamic";
 import { PromoModal } from "../components/promo-modal";
+
+function ProgressBar({ progress }: { progress: number }) {
+  return (
+    <div className="w-full mt-2 flex flex-col items-center">
+      <div className="relative w-full md:w-80 h-2 bg-slate-200 rounded-full overflow-hidden">
+        <div
+          className="absolute left-0 top-0 h-2 bg-[var(--brand-yellow,#ffd526)] transition-all duration-200"
+          style={{ width: `${progress}%` }}
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          role="progressbar"
+        />
+      </div>
+      <span className="mt-1 text-xs font-semibold text-slate-700">{progress}%</span>
+    </div>
+  );
+}
+// Simple animated dots for loading indication
+function LoadingDots() {
+  return (
+    <span className="inline-flex items-center ml-2" aria-hidden="true">
+      <span className="animate-bounce [animation-delay:-0.32s]">.</span>
+      <span className="animate-bounce [animation-delay:-0.16s]">.</span>
+      <span className="animate-bounce">.</span>
+    </span>
+  );
+}
+
+// Button with progress bar and percent
+function ProgressButton({ imageLoading, onClick }: { imageLoading: boolean; onClick: () => void }) {
+  const [progress, setProgress] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (imageLoading) {
+      setProgress(0);
+      let current = 0;
+      intervalRef.current = setInterval(() => {
+        current = Math.min(current + Math.random() * 10 + 5, 95); // Simulate progress
+        setProgress(Math.floor(current));
+      }, 200);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setProgress(100);
+      // Optionally reset after a short delay
+      const timeout = setTimeout(() => setProgress(0), 500);
+      return () => clearTimeout(timeout);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [imageLoading]);
+
+  return (
+    <div className="flex flex-col items-center w-full md:w-80">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={imageLoading}
+        className="rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-8 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 w-full"
+        aria-busy={imageLoading}
+        aria-live="polite"
+      >
+        {imageLoading ? (
+          <>
+            Generating…
+          </>
+        ) : (
+          "Generate Visual Example"
+        )}
+      </button>
+      {imageLoading && <ProgressBar progress={progress} />}
+    </div>
+  );
+}
 
 type ProjectFolder = { id: string; name: string; open: boolean; sortOrder?: number };
 type HistoryItem = { id: string; title: string; content: string; templateIndex: number | null; projectId: string | null };
@@ -85,8 +161,8 @@ const styledMarkdownComponents: Components = {
         </li>
       );
     }
-    
-    return (
+  // ...existing code continues
+  return (
       <li className="relative pl-6 text-[15px] leading-relaxed text-[#374151]" {...props}>
         <span className="absolute left-0 top-1.5 h-1.5 w-1.5 rounded-full bg-[#3b82f6]"></span>
         {children}
@@ -2094,39 +2170,37 @@ export default function CanvasPage() {
                           placeholder="Copy any section to generate an image or mockup."
                         />
                       </div>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!imagePrompt.trim()) {
-                            setImageError("Enter a prompt.");
-                            return;
-                          }
-                          setImageError(null);
-                          setImageLoading(true);
-                          try {
-                            const res = await fetch("/api/images/generate", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
-                            });
-                            const json = await res.json().catch(() => null);
-                            if (!res.ok) {
-                              setImageError(json?.error || "Image generation failed.");
+                      <div className="flex justify-center mt-4">
+                        <ProgressButton
+                          imageLoading={imageLoading}
+                          onClick={async () => {
+                            if (!imagePrompt.trim()) {
+                              setImageError("Enter a prompt.");
                               return;
                             }
-                            setImages(json.images || []);
-                          setResultsCollapsed(false);
-                          } catch (err) {
-                            setImageError("Image generation failed.");
-                          } finally {
-                            setImageLoading(false);
-                          }
-                        }}
-                        disabled={imageLoading}
-                        className="w-full rounded-[14px] bg-black px-4 py-3 text-sm font-bold uppercase text-white shadow-[0_4px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_6px_0_#111] disabled:opacity-60"
-                      >
-                        {imageLoading ? "Generating..." : "Generate Visual Example"}
-                      </button>
+                            setImageError(null);
+                            setImageLoading(true);
+                            try {
+                              const res = await fetch("/api/images/generate", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
+                              });
+                              const json = await res.json().catch(() => null);
+                              if (!res.ok) {
+                                setImageError(json?.error || "Image generation failed.");
+                                return;
+                              }
+                              setImages(json.images || []);
+                              setResultsCollapsed(false);
+                            } catch (err) {
+                              setImageError("Image generation failed.");
+                            } finally {
+                              setImageLoading(false);
+                            }
+                          }}
+                        />
+                      </div>
                     </>
                   )}
                 </div>
