@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { getCurrentUser } from "../../../../lib/auth";
 import { z } from "zod";
+import { sanitizeTemplateHtml } from "@luke-ux/shared";
 
 const updateTemplateSchema = z.object({
   category: z.string().min(1).optional(),
@@ -70,6 +71,20 @@ export async function PATCH(
       );
     }
 
+    // Sanitize HTML in guidance fields if they are being updated
+    const sanitizedGuidanceUseAiTo = parsed.data.guidanceUseAiTo !== undefined
+      ? (parsed.data.guidanceUseAiTo ? sanitizeTemplateHtml(parsed.data.guidanceUseAiTo) || null : null)
+      : undefined;
+    const sanitizedGuidanceExample = parsed.data.guidanceExample !== undefined
+      ? (parsed.data.guidanceExample ? sanitizeTemplateHtml(parsed.data.guidanceExample) || null : null)
+      : undefined;
+    const sanitizedGuidanceOutcome = parsed.data.guidanceOutcome !== undefined
+      ? (parsed.data.guidanceOutcome ? sanitizeTemplateHtml(parsed.data.guidanceOutcome) || null : null)
+      : undefined;
+    const sanitizedAssets = parsed.data.assets !== undefined
+      ? (parsed.data.assets ? sanitizeTemplateHtml(parsed.data.assets) || null : null)
+      : undefined;
+
     const template = await prisma.taskTemplate.update({
       where: { id: params.id },
       data: {
@@ -77,10 +92,10 @@ export async function PATCH(
         ...(parsed.data.subcategory !== undefined && { subcategory: parsed.data.subcategory }),
         ...(parsed.data.title !== undefined && { title: parsed.data.title }),
         ...(parsed.data.prompt !== undefined && { prompt: parsed.data.prompt }),
-        ...(parsed.data.guidanceUseAiTo !== undefined && { guidanceUseAiTo: parsed.data.guidanceUseAiTo }),
-        ...(parsed.data.guidanceExample !== undefined && { guidanceExample: parsed.data.guidanceExample }),
-        ...(parsed.data.guidanceOutcome !== undefined && { guidanceOutcome: parsed.data.guidanceOutcome }),
-        ...(parsed.data.assets !== undefined && { assets: parsed.data.assets }),
+        ...(sanitizedGuidanceUseAiTo !== undefined && { guidanceUseAiTo: sanitizedGuidanceUseAiTo }),
+        ...(sanitizedGuidanceExample !== undefined && { guidanceExample: sanitizedGuidanceExample }),
+        ...(sanitizedGuidanceOutcome !== undefined && { guidanceOutcome: sanitizedGuidanceOutcome }),
+        ...(sanitizedAssets !== undefined && { assets: sanitizedAssets }),
         ...(parsed.data.allowedModes !== undefined && { allowedModes: parsed.data.allowedModes }),
         ...(parsed.data.allowedModels !== undefined && { allowedModels: parsed.data.allowedModels }),
         ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
@@ -124,4 +139,3 @@ export async function DELETE(
     return NextResponse.json({ error: "Failed to delete template" }, { status: 500 });
   }
 }
-

@@ -107,8 +107,12 @@ function Field({ label, value, bgClass }: { label: string; value: string | null;
   return (
     <div className="space-y-1">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">{label}</div>
-      <div className={`rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 min-h-[44px] ${bgClass ?? "bg-slate-50"}`}>
-        {value?.trim() || "—"}
+      <div className={`rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 min-h-[44px] prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 ${bgClass ?? "bg-slate-50"}`}>
+        {value?.trim() ? (
+          <div dangerouslySetInnerHTML={{ __html: value }} />
+        ) : (
+          "—"
+        )}
       </div>
     </div>
   );
@@ -135,5 +139,3 @@ if (typeof document !== "undefined" && !document.getElementById("custom-scrollba
   style.innerHTML = styles;
   document.head.appendChild(style);
 }
-
-

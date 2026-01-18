@@ -1,5 +1,8 @@
 export type LlmMode = "auto" | "instant" | "thinking";
 
+// HTML Sanitization
+export { sanitizeTemplateHtml, stripHtmlTags } from './htmlSanitizer';
+
 export type LlmAttachment = {
   id: string;
   filename: string;

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getCurrentUser } from "../../../lib/auth";
 import { z } from "zod";
+import { sanitizeTemplateHtml } from "@luke-ux/shared";
 
 const templateSchema = z.object({
   category: z.string().min(1),
@@ -45,16 +46,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Sanitize HTML in guidance fields before storing
+    const sanitizedGuidanceUseAiTo = parsed.data.guidanceUseAiTo 
+      ? sanitizeTemplateHtml(parsed.data.guidanceUseAiTo) || null 
+      : null;
+    const sanitizedGuidanceExample = parsed.data.guidanceExample 
+      ? sanitizeTemplateHtml(parsed.data.guidanceExample) || null 
+      : null;
+    const sanitizedGuidanceOutcome = parsed.data.guidanceOutcome 
+      ? sanitizeTemplateHtml(parsed.data.guidanceOutcome) || null 
+      : null;
+    const sanitizedAssets = parsed.data.assets 
+      ? sanitizeTemplateHtml(parsed.data.assets) || null 
+      : null;
+
     const template = await prisma.taskTemplate.create({
       data: {
         category: parsed.data.category,
         subcategory: parsed.data.subcategory || "", // Default to empty string if not provided
         title: parsed.data.title,
         prompt: parsed.data.prompt,
-        guidanceUseAiTo: parsed.data.guidanceUseAiTo || null,
-        guidanceExample: parsed.data.guidanceExample || null,
-        guidanceOutcome: parsed.data.guidanceOutcome || null,
-        assets: parsed.data.assets || null,
+        guidanceUseAiTo: sanitizedGuidanceUseAiTo,
+        guidanceExample: sanitizedGuidanceExample,
+        guidanceOutcome: sanitizedGuidanceOutcome,
+        assets: sanitizedAssets,
         allowedModes: parsed.data.allowedModes || ["auto", "instant", "thinking"],
         allowedModels: parsed.data.allowedModels || [],
         isActive: parsed.data.isActive ?? true,
@@ -69,4 +84,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to create template" }, { status: 500 });
   }
 }
-

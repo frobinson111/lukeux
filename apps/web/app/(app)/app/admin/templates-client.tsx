@@ -403,39 +403,38 @@ export default function TemplatesAdmin({
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">WHAT LUKEUX WILL CHECK</label>
-              <input
-                type="text"
+              <textarea
                 value={formData.guidanceUseAiTo}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceUseAiTo: e.target.value }))}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">EXAMPLE OF THE PROBLEM</label>
-              <input
-                type="text"
+              <textarea
                 value={formData.guidanceExample}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceExample: e.target.value }))}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600">HOW LUKEUX HELPS</label>
-              <input
-                type="text"
+              <textarea
                 value={formData.guidanceOutcome}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceOutcome: e.target.value }))}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600">UPLOAD THESE FILES</label>
-              <input
-                type="text"
+              <textarea
                 value={formData.assets}
                 onChange={(e) => setFormData((prev) => ({ ...prev, assets: e.target.value }))}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-                placeholder='e.g., ["image", "pdf"]'
+                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
             <div>
@@ -670,4 +669,3 @@ export default function TemplatesAdmin({
     </div>
   );
 }
-
