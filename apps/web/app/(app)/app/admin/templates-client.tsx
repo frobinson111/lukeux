@@ -15,6 +15,7 @@ type TemplateFormData = {
   assets: string;
   allowedModes: string[];
   allowedModels: string[];
+  allowUrlInput: boolean;
   isActive: boolean;
   templateCategoryId: string | null;
 };
@@ -30,6 +31,7 @@ const emptyForm: TemplateFormData = {
   assets: "",
   allowedModes: ["auto", "instant", "thinking"],
   allowedModels: [],
+  allowUrlInput: false,
   isActive: true,
   templateCategoryId: null,
 };
@@ -93,6 +95,7 @@ export default function TemplatesAdmin({
       assets: template.assets || "",
       allowedModes: template.allowedModes || ["auto", "instant", "thinking"],
       allowedModels: template.allowedModels || [],
+      allowUrlInput: (template as any).allowUrlInput || false,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
     });
@@ -108,6 +111,7 @@ export default function TemplatesAdmin({
       assets: template.assets || "",
       allowedModes: template.allowedModes || ["auto", "instant", "thinking"],
       allowedModels: template.allowedModels || [],
+      allowUrlInput: (template as any).allowUrlInput || false,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
     });
@@ -150,6 +154,7 @@ export default function TemplatesAdmin({
           assets: formData.assets || null,
           allowedModes: formData.allowedModes,
           allowedModels: formData.allowedModels,
+          allowUrlInput: formData.allowUrlInput,
           isActive: formData.isActive,
           templateCategoryId: formData.templateCategoryId,
         }),
@@ -479,6 +484,16 @@ export default function TemplatesAdmin({
                   </label>
                 ))}
               </div>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={formData.allowUrlInput}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, allowUrlInput: e.target.checked }))}
+                />
+                Allow URL Input
+              </label>
             </div>
             <div>
               <label className="flex items-center gap-2 text-sm">

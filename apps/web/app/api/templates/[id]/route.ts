@@ -16,6 +16,7 @@ const updateTemplateSchema = z.object({
   assets: z.string().nullable().optional(),
   allowedModes: z.array(z.string()).optional(),
   allowedModels: z.array(z.string()).optional(),
+  allowUrlInput: z.boolean().optional(),
   isActive: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
 });
@@ -98,6 +99,7 @@ export async function PATCH(
         ...(sanitizedAssets !== undefined && { assets: sanitizedAssets }),
         ...(parsed.data.allowedModes !== undefined && { allowedModes: parsed.data.allowedModes }),
         ...(parsed.data.allowedModels !== undefined && { allowedModels: parsed.data.allowedModels }),
+        ...(parsed.data.allowUrlInput !== undefined && { allowUrlInput: parsed.data.allowUrlInput }),
         ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
         ...(parsed.data.templateCategoryId !== undefined && { templateCategoryId: parsed.data.templateCategoryId }),
       }

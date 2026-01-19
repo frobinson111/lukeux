@@ -437,6 +437,10 @@ export default function CanvasPage() {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
+  const [urlInput, setUrlInput] = useState("");
+  const [urlContent, setUrlContent] = useState<{ url: string; title: string; content: string; contentLength: number } | null>(null);
+  const [urlFetching, setUrlFetching] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
   const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
@@ -1042,7 +1046,43 @@ export default function CanvasPage() {
     setLoading(true);
     setStatus(null);
     setInputsCollapsed(true);
+    setUrlError(null);
+    
     try {
+      // Include URL content as an asset if URL input is provided
+      const allAssets = [...assetPayloads];
+      
+      // Fetch URL content inline if URL is provided
+      if ((template as any).allowUrlInput && urlInput.trim()) {
+        try {
+          const urlRes = await fetch("/api/url/fetch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: urlInput.trim() })
+          });
+          const urlData = await urlRes.json();
+          
+          if (!urlRes.ok) {
+            setUrlError(urlData.error || "Failed to fetch URL");
+            setLoading(false);
+            setInputsCollapsed(false);
+            return;
+          }
+          
+          // Add URL content to assets
+          allAssets.push({
+            name: `Website: ${urlData.title}`,
+            type: "url",
+            content: `URL: ${urlData.url}\n\nPage Title: ${urlData.title}\n\nContent:\n${urlData.content}`
+          });
+        } catch (err) {
+          setUrlError("Failed to fetch URL");
+          setLoading(false);
+          setInputsCollapsed(false);
+          return;
+        }
+      }
+      
       const res = await fetch("/api/tasks/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1053,7 +1093,7 @@ export default function CanvasPage() {
           detailLevel,
           prompt: editablePrompt?.trim() || template.prompt,
           files: files.map((f) => f.name),
-          assets: assetPayloads
+          assets: allAssets
         })
       });
       const data = await res.json().catch(() => null);
@@ -1473,7 +1513,7 @@ export default function CanvasPage() {
                   <div className={`space-y-2 px-5 py-4 text-sm ${inputsCollapsed ? "hidden" : ""}`}>
                     {template.guidanceUseAiTo && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#3b82f6] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold uppercase text-[#1e40af]">
+                      <span className="inline-block text-[11px] font-semibold text-[#1e40af]">
                         What LukeUX will check:
                       </span>
                         <div className="mt-2 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceUseAiTo }} />
@@ -1481,19 +1521,19 @@ export default function CanvasPage() {
                     )}
                     {template.guidanceExample && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#f59e0b] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold uppercase text-[#92400e]">Example of the problem:</span>
+                      <span className="inline-block text-[11px] font-semibold text-[#92400e]">Example of the problem:</span>
                         <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceExample }} />
                     </div>
                     )}
                     {template.guidanceOutcome && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#10b981] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold uppercase text-[#065f46]">How LukeUX Helps:</span>
+                      <span className="inline-block text-[11px] font-semibold text-[#065f46]">How LukeUX helps:</span>
                         <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceOutcome }} />
                     </div>
                     )}
                     {template.assets && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#6b7280] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold uppercase text-[#374151]">Upload These Files:</span>
+                      <span className="inline-block text-[11px] font-semibold text-[#374151]">Upload these files:</span>
                         <div className="mt-1 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:space-y-1 [&_li]:my-0 [&_p]:my-1" dangerouslySetInnerHTML={{ __html: template.assets }} />
                     </div>
                     )}
@@ -1577,10 +1617,38 @@ export default function CanvasPage() {
               </div>
             )}
 
+            {template && !inputsCollapsed && (template as any).allowUrlInput && (
+              <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-slate-600">Analyze a website:</p>
+                  <p className="text-xs text-slate-500">Enter URL to analyze (processed with affordance check)</p>
+                </div>
+                
+                {urlError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    {urlError}
+                  </div>
+                )}
+                
+                <div className="flex flex-col items-center gap-3">
+                  <input
+                    type="url"
+                    value={urlInput}
+                    onChange={(e) => {
+                      setUrlInput(e.target.value);
+                      setUrlError(null);
+                    }}
+                    placeholder="https://example.com/page"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                </div>
+              </div>
+            )}
+
             {template && !inputsCollapsed && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-center">
-                  <p className="text-xs font-semibold uppercase text-slate-600">Upload Your Files:</p>
+                  <p className="text-xs font-semibold text-slate-600">Upload your files:</p>
                   <p className="text-xs text-slate-500">PDF, DOCX, CSV, XLSX, PNG, JPG, SVG, TXT, MD</p>
                 </div>
                 {files.length > 0 && (

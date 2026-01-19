@@ -16,6 +16,7 @@ const templateSchema = z.object({
   assets: z.string().nullable().optional(),
   allowedModes: z.array(z.string()).optional(),
   allowedModels: z.array(z.string()).optional(),
+  allowUrlInput: z.boolean().optional(),
   isActive: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
 });
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
         assets: sanitizedAssets,
         allowedModes: parsed.data.allowedModes || ["auto", "instant", "thinking"],
         allowedModels: parsed.data.allowedModels || [],
+        allowUrlInput: parsed.data.allowUrlInput ?? false,
         isActive: parsed.data.isActive ?? true,
         templateCategoryId: parsed.data.templateCategoryId || null,
         createdById: user.id,
