@@ -1470,7 +1470,7 @@ export default function CanvasPage() {
           <section className="space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-3 text-sm font-semibold text-slate-900">
-                <span className="shrink-0">{template ? template.category : "Define Your UX Objective"}</span>
+                <span className="shrink-0">{template ? (template.templateCategory?.name || template.category) : "Define Your UX Objective"}</span>
                 <select
                   value={templateIndex ?? ""}
                   onChange={(e) => {
