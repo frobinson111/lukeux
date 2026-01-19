@@ -61,6 +61,17 @@ export default function TemplatesAdmin({
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [savingCategory, setSavingCategory] = useState(false);
+  
+  // Category dropdown state
+  const [categoryMode, setCategoryMode] = useState<"select" | "new">("select");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryError, setNewCategoryError] = useState<string | null>(null);
+
+  // Get unique existing categories from templates
+  const existingCategories = useMemo(() => {
+    const cats = new Set(templates.map(t => t.category).filter(Boolean));
+    return Array.from(cats).sort();
+  }, [templates]);
 
   const filteredTemplates = useMemo(() => {
     if (!searchQuery.trim()) return templates;
@@ -80,6 +91,9 @@ export default function TemplatesAdmin({
     setFormData(emptyForm);
     setShowForm(true);
     setError(null);
+    setCategoryMode("select");
+    setNewCategoryName("");
+    setNewCategoryError(null);
   };
 
   const handleEdit = (template: TemplateRow) => {
@@ -117,6 +131,9 @@ export default function TemplatesAdmin({
     });
     setShowForm(true);
     setError(null);
+    setCategoryMode("select");
+    setNewCategoryName("");
+    setNewCategoryError(null);
   };
 
   const handleCancel = () => {
@@ -124,6 +141,9 @@ export default function TemplatesAdmin({
     setEditingTemplate(null);
     setFormData(emptyForm);
     setError(null);
+    setCategoryMode("select");
+    setNewCategoryName("");
+    setNewCategoryError(null);
   };
 
   const handleSave = async () => {
@@ -369,13 +389,62 @@ export default function TemplatesAdmin({
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">Category *</label>
-              <input
-                type="text"
-                value={formData.category}
-                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+              <select
+                value={categoryMode === "new" ? "__new__" : formData.category}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "__new__") {
+                    setCategoryMode("new");
+                    setNewCategoryName("");
+                    setNewCategoryError(null);
+                    setFormData((prev) => ({ ...prev, category: "" }));
+                  } else {
+                    setCategoryMode("select");
+                    setNewCategoryName("");
+                    setNewCategoryError(null);
+                    setFormData((prev) => ({ ...prev, category: value }));
+                  }
+                }}
                 className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-                placeholder="e.g., Research"
-              />
+              >
+                <option value="">Choose existing category...</option>
+                {existingCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                <option value="__new__">➕ Create New Category</option>
+              </select>
+              {categoryMode === "new" && (
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewCategoryName(value);
+                      
+                      // Validate for duplicates (case-insensitive)
+                      const duplicate = existingCategories.find(
+                        cat => cat.toLowerCase() === value.trim().toLowerCase()
+                      );
+                      
+                      if (duplicate) {
+                        setNewCategoryError(`Category "${duplicate}" already exists`);
+                        setFormData((prev) => ({ ...prev, category: "" }));
+                      } else {
+                        setNewCategoryError(null);
+                        setFormData((prev) => ({ ...prev, category: value.trim() }));
+                      }
+                    }}
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                    placeholder="Enter new category name..."
+                  />
+                  {newCategoryError && (
+                    <p className="mt-1 text-xs text-red-600">{newCategoryError}</p>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">Subcategory</label>

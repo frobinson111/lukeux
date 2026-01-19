@@ -455,17 +455,41 @@ export default function CanvasPage() {
   const [firstNameLocal, setFirstNameLocal] = useState("");
 
   const groupedTemplates = useMemo(() => {
-    const groups: Record<string, { category: string; items: { t: Template; idx: number }[] }> = {};
+    // Group by Framework (templateCategory.name) first
+    const frameworkGroups: Record<string, { 
+      framework: string; 
+      categories: Record<string, {
+        category: string;
+        items: { t: Template; idx: number }[]
+      }>
+    }> = {};
+    
     templateList.forEach((t, idx) => {
-      const cat = t.category || "Uncategorized";
-      if (!groups[cat]) groups[cat] = { category: cat, items: [] };
-      groups[cat].items.push({ t, idx });
+      const framework = t.templateCategory?.name || "No Framework";
+      const category = t.category || "Uncategorized";
+      
+      if (!frameworkGroups[framework]) {
+        frameworkGroups[framework] = { framework, categories: {} };
+      }
+      
+      if (!frameworkGroups[framework].categories[category]) {
+        frameworkGroups[framework].categories[category] = { category, items: [] };
+      }
+      
+      frameworkGroups[framework].categories[category].items.push({ t, idx });
     });
-    return Object.values(groups)
-      .sort((a, b) => a.category.localeCompare(b.category))
-      .map((g) => ({
-        category: g.category,
-        items: g.items.sort((a, b) => a.t.title.localeCompare(b.t.title))
+    
+    // Convert to sorted array
+    return Object.values(frameworkGroups)
+      .sort((a, b) => a.framework.localeCompare(b.framework))
+      .map(fGroup => ({
+        framework: fGroup.framework,
+        categories: Object.values(fGroup.categories)
+          .sort((a, b) => a.category.localeCompare(b.category))
+          .map(cGroup => ({
+            category: cGroup.category,
+            items: cGroup.items.sort((a, b) => a.t.title.localeCompare(b.t.title))
+          }))
       }));
   }, [templateList]);
 
@@ -1479,13 +1503,30 @@ export default function CanvasPage() {
                   id="template"
                 >
                   <option value="">Choose…</option>
-                  {groupedTemplates.map((group) => (
-                    <optgroup key={group.category} label={group.category}>
-                      {group.items.map(({ t, idx }) => (
-                        <option key={t.id} value={idx}>
-                          {t.title}
-                        </option>
-                      ))}
+                  {groupedTemplates.map((frameworkGroup) => (
+                    <optgroup key={frameworkGroup.framework} label={`📁 ${frameworkGroup.framework}`}>
+                      {frameworkGroup.categories.map((categoryGroup) => 
+                        categoryGroup.items.map(({ t, idx }) => {
+                          const parts = [];
+                          
+                          // Add category with indentation
+                          if (t.category) parts.push(`  ├─ ${t.category}`);
+                          
+                          // Add subcategory with more indentation if it exists
+                          if (t.subcategory) parts.push(`    ├─ ${t.subcategory}`);
+                          
+                          // Add title with final indentation
+                          parts.push(`      └─ ${t.title}`);
+                          
+                          const displayText = parts.join(" ");
+                          
+                          return (
+                            <option key={t.id} value={idx}>
+                              {displayText}
+                            </option>
+                          );
+                        })
+                      )}
                     </optgroup>
                   ))}
                 </select>
