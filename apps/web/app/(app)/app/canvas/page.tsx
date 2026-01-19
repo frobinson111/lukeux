@@ -80,6 +80,7 @@ type Template = {
   assets?: string | null;
   allowedModels?: string[];
   allowedModes?: string[];
+  templateCategory?: { name: string } | null;
 };
 
 const projects = ["New UX Task"];

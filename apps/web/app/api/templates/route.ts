@@ -24,7 +24,12 @@ const templateSchema = z.object({
 export async function GET() {
   const templates = await prisma.taskTemplate.findMany({
     where: { isActive: true },
-    orderBy: [{ category: "asc" }, { title: "asc" }]
+    orderBy: [{ category: "asc" }, { subcategory: "asc" }, { title: "asc" }],
+    include: {
+      templateCategory: {
+        select: { name: true }
+      }
+    }
   });
   return NextResponse.json({ templates }, { headers: { "Cache-Control": "no-store" } });
 }

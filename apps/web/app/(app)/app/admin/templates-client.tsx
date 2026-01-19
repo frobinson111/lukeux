@@ -458,7 +458,7 @@ export default function TemplatesAdmin({
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Category Link</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Framework</label>
               <select
                 value={formData.templateCategoryId || ""}
                 onChange={(e) => setFormData((prev) => ({ ...prev, templateCategoryId: e.target.value || null }))}
@@ -579,24 +579,24 @@ export default function TemplatesAdmin({
         </table>
       </div>
 
-      {/* Manage Categories Section */}
+      {/* Frameworks Section */}
       <div className="mt-6 border-t border-slate-200 pt-4">
         <button
           onClick={() => setShowCategorySection(!showCategorySection)}
           className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
         >
           <span className={`transform transition-transform ${showCategorySection ? "rotate-90" : ""}`}>▶</span>
-          Manage Categories ({categories.length})
+          Frameworks ({categories.length})
         </button>
 
         {showCategorySection && (
           <div className="mt-3 space-y-3">
-            {/* Category Form */}
+            {/* Framework Form */}
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex-1 min-w-[200px]">
                   <label className="mb-1 block text-xs font-medium text-slate-600">
-                    {editingCategoryId ? "Edit Category Name" : "New Category Name"}
+                    {editingCategoryId ? "Edit UX Framework" : "New UX Framework"}
                   </label>
                   <input
                     type="text"

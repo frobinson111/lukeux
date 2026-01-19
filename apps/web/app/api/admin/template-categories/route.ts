@@ -36,9 +36,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
+    const trimmedName = name.trim();
+
+    // Check for duplicate (case-insensitive)
+    const existingCategories = await prisma.templateCategory.findMany();
+    const duplicate = existingCategories.find(
+      (cat) => cat.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "A framework with this name already exists" },
+        { status: 400 }
+      );
+    }
+
     const category = await prisma.templateCategory.create({
       data: {
-        name: name.trim(),
+        name: trimmedName,
         sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
       },
     });
@@ -64,6 +79,22 @@ export async function PUT(req: NextRequest) {
 
   if (!id) {
     return NextResponse.json({ error: "ID is required" }, { status: 400 });
+  }
+
+  // If updating name, check for duplicates (case-insensitive)
+  if (name) {
+    const trimmedName = name.trim();
+    const existingCategories = await prisma.templateCategory.findMany();
+    const duplicate = existingCategories.find(
+      (cat) => cat.id !== id && cat.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "A framework with this name already exists" },
+        { status: 400 }
+      );
+    }
   }
 
   const category = await prisma.templateCategory.update({
@@ -111,4 +142,3 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
-

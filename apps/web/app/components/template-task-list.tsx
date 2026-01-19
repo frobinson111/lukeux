@@ -5,10 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 
 type TemplateRow = {
   id: string;
+  category: string;
+  subcategory: string;
   title: string;
   guidanceUseAiTo: string | null;
   guidanceExample: string | null;
   guidanceOutcome: string | null;
+  templateCategory: {
+    name: string;
+  } | null;
 };
 
 export default function TemplateTaskList() {
@@ -22,6 +27,7 @@ export default function TemplateTaskList() {
       const res = await fetch("/api/templates/public");
       if (!res.ok) throw new Error("Failed");
       const json = await res.json();
+      console.log("Templates loaded:", json.templates?.[0]); // Debug: check first template structure
       setTemplates(json.templates ?? []);
       setError(null);
     } catch {
@@ -52,20 +58,31 @@ export default function TemplateTaskList() {
   } else {
     body = (
       <div className="max-h-60 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-[0_6px_0_#eaebf1] pb-10 custom-scroll">
-        {templates.map((t, idx) => (
-          <button
-            key={t.id}
-            onClick={() => setSelected(t)}
-            className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-800 transition ${
-              idx !== 0 ? "border-t border-slate-200" : ""
-            } hover:bg-slate-50 active:bg-slate-100`}
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
-              <Image src="/images/help.svg" alt="" width={16} height={16} className="h-4 w-4" />
-            </div>
-            <span className="font-semibold truncate">{t.title}</span>
-          </button>
-        ))}
+        {templates.map((t, idx) => {
+          const displayText = [
+            t.templateCategory?.name,
+            t.category,
+            t.subcategory,
+            t.title
+          ]
+            .filter(Boolean)
+            .join(" > ");
+          
+          return (
+            <button
+              key={t.id}
+              onClick={() => setSelected(t)}
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-800 transition ${
+                idx !== 0 ? "border-t border-slate-200" : ""
+              } hover:bg-slate-50 active:bg-slate-100`}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
+                <Image src="/images/help.svg" alt="" width={16} height={16} className="h-4 w-4" />
+              </div>
+              <span className="font-semibold truncate">{displayText}</span>
+            </button>
+          );
+        })}
       </div>
     );
   }
