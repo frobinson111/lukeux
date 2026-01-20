@@ -36,8 +36,26 @@ function LoadingDots() {
   );
 }
 
+// Helper function to format elapsed seconds
+function formatElapsedTime(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
 // Button with loading message and time estimate
-function ProgressButton({ imageLoading, onClick }: { imageLoading: boolean; onClick: () => void }) {
+function ProgressButton({ 
+  imageLoading, 
+  onClick,
+  elapsedTime 
+}: { 
+  imageLoading: boolean; 
+  onClick: () => void;
+  elapsedTime: number;
+}) {
   return (
     <div className="flex flex-col items-center w-full md:w-80">
       <button
@@ -59,6 +77,11 @@ function ProgressButton({ imageLoading, onClick }: { imageLoading: boolean; onCl
       {imageLoading && (
         <p className="mt-3 text-center text-xs text-slate-600">
           This can take up to ~30–60s depending on load.
+          {elapsedTime > 0 && (
+            <span className="ml-2 font-semibold text-slate-800">
+              Elapsed: {formatElapsedTime(elapsedTime)}
+            </span>
+          )}
         </p>
       )}
     </div>
@@ -436,6 +459,7 @@ export default function CanvasPage() {
   };
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
+  const [imageElapsedTime, setImageElapsedTime] = useState(0);
   const [imageError, setImageError] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState("");
@@ -696,6 +720,26 @@ export default function CanvasPage() {
     setShowPromoModal(false);
     localStorage.setItem("promo_modal_dismissed", Date.now().toString());
   };
+
+  // Timer effect for image generation elapsed time
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (imageLoading) {
+      setImageElapsedTime(0);
+      interval = setInterval(() => {
+        setImageElapsedTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setImageElapsedTime(0);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [imageLoading]);
 
   const allowedTextTypes = new Set([
     "text/plain",
@@ -2393,6 +2437,7 @@ export default function CanvasPage() {
                       <div className="flex justify-center mt-4">
                         <ProgressButton
                           imageLoading={imageLoading}
+                          elapsedTime={imageElapsedTime}
                           onClick={async () => {
                             if (!imagePrompt.trim()) {
                               setImageError("Enter a prompt.");
