@@ -76,7 +76,7 @@ function ProgressButton({
       </button>
       {imageLoading && (
         <p className="mt-3 text-center text-xs text-slate-600">
-          This can take up to ~30–60s depending on load.
+          This can take up to ~30–60s.
           {elapsedTime > 0 && (
             <span className="ml-2 font-semibold text-slate-800">
               Elapsed: {formatElapsedTime(elapsedTime)}
@@ -405,6 +405,7 @@ const FEEDBACK_MAX_LEN = 1000;
 export default function CanvasPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingElapsedTime, setLoadingElapsedTime] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const [model, setModel] = useState<(typeof models)[number]>(models[0]);
   const [templateIndex, setTemplateIndex] = useState<number | null>(null);
@@ -720,6 +721,26 @@ export default function CanvasPage() {
     setShowPromoModal(false);
     localStorage.setItem("promo_modal_dismissed", Date.now().toString());
   };
+
+  // Timer effect for design context analysis elapsed time
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (loading) {
+      setLoadingElapsedTime(0);
+      interval = setInterval(() => {
+        setLoadingElapsedTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setLoadingElapsedTime(0);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [loading]);
 
   // Timer effect for image generation elapsed time
   useEffect(() => {
@@ -1648,7 +1669,14 @@ export default function CanvasPage() {
                   className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-slate-900 animate-spin"
                   aria-hidden="true"
                 />
-                <span>Analyzing the Design Context…</span>
+                <span>
+                  Analyzing the Design Context…This can take up to ~30–60s
+                  {loadingElapsedTime > 0 && (
+                    <span className="ml-2 font-semibold text-slate-800">
+                      Elapsed: {formatElapsedTime(loadingElapsedTime)}
+                    </span>
+                  )}
+                </span>
               </div>
             )}
 
