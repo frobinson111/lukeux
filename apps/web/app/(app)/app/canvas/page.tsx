@@ -1509,16 +1509,16 @@ export default function CanvasPage() {
                         categoryGroup.items.map(({ t, idx }) => {
                           const parts = [];
                           
-                          // Add category with indentation
-                          if (t.category) parts.push(`  ├─ ${t.category}`);
+                          // Add category
+                          if (t.category) parts.push(t.category);
                           
-                          // Add subcategory with more indentation if it exists
-                          if (t.subcategory) parts.push(`    ├─ ${t.subcategory}`);
+                          // Add subcategory if it exists
+                          if (t.subcategory) parts.push(t.subcategory);
                           
-                          // Add title with final indentation
-                          parts.push(`      └─ ${t.title}`);
+                          // Add title
+                          parts.push(t.title);
                           
-                          const displayText = parts.join(" ");
+                          const displayText = parts.join(" >> ");
                           
                           return (
                             <option key={t.id} value={idx}>
