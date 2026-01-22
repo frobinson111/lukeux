@@ -1628,7 +1628,7 @@ export default function CanvasPage() {
                     )}
                     {template.guidanceExample && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#f59e0b] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold text-[#92400e]">Example of the problem:</span>
+                      <span className="inline-block text-[11px] font-semibold text-[#92400e]">Example of a problem:</span>
                         <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceExample }} />
                     </div>
                     )}
@@ -1670,10 +1670,10 @@ export default function CanvasPage() {
                   aria-hidden="true"
                 />
                 <span>
-                  Analyzing the Design Context…This can take up to ~30–60s
+                  Analyzing…This can take up to ~30–60s
                   {loadingElapsedTime > 0 && (
                     <span className="ml-2 font-semibold text-slate-800">
-                      Elapsed: {formatElapsedTime(loadingElapsedTime)}
+                      Thinking: {formatElapsedTime(loadingElapsedTime)}
                     </span>
                   )}
                 </span>
