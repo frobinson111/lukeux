@@ -1754,8 +1754,8 @@ export default function CanvasPage() {
             {template && !inputsCollapsed && (template as any).allowUrlInput && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-left">
-                  <p className="text-xs font-semibold text-slate-600">Analyze a website:</p>
-                  <p className="text-xs text-slate-500">Enter URL to analyze (processed with affordance check)</p>
+                  <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype:</p>
+                  <p className="text-xs text-slate-500">Enter a live site, Figma, or Framer URL for affordance analysis</p>
                 </div>
                 
                 {urlError && (
