@@ -201,6 +201,26 @@ const styledMarkdownComponents: Components = {
   hr: ({ node, ...props }) => (
     <hr className="my-6 border-t border-[#e5e7eb]" {...props} />
   ),
+  table: ({ node, ...props }) => (
+    <div className="my-4 w-full overflow-x-auto">
+      <table className="w-full border-collapse text-left text-[14px]" {...props} />
+    </div>
+  ),
+  thead: ({ node, ...props }) => (
+    <thead className="bg-[#f8fafc] text-[13px] font-semibold text-[#111827]" {...props} />
+  ),
+  tbody: ({ node, ...props }) => (
+    <tbody className="text-[14px] text-[#374151]" {...props} />
+  ),
+  th: ({ node, ...props }) => (
+    <th className="border border-[#e5e7eb] px-4 py-3 font-semibold text-left" {...props} />
+  ),
+  td: ({ node, ...props }) => (
+    <td className="border border-[#e5e7eb] px-4 py-3 align-top" {...props} />
+  ),
+  tr: ({ node, ...props }) => (
+    <tr className="hover:bg-[#f8fafc]" {...props} />
+  ),
 };
 
 function StructuredAnalysisOutput({ 
