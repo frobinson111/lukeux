@@ -1,8 +1,25 @@
 import type { LlmMode, LlmProvider, LlmRequest, LlmResponse } from "@luke-ux/shared";
 
+// Anthropic supports multimodal content with text and image blocks
+type AnthropicImageBlock = {
+  type: "image";
+  source: {
+    type: "base64";
+    media_type: "image/png" | "image/jpeg" | "image/gif" | "image/webp";
+    data: string;
+  };
+};
+
+type AnthropicTextBlock = {
+  type: "text";
+  text: string;
+};
+
+type AnthropicContentBlock = AnthropicImageBlock | AnthropicTextBlock;
+
 type AnthropicMessage = {
   role: "user";
-  content: string;
+  content: string | AnthropicContentBlock[];
 };
 
 export class AnthropicProvider implements LlmProvider {
@@ -28,11 +45,57 @@ export class AnthropicProvider implements LlmProvider {
   async send(request: LlmRequest): Promise<LlmResponse> {
     const temperature = this.modeTemperature(request.mode);
 
+    // Build content array for multimodal requests
+    const hasImages = request.images && request.images.length > 0;
+    const hasPdfPages = request.pdfPages && request.pdfPages.length > 0;
+    const isMultimodal = hasImages || hasPdfPages;
+
+    let messageContent: string | AnthropicContentBlock[];
+
+    if (isMultimodal) {
+      const contentBlocks: AnthropicContentBlock[] = [];
+
+      // Add images first if present
+      if (hasImages) {
+        for (const img of request.images!) {
+          contentBlocks.push({
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: img.mimeType as "image/png" | "image/jpeg" | "image/gif" | "image/webp",
+              data: img.base64Data
+            }
+          });
+        }
+      }
+
+      // Add PDF pages as images if present
+      if (hasPdfPages) {
+        for (const page of request.pdfPages!) {
+          contentBlocks.push({
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: page.mimeType,
+              data: page.base64Data
+            }
+          });
+        }
+      }
+
+      // Add text prompt last
+      contentBlocks.push({ type: "text", text: request.prompt });
+      messageContent = contentBlocks;
+    } else {
+      // Simple text-only request
+      messageContent = request.prompt;
+    }
+
     const body = {
       model: request.model,
-      max_tokens: 1024,
+      max_tokens: isMultimodal ? 4096 : 1024, // Increase for vision responses
       temperature,
-      messages: [{ role: "user", content: request.prompt } satisfies AnthropicMessage]
+      messages: [{ role: "user", content: messageContent } satisfies AnthropicMessage]
     };
 
     const res = await fetch(this.apiUrl, {
@@ -60,6 +123,3 @@ export class AnthropicProvider implements LlmProvider {
     };
   }
 }
-
-
-
