@@ -226,6 +226,7 @@ model TaskTemplate {
   allowedModes        String[]
   allowedModels       String[]
   allowUrlInput       Boolean  @default(false)
+  allowFileUploads    Boolean  @default(true)
   isActive            Boolean  @default(true)
   templateCategoryId  String?  @db.ObjectId
   templateCategory    TemplateCategory? @relation(fields: [templateCategoryId], references: [id])

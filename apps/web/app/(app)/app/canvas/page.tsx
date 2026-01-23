@@ -103,6 +103,8 @@ type Template = {
   assets?: string | null;
   allowedModels?: string[];
   allowedModes?: string[];
+  allowUrlInput?: boolean;
+  allowFileUploads?: boolean;
   templateCategory?: { name: string } | null;
 };
 
@@ -498,6 +500,9 @@ export default function CanvasPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const followupFileInputRef = useRef<HTMLInputElement | null>(null);
   const [firstNameLocal, setFirstNameLocal] = useState("");
+
+  // Backward-compatible default: if templates in DB don’t have this field yet, treat as enabled.
+  const fileUploadsAllowed = template?.allowFileUploads ?? true;
 
   const groupedTemplates = useMemo(() => {
     // Group by Framework (templateCategory.name) first
@@ -1160,10 +1165,10 @@ export default function CanvasPage() {
     
     try {
       // Include URL content as an asset if URL input is provided
-      const allAssets = [...assetPayloads];
+      const allAssets = fileUploadsAllowed ? [...assetPayloads] : [];
       
       // Fetch URL content inline if URL is provided
-      if ((template as any).allowUrlInput && urlInput.trim()) {
+      if (template.allowUrlInput && urlInput.trim()) {
         try {
           const urlRes = await fetch("/api/url/fetch", {
             method: "POST",
@@ -1202,7 +1207,7 @@ export default function CanvasPage() {
           mode,
           detailLevel,
           prompt: editablePrompt?.trim() || template.prompt,
-          files: files.map((f) => f.name),
+          files: fileUploadsAllowed ? files.map((f) => f.name) : [],
           assets: allAssets
         })
       });
@@ -1751,11 +1756,11 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && (template as any).allowUrlInput && (
+            {template && !inputsCollapsed && template.allowUrlInput && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-left">
                   <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype:</p>
-                  <p className="text-xs text-slate-500">Enter a live site, Figma, or Framer URL for affordance analysis</p>
+                  <p className="text-xs text-slate-500">One URL at a time: webpage or Figma/Framer prototype.</p>
                 </div>
                 
                 {urlError && (
@@ -1780,72 +1785,83 @@ export default function CanvasPage() {
             )}
 
             {template && !inputsCollapsed && (
-              <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
-                <div className="text-center">
-                  <p className="text-xs font-semibold text-slate-600">Upload your files:</p>
-                  <p className="text-xs text-slate-500">PDF, DOCX, CSV, XLSX, PNG, JPG, SVG, TXT, MD</p>
-                </div>
-                {files.length > 0 && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                    <div className="mb-1 flex items-center justify-between">
-                      <p className="font-semibold">Attached files</p>
-                      <button
-                        type="button"
-                        className="text-[11px] font-semibold text-slate-600 hover:text-red-600"
-                        onClick={() => {
-                          setFiles([]);
-                          setAssetPayloads([]);
-                        }}
-                      >
-                        Clear all
-                      </button>
+              <>
+                {/* Upload UI (only when enabled for this template) */}
+                {fileUploadsAllowed && (
+                  <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-slate-600">Upload your files:</p>
+                      <p className="text-xs text-slate-500">PDF, DOCX, CSV, XLSX, PNG, JPG, SVG, TXT, MD</p>
                     </div>
-                    <ul className="mt-1 space-y-1">
-                      {files.map((file) => (
-                        <li key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{file.name}</span>
+                    {files.length > 0 && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                        <div className="mb-1 flex items-center justify-between">
+                          <p className="font-semibold">Attached files</p>
                           <button
                             type="button"
-                            className="rounded-full px-2 py-[2px] text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                            className="text-[11px] font-semibold text-slate-600 hover:text-red-600"
                             onClick={() => {
-                              setFiles((prev) => prev.filter((f) => !(f.name === file.name && f.size === file.size)));
-                              setAssetPayloads((prev) => prev.filter((p) => p.name !== file.name));
+                              setFiles([]);
+                              setAssetPayloads([]);
                             }}
-                            aria-label={`Remove ${file.name}`}
                           >
-                            Remove
+                            Clear all
                           </button>
-                        </li>
-                      ))}
-                    </ul>
+                        </div>
+                        <ul className="mt-1 space-y-1">
+                          {files.map((file) => (
+                            <li key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-2">
+                              <span className="truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                className="rounded-full px-2 py-[2px] text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  setFiles((prev) => prev.filter((f) => !(f.name === file.name && f.size === file.size)));
+                                  setAssetPayloads((prev) => prev.filter((p) => p.name !== file.name));
+                                }}
+                                aria-label={`Remove ${file.name}`}
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center gap-4">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleUploadSelect}
+                        aria-label="Upload your files"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleUploadClick}
+                        className="flex h-16 w-16 items-center justify-center rounded-full border border-black bg-white text-3xl font-semibold text-black shadow-[0_2px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_3px_0_#111] disabled:opacity-60"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 )}
-                <div className="flex flex-col items-center gap-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleUploadSelect}
-                    aria-label="Upload your files"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleUploadClick}
-                    className="flex h-16 w-16 items-center justify-center rounded-full border border-black bg-white text-3xl font-semibold text-black shadow-[0_2px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_3px_0_#111] disabled:opacity-60"
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleGenerate}
-                    disabled={loading || !template}
-                    className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 md:w-80"
-                  >
-                    {loading ? "Working..." : "Run Affordance Check"}
-                  </button>
+
+                {/* Run button (always visible when template selected) */}
+                <div className="rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
+                  <div className="flex flex-col items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={handleGenerate}
+                      disabled={loading || !template}
+                      className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 md:w-80"
+                    >
+                      {loading ? "Working..." : "Run Affordance Check"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 {lastResponse && (
               <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
@@ -2342,7 +2358,7 @@ export default function CanvasPage() {
                             prompt: followup,
                             taskId,
                             threadId,
-                            assets: [...assetPayloads, ...followupAssetPayloads]
+                            assets: fileUploadsAllowed ? [...assetPayloads, ...followupAssetPayloads] : []
                           })
                         });
                         const json = await res.json().catch(() => null);
@@ -2368,7 +2384,7 @@ export default function CanvasPage() {
                             detailLevel,
                             prompt,
                             files: [],
-                            assets: [...assetPayloads, ...followupAssetPayloads]
+                            assets: fileUploadsAllowed ? [...assetPayloads, ...followupAssetPayloads] : []
                           })
                         });
                         const json = await res.json().catch(() => null);
@@ -2402,7 +2418,7 @@ export default function CanvasPage() {
                     />
                   </label>
                   <div className="mt-2 space-y-2">
-                    {followupFiles.length > 0 && (
+                    {fileUploadsAllowed && followupFiles.length > 0 && (
                       <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                         <p className="font-semibold">Attached files</p>
                         <ul className="mt-1 list-disc pl-4">
@@ -2413,22 +2429,26 @@ export default function CanvasPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-2">
-                      <input
-                        ref={followupFileInputRef}
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleFollowupUploadSelect}
-                        aria-label="Upload follow-up assets"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => followupFileInputRef.current?.click()}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 transition hover:-translate-y-[1px]"
-                        aria-label="Add assets"
-                      >
-                        <Image src="/images/add-assets.svg" alt="Add assets" width={25} height={25} className="h-6 w-6" />
-                      </button>
+                      {fileUploadsAllowed && (
+                        <>
+                          <input
+                            ref={followupFileInputRef}
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={handleFollowupUploadSelect}
+                            aria-label="Upload follow-up assets"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => followupFileInputRef.current?.click()}
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 transition hover:-translate-y-[1px]"
+                            aria-label="Add assets"
+                          >
+                            <Image src="/images/add-assets.svg" alt="Add assets" width={25} height={25} className="h-6 w-6" />
+                          </button>
+                        </>
+                      )}
                       <button
                         type="submit"
                         disabled={loading}

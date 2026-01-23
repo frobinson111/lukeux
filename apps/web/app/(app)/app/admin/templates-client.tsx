@@ -16,6 +16,7 @@ type TemplateFormData = {
   allowedModes: string[];
   allowedModels: string[];
   allowUrlInput: boolean;
+  allowFileUploads: boolean;
   isActive: boolean;
   templateCategoryId: string | null;
 };
@@ -32,6 +33,7 @@ const emptyForm: TemplateFormData = {
   allowedModes: ["auto", "instant", "thinking"],
   allowedModels: [],
   allowUrlInput: false,
+  allowFileUploads: true,
   isActive: true,
   templateCategoryId: null,
 };
@@ -110,6 +112,7 @@ export default function TemplatesAdmin({
       allowedModes: template.allowedModes || ["auto", "instant", "thinking"],
       allowedModels: template.allowedModels || [],
       allowUrlInput: (template as any).allowUrlInput || false,
+      allowFileUploads: (template as any).allowFileUploads ?? true,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
     });
@@ -126,6 +129,7 @@ export default function TemplatesAdmin({
       allowedModes: template.allowedModes || ["auto", "instant", "thinking"],
       allowedModels: template.allowedModels || [],
       allowUrlInput: (template as any).allowUrlInput || false,
+      allowFileUploads: (template as any).allowFileUploads ?? true,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
     });
@@ -175,6 +179,7 @@ export default function TemplatesAdmin({
           allowedModes: formData.allowedModes,
           allowedModels: formData.allowedModels,
           allowUrlInput: formData.allowUrlInput,
+          allowFileUploads: formData.allowFileUploads,
           isActive: formData.isActive,
           templateCategoryId: formData.templateCategoryId,
         }),
@@ -563,6 +568,19 @@ export default function TemplatesAdmin({
                 />
                 Allow URL Input
               </label>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={formData.allowFileUploads}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, allowFileUploads: e.target.checked }))}
+                />
+                Allow File Uploads
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Controls whether users can attach files and follow-up assets for this template.
+              </p>
             </div>
             <div>
               <label className="flex items-center gap-2 text-sm">

@@ -29,6 +29,8 @@ export type TemplateRow = {
   assets: string | null;
   allowedModels: string[];
   allowedModes: string[];
+  allowUrlInput?: boolean;
+  allowFileUploads?: boolean;
   isActive: boolean;
   createdAt: Date;
   templateCategoryId: string | null;
@@ -250,5 +252,3 @@ export default async function AdminPage() {
     />
   );
 }
-
-
