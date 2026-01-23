@@ -18,6 +18,8 @@ const templateSchema = z.object({
   allowedModels: z.array(z.string()).optional(),
   allowUrlInput: z.boolean().optional(),
   allowFileUploads: z.boolean().optional(),
+  allowMockupGeneration: z.boolean().optional(),
+  allowRefineAnalysis: z.boolean().optional(),
   isActive: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
 });
@@ -81,6 +83,8 @@ export async function POST(request: NextRequest) {
         allowedModels: parsed.data.allowedModels || [],
         allowUrlInput: parsed.data.allowUrlInput ?? false,
         allowFileUploads: parsed.data.allowFileUploads ?? true,
+        allowMockupGeneration: parsed.data.allowMockupGeneration ?? true,
+        allowRefineAnalysis: parsed.data.allowRefineAnalysis ?? true,
         isActive: parsed.data.isActive ?? true,
         templateCategoryId: parsed.data.templateCategoryId || null,
         createdById: user.id,

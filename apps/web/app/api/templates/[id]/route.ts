@@ -18,6 +18,8 @@ const updateTemplateSchema = z.object({
   allowedModels: z.array(z.string()).optional(),
   allowUrlInput: z.boolean().optional(),
   allowFileUploads: z.boolean().optional(),
+  allowMockupGeneration: z.boolean().optional(),
+  allowRefineAnalysis: z.boolean().optional(),
   isActive: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
 });
@@ -102,6 +104,8 @@ export async function PATCH(
         ...(parsed.data.allowedModels !== undefined && { allowedModels: parsed.data.allowedModels }),
         ...(parsed.data.allowUrlInput !== undefined && { allowUrlInput: parsed.data.allowUrlInput }),
         ...(parsed.data.allowFileUploads !== undefined && { allowFileUploads: parsed.data.allowFileUploads }),
+        ...(parsed.data.allowMockupGeneration !== undefined && { allowMockupGeneration: parsed.data.allowMockupGeneration }),
+        ...(parsed.data.allowRefineAnalysis !== undefined && { allowRefineAnalysis: parsed.data.allowRefineAnalysis }),
         ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
         ...(parsed.data.templateCategoryId !== undefined && { templateCategoryId: parsed.data.templateCategoryId }),
       }

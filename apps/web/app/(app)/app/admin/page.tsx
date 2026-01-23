@@ -31,6 +31,8 @@ export type TemplateRow = {
   allowedModes: string[];
   allowUrlInput?: boolean;
   allowFileUploads?: boolean;
+  allowMockupGeneration?: boolean;
+  allowRefineAnalysis?: boolean;
   isActive: boolean;
   createdAt: Date;
   templateCategoryId: string | null;

@@ -105,6 +105,8 @@ type Template = {
   allowedModes?: string[];
   allowUrlInput?: boolean;
   allowFileUploads?: boolean;
+  allowMockupGeneration?: boolean;
+  allowRefineAnalysis?: boolean;
   templateCategory?: { name: string } | null;
 };
 
@@ -229,6 +231,7 @@ function StructuredAnalysisOutput({
   response, 
   selectedIndex, 
   onSelectRecommendation,
+  allowMockupGeneration,
   historyEntryId,
   templateId,
   templateTitle,
@@ -238,6 +241,7 @@ function StructuredAnalysisOutput({
   response: string;
   selectedIndex: number | null;
   onSelectRecommendation: (index: number | null, title: string, content: string) => void;
+  allowMockupGeneration: boolean;
   historyEntryId: string | null;
   templateId: string | null;
   templateTitle: string | null;
@@ -368,29 +372,31 @@ function StructuredAnalysisOutput({
                           </button>
                         </div>
                         {/* Checkbox for mockup selection */}
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
-                          <span className="whitespace-nowrap">Generate mockup</span>
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleCheckboxChange(idx, finding.title, finding.content)}
-                              className="sr-only"
-                              aria-label={`Select ${finding.title} for mockup generation`}
-                            />
-                            <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
-                              isSelected 
-                                ? 'border-[#3b82f6] bg-[#3b82f6]' 
-                                : 'border-slate-300 bg-white hover:border-slate-400'
-                            }`}>
-                              {isSelected && (
-                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
+                        {allowMockupGeneration && (
+                          <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
+                            <span className="whitespace-nowrap">Generate mockup</span>
+                            <div className="relative">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleCheckboxChange(idx, finding.title, finding.content)}
+                                className="sr-only"
+                                aria-label={`Select ${finding.title} for mockup generation`}
+                              />
+                              <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
+                                isSelected 
+                                  ? 'border-[#3b82f6] bg-[#3b82f6]' 
+                                  : 'border-slate-300 bg-white hover:border-slate-400'
+                              }`}>
+                                {isSelected && (
+                                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </label>
+                          </label>
+                        )}
                       </div>
                     </div>
                     <div className="text-[15px] leading-relaxed text-[#4b5563]">
@@ -503,6 +509,9 @@ export default function CanvasPage() {
 
   // Backward-compatible default: if templates in DB don’t have this field yet, treat as enabled.
   const fileUploadsAllowed = template?.allowFileUploads ?? true;
+  // Backward-compatible default: if templates in DB don't have this field yet, treat as enabled.
+  const mockupGenerationAllowed = template?.allowMockupGeneration ?? true;
+  const refineAnalysisAllowed = template?.allowRefineAnalysis ?? true;
 
   const groupedTemplates = useMemo(() => {
     // Group by Framework (templateCategory.name) first
@@ -2256,7 +2265,7 @@ export default function CanvasPage() {
                 </div>
                 <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-900">Recommended Actions</p>
+                    <p className="text-sm font-bold text-slate-900">Analysis</p>
                     <button
                       type="button"
                       onClick={() => setResultsCollapsed((v) => !v)}
@@ -2282,7 +2291,16 @@ export default function CanvasPage() {
                           <StructuredAnalysisOutput 
                             response={lastResponse} 
                             selectedIndex={selectedRecommendation}
+                            allowMockupGeneration={mockupGenerationAllowed}
                             onSelectRecommendation={(idx, title, content) => {
+                              // If mockup generation is disabled for this template, do not allow selecting
+                              // recommendations for mockup generation or auto-opening that UI.
+                              if (!mockupGenerationAllowed) {
+                                setSelectedRecommendation(null);
+                                setImagePrompt("");
+                                return;
+                              }
+
                               setSelectedRecommendation(idx);
                               if (idx !== null) {
                                 // Auto-populate the image prompt with the recommendation
@@ -2303,6 +2321,12 @@ export default function CanvasPage() {
                             feedbacks={recommendationFeedbacks}
                             onFeedbackChange={handleRecommendationFeedback}
                           />
+                        </div>
+                      )}
+
+                      {!mockupGenerationAllowed && (
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                          Mockup Generation is disabled for this UX objective.
                         </div>
                       )}
                       {images.length > 0 && (
@@ -2331,6 +2355,7 @@ export default function CanvasPage() {
                     </div>
                   )}
                 </div>
+                {refineAnalysisAllowed && (
                 <form
                   className="mt-4 space-y-3"
                   onSubmit={async (e) => {
@@ -2464,79 +2489,82 @@ export default function CanvasPage() {
                     </div>
                   </div>
                 </form>
-                <div ref={mockupSectionRef} className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-900">Generate Mockups</p>
-                    <div className="flex items-center gap-2">
-                      {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
-                      <button
-                        type="button"
-                        onClick={() => setImageSectionOpen((v) => !v)}
-                        className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                        aria-expanded={imageSectionOpen}
-                        aria-label={imageSectionOpen ? "Collapse image generation" : "Expand image generation"}
-                      >
-                        <svg 
-                          className={`h-5 w-5 transition-transform ${imageSectionOpen ? "rotate-180" : ""}`} 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor" 
-                          strokeWidth={2}
+                )}
+                {mockupGenerationAllowed && (
+                  <div ref={mockupSectionRef} className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-slate-900">Generate Mockups</p>
+                      <div className="flex items-center gap-2">
+                        {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
+                        <button
+                          type="button"
+                          onClick={() => setImageSectionOpen((v) => !v)}
+                          className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                          aria-expanded={imageSectionOpen}
+                          aria-label={imageSectionOpen ? "Collapse image generation" : "Expand image generation"}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  {imageSectionOpen && (
-                    <>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                          <span>Or describe your own scenario:</span>
-                        </div>
-                        <textarea
-                          value={imagePrompt}
-                          onChange={(e) => setImagePrompt(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                          rows={5}
-                          placeholder="Copy any section to generate an image or mockup."
-                        />
+                          <svg 
+                            className={`h-5 w-5 transition-transform ${imageSectionOpen ? "rotate-180" : ""}`} 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor" 
+                            strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="flex justify-center mt-4">
-                        <ProgressButton
-                          imageLoading={imageLoading}
-                          elapsedTime={imageElapsedTime}
-                          onClick={async () => {
-                            if (!imagePrompt.trim()) {
-                              setImageError("Enter a prompt.");
-                              return;
-                            }
-                            setImageError(null);
-                            setImageLoading(true);
-                            try {
-                              const res = await fetch("/api/images/generate", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
-                              });
-                              const json = await res.json().catch(() => null);
-                              if (!res.ok) {
-                                setImageError(json?.error || "Image generation failed.");
+                    </div>
+                    {imageSectionOpen && (
+                      <>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                            <span>Or describe your own scenario:</span>
+                          </div>
+                          <textarea
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                            rows={5}
+                            placeholder="Copy any section to generate an image or mockup."
+                          />
+                        </div>
+                        <div className="flex justify-center mt-4">
+                          <ProgressButton
+                            imageLoading={imageLoading}
+                            elapsedTime={imageElapsedTime}
+                            onClick={async () => {
+                              if (!imagePrompt.trim()) {
+                                setImageError("Enter a prompt.");
                                 return;
                               }
-                              setImages(json.images || []);
-                              setResultsCollapsed(false);
-                            } catch (err) {
-                              setImageError("Image generation failed.");
-                            } finally {
-                              setImageLoading(false);
-                            }
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
+                              setImageError(null);
+                              setImageLoading(true);
+                              try {
+                                const res = await fetch("/api/images/generate", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
+                                });
+                                const json = await res.json().catch(() => null);
+                                if (!res.ok) {
+                                  setImageError(json?.error || "Image generation failed.");
+                                  return;
+                                }
+                                setImages(json.images || []);
+                                setResultsCollapsed(false);
+                              } catch (err) {
+                                setImageError("Image generation failed.");
+                              } finally {
+                                setImageLoading(false);
+                              }
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

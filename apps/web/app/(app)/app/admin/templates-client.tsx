@@ -17,6 +17,8 @@ type TemplateFormData = {
   allowedModels: string[];
   allowUrlInput: boolean;
   allowFileUploads: boolean;
+  allowMockupGeneration: boolean;
+  allowRefineAnalysis: boolean;
   isActive: boolean;
   templateCategoryId: string | null;
 };
@@ -34,6 +36,8 @@ const emptyForm: TemplateFormData = {
   allowedModels: [],
   allowUrlInput: false,
   allowFileUploads: true,
+  allowMockupGeneration: true,
+  allowRefineAnalysis: true,
   isActive: true,
   templateCategoryId: null,
 };
@@ -99,6 +103,8 @@ export default function TemplatesAdmin({
   };
 
   const handleEdit = (template: TemplateRow) => {
+    const allowMockupGeneration = (template as any).allowMockupGeneration ?? true;
+    const allowRefineAnalysis = (template as any).allowRefineAnalysis ?? true;
     setEditingTemplate({
       id: template.id,
       category: template.category,
@@ -113,6 +119,8 @@ export default function TemplatesAdmin({
       allowedModels: template.allowedModels || [],
       allowUrlInput: (template as any).allowUrlInput || false,
       allowFileUploads: (template as any).allowFileUploads ?? true,
+      allowMockupGeneration,
+      allowRefineAnalysis,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
     });
@@ -130,6 +138,8 @@ export default function TemplatesAdmin({
       allowedModels: template.allowedModels || [],
       allowUrlInput: (template as any).allowUrlInput || false,
       allowFileUploads: (template as any).allowFileUploads ?? true,
+      allowMockupGeneration,
+      allowRefineAnalysis,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
     });
@@ -180,6 +190,8 @@ export default function TemplatesAdmin({
           allowedModels: formData.allowedModels,
           allowUrlInput: formData.allowUrlInput,
           allowFileUploads: formData.allowFileUploads,
+          allowMockupGeneration: formData.allowMockupGeneration,
+          allowRefineAnalysis: formData.allowRefineAnalysis,
           isActive: formData.isActive,
           templateCategoryId: formData.templateCategoryId,
         }),
@@ -580,6 +592,32 @@ export default function TemplatesAdmin({
               </label>
               <p className="mt-1 text-xs text-slate-500">
                 Controls whether users can attach files and follow-up assets for this template.
+              </p>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={formData.allowMockupGeneration}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, allowMockupGeneration: e.target.checked }))}
+                />
+                Allow Mockup Generation
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Controls whether users can access the post-affordance mockup/image generation UI.
+              </p>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={formData.allowRefineAnalysis}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, allowRefineAnalysis: e.target.checked }))}
+                />
+                Allow Refine the Analysis
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Controls whether users can access the post-affordance follow-up (Refine the Analysis) UI.
               </p>
             </div>
             <div>
