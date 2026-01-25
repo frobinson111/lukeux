@@ -251,16 +251,26 @@ function StructuredAnalysisOutput({
   // Parse numbered findings from the response
   const parseNumberedFindings = (text: string) => {
     const findings: { num: string; title: string; content: string }[] = [];
-    // Match patterns like "1) **Title:** content" or "1. **Title** content"
-    const pattern = /(\d+)\)\s*\*\*([^*]+)\*\*[:\s]*([\s\S]*?)(?=(?:\d+\)\s*\*\*)|$)/g;
+    // Match patterns like:
+    // - "**Concept 1 — Title**" (with em dash)
+    // - "**Concept 1 - Title**" (with hyphen)
+    // - "1) **Title:**" (numbered list with colon)
+    // - "1. **Title**" (numbered list with period)
+    const pattern = /\*\*(?:Concept\s+)?(\d+)\s*[—\-–]\s*([^*]+)\*\*\n\n([\s\S]*?)(?=\n\n\*\*(?:Concept\s+)?\d+\s*[—\-–]|\n\n---|\n\nThese concepts|$)/gi;
     let match;
     
     while ((match = pattern.exec(text)) !== null) {
       findings.push({
         num: match[1],
-        title: match[2].trim().replace(/:$/, ''),
+        title: match[2].trim(),
         content: match[3].trim(),
       });
+    }
+    
+    console.log('Parsed findings:', findings.length, 'from response length:', text.length);
+    console.log('First 200 chars of response:', text.substring(0, 200));
+    if (findings.length > 0) {
+      console.log('Sample finding:', findings[0]);
     }
     
     return findings;
