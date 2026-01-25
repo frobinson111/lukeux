@@ -420,11 +420,77 @@ function StructuredAnalysisOutput({
           })}
         </div>
       ) : (
-        /* Fallback to styled markdown rendering */
+        /* Fallback to styled markdown rendering with feedback controls */
         <div 
           className="rounded-xl border border-[#e5e7eb] bg-white p-6"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
         >
+          {/* Feedback and mockup controls at top of non-structured content */}
+          <div className="mb-4 flex items-center justify-end gap-3 border-b border-slate-200 pb-3">
+            {/* Thumbs up/down feedback buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const currentFeedback = feedbacks[0];
+                  onFeedbackChange(0, currentFeedback === "UP" ? null : "UP");
+                }}
+                className={`group flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+                  feedbacks[0] === "UP"
+                    ? 'bg-green-100 text-green-600'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-green-600'
+                }`}
+                aria-label={`${feedbacks[0] === "UP" ? 'Remove helpful' : 'Mark as helpful'}`}
+                title="Helpful"
+              >
+                <svg className="h-4 w-4" fill={feedbacks[0] === "UP" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                </svg>
+              </button>
+              <button
+                onClick={() => {
+                  const currentFeedback = feedbacks[0];
+                  onFeedbackChange(0, currentFeedback === "DOWN" ? null : "DOWN");
+                }}
+                className={`group flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+                  feedbacks[0] === "DOWN"
+                    ? 'bg-red-100 text-red-600'
+                    : 'text-slate-400 hover:bg-slate-100 hover:text-red-600'
+                }`}
+                aria-label={`${feedbacks[0] === "DOWN" ? 'Remove not helpful' : 'Mark as not helpful'}`}
+                title="Not helpful"
+              >
+                <svg className="h-4 w-4" fill={feedbacks[0] === "DOWN" ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                </svg>
+              </button>
+            </div>
+            {/* Checkbox for mockup selection */}
+            {allowMockupGeneration && (
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
+                <span className="whitespace-nowrap">Generate mockup</span>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={selectedIndex === 0}
+                    onChange={() => handleCheckboxChange(0, "Analysis", response.substring(0, 200))}
+                    className="sr-only"
+                    aria-label="Select analysis for mockup generation"
+                  />
+                  <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
+                    selectedIndex === 0
+                      ? 'border-[#3b82f6] bg-[#3b82f6]' 
+                      : 'border-slate-300 bg-white hover:border-slate-400'
+                  }`}>
+                    {selectedIndex === 0 && (
+                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </label>
+            )}
+          </div>
           <div className="prose prose-slate max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={styledMarkdownComponents}>
               {response}
