@@ -252,11 +252,10 @@ function StructuredAnalysisOutput({
   const parseNumberedFindings = (text: string) => {
     const findings: { num: string; title: string; content: string }[] = [];
     // Match patterns like:
-    // - "**Concept 1 — Title**" (with em dash)
-    // - "**Concept 1 - Title**" (with hyphen)
+    // - "### Concept 1 — Title" (markdown heading with em dash)
+    // - "**Concept 1 — Title**" (bold with em dash)
     // - "1) **Title:**" (numbered list with colon)
-    // - "1. **Title**" (numbered list with period)
-    const pattern = /\*\*(?:Concept\s+)?(\d+)\s*[—\-–]\s*([^*]+)\*\*\n\n([\s\S]*?)(?=\n\n\*\*(?:Concept\s+)?\d+\s*[—\-–]|\n\n---|\n\nThese concepts|$)/gi;
+    const pattern = /(?:###\s*|^\*\*)(?:Concept\s+)?(\d+)\s*[—\-–]\s*([^\n*]+?)(?:\*\*)?[\n\r]+\s*\*\*A\)\s*Concept\s+Summary\*\*([\s\S]*?)(?=(?:###\s*|^\*\*)(?:Concept\s+)?\d+\s*[—\-–]|$)/gim;
     let match;
     
     while ((match = pattern.exec(text)) !== null) {
