@@ -50,6 +50,15 @@ export async function POST(req: Request) {
   await revokeSessionByToken(existingToken);
   clearSessionCookie();
 
+  // Update last login timestamp
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() }
+  }).catch(() => {
+    // Non-blocking: login succeeds even if update fails
+    console.error('Failed to update lastLoginAt for user', user.id);
+  });
+
   const { token, expiresAt } = await createSession(user.id);
 
   const res = NextResponse.json({ message: "Logged in" });

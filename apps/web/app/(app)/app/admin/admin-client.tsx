@@ -58,6 +58,13 @@ export default function AdminClient({
   const [usersState, setUsersState] = useState(users);
   const [status, setStatus] = useState<string | null>(null);
   
+  // User filtering and search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [planFilter, setPlanFilter] = useState<string>("ALL");
+  const [sortBy, setSortBy] = useState<"email" | "createdAt" | "lastLoginAt">("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  
   // Recommendation feedback state (loaded on demand)
   const [recFeedbacks, setRecFeedbacks] = useState<RecommendationFeedbackRow[]>([]);
   const [recSummary, setRecSummary] = useState<FeedbackSummary>({ totalUp: 0, totalDown: 0, total: 0, ratio: 0 });
@@ -81,11 +88,68 @@ export default function AdminClient({
     }
   }, [tab, recFeedbackLoaded]);
 
-  const totalPages = Math.max(1, Math.ceil(usersState.length / pageSize));
+  // Helper function to format relative time
+  const formatRelativeTime = (date: Date | null): string => {
+    if (!date) return "Never logged in";
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffSecs < 60) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return date.toISOString().slice(0, 10);
+  };
+
+  // Filter and sort users
+  const filteredAndSortedUsers = useMemo(() => {
+    let result = [...usersState];
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(u => u.email.toLowerCase().includes(query));
+    }
+    
+    // Apply role filter
+    if (roleFilter !== "ALL") {
+      result = result.filter(u => u.role === roleFilter);
+    }
+    
+    // Apply plan filter
+    if (planFilter !== "ALL") {
+      result = result.filter(u => u.plan === planFilter);
+    }
+    
+    // Apply sorting
+    result.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortBy === "email") {
+        comparison = a.email.localeCompare(b.email);
+      } else if (sortBy === "createdAt") {
+        comparison = a.createdAt.getTime() - b.createdAt.getTime();
+      } else if (sortBy === "lastLoginAt") {
+        const aTime = a.lastLoginAt?.getTime() ?? 0;
+        const bTime = b.lastLoginAt?.getTime() ?? 0;
+        comparison = aTime - bTime;
+      }
+      
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+    
+    return result;
+  }, [usersState, searchQuery, roleFilter, planFilter, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedUsers.length / pageSize));
   const pagedUsers = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return usersState.slice(start, start + pageSize);
-  }, [usersState, page, pageSize]);
+    return filteredAndSortedUsers.slice(start, start + pageSize);
+  }, [filteredAndSortedUsers, page, pageSize]);
 
   const stats = useMemo(
     () => ({
@@ -279,22 +343,105 @@ export default function AdminClient({
 
           {tab === "users" && (
             <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Image src="/images/settings.svg" alt="Users" width={18} height={18} className="h-5 w-5" />
-                <h2 className="text-lg font-semibold text-slate-900">Users & Limits</h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Image src="/images/settings.svg" alt="Users" width={18} height={18} className="h-5 w-5" />
+                  <h2 className="text-lg font-semibold text-slate-900">Users & Limits</h2>
+                </div>
+                <span className="text-xs text-slate-500">
+                  Showing {filteredAndSortedUsers.length} of {usersState.length} users
+                </span>
               </div>
+              
+              {/* Search and Filter Controls */}
+              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Search</label>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setPage(1);
+                      }}
+                      placeholder="Search by email..."
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+                    <select
+                      value={roleFilter}
+                      onChange={(e) => {
+                        setRoleFilter(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                    >
+                      <option value="ALL">All Roles</option>
+                      <option value="USER">USER</option>
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="SUPERUSER">SUPERUSER</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Plan</label>
+                    <select
+                      value={planFilter}
+                      onChange={(e) => {
+                        setPlanFilter(e.target.value);
+                        setPage(1);
+                      }}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                    >
+                      <option value="ALL">All Plans</option>
+                      <option value="FREE">FREE</option>
+                      <option value="PRO">PRO</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Sort By</label>
+                    <div className="flex gap-2">
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                      >
+                        <option value="email">Email</option>
+                        <option value="createdAt">Created</option>
+                        <option value="lastLoginAt">Last Login</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                        className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
+                        title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                      >
+                        {sortOrder === "asc" ? "↑" : "↓"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              </div>
+
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="grid grid-cols-7 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
+                <div className="grid grid-cols-8 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
                   <div className="col-span-2">User</div>
                   <div>Role</div>
                   <div>Plan</div>
                   <div>Limit</div>
+                  <div>Last Login</div>
                   <div>Created</div>
                   <div>Actions</div>
                 </div>
                 <div className="divide-y divide-slate-200">
-                  {usersState.map((u) => (
-                    <div key={u.id} className="grid grid-cols-7 items-center px-4 py-3 text-sm">
+                  {pagedUsers.map((u) => (
+                    <div key={u.id} className="grid grid-cols-8 items-center px-4 py-3 text-sm">
                       <div className="col-span-2">
                         <div className="font-semibold text-slate-900">{u.email}</div>
                         <div className="text-[11px] text-slate-500">
@@ -306,6 +453,9 @@ export default function AdminClient({
                         {u.plan} · {u.planStatus}
                       </div>
                       <div className="text-xs text-slate-700">{u.generationLimit ?? "—"}</div>
+                      <div className="text-[12px] text-slate-600" title={u.lastLoginAt ? u.lastLoginAt.toISOString() : "Never"}>
+                        {formatRelativeTime(u.lastLoginAt)}
+                      </div>
                       <div className="text-[12px] text-slate-500">{u.createdAt.toISOString().slice(0, 10)}</div>
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -329,6 +479,11 @@ export default function AdminClient({
                       </div>
                     </div>
                   ))}
+                  {pagedUsers.length === 0 && (
+                    <div className="px-4 py-8 text-center text-sm text-slate-600">
+                      No users match your filters
+                    </div>
+                  )}
                 </div>
               </div>
             </section>

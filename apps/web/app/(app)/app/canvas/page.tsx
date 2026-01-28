@@ -264,18 +264,39 @@ function StructuredAnalysisOutput({
       });
     }
     
-    // Pattern 2: Heading-based sections like "## 1. Title" or "### 1. Title"
+    // Pattern 2: Numbered heading sections like "## 1. Title" or "### 1. Title"
     if (findings.length === 0) {
-      const headingPattern = /(?:^|\n)(#{2,3})\s*(\d+)[\.\)]\s*([^\n]+)\n([\s\S]*?)(?=\n#{2,3}\s*\d+[\.\)]|\n#{1,2}\s+[A-Z]|$)/g;
+      const numberedHeadingPattern = /(?:^|\n)(#{2,3})\s*(\d+)[\.\)]\s*([^\n]+)\n([\s\S]*?)(?=\n#{2,3}\s*\d+[\.\)]|\n#{1,2}\s+[A-Z]|$)/g;
       let headingMatch;
       
-      while ((headingMatch = headingPattern.exec(text)) !== null) {
+      while ((headingMatch = numberedHeadingPattern.exec(text)) !== null) {
         const content = headingMatch[4].trim();
         // Only include if there's meaningful content
         if (content.length > 10) {
           findings.push({
             num: headingMatch[2],
             title: headingMatch[3].trim(),
+            content: content,
+          });
+        }
+      }
+    }
+    
+    // Pattern 3: Non-numbered heading sections like "## Section Title" or "### Section Title"
+    if (findings.length === 0) {
+      const genericHeadingPattern = /(?:^|\n)(#{2,3})\s+([^\n#]+)\n([\s\S]*?)(?=\n#{2,3}\s+[^\n]|\n#{1}\s+[^\n]|$)/g;
+      let genericMatch;
+      let sectionNum = 1;
+      
+      while ((genericMatch = genericHeadingPattern.exec(text)) !== null) {
+        const title = genericMatch[2].trim();
+        const content = genericMatch[3].trim();
+        
+        // Only include if there's meaningful content and title
+        if (content.length > 10 && title.length > 0) {
+          findings.push({
+            num: String(sectionNum++),
+            title: title,
             content: content,
           });
         }
@@ -1460,7 +1481,7 @@ export default function CanvasPage() {
                 {idx === 0 && !railCollapsed && (
                   <div className="space-y-1">
                     <div className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">History</div>
-                    <div className="space-y-1">
+                    <div className="max-h-[600px] space-y-1 overflow-y-auto">
                       {history.filter((h) => !h.projectId).length === 0 && (
                         <div className="px-3 text-[11px] text-slate-500">No history yet</div>
                       )}
@@ -1708,7 +1729,7 @@ export default function CanvasPage() {
                           // Add title
                           parts.push(t.title);
                           
-                          const displayText = parts.join(" >> ");
+                          const displayText = parts.join(": ");
                           
                           return (
                             <option key={t.id} value={idx}>
@@ -1765,7 +1786,7 @@ export default function CanvasPage() {
                     )}
                     {template.assets && (
                     <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#6b7280] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold text-[#374151]">Upload these files:</span>
+                      <span className="inline-block text-[11px] font-semibold text-[#374151]">Upload the following files:</span>
                         <div className="mt-1 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:space-y-1 [&_li]:my-0 [&_p]:my-1" dangerouslySetInnerHTML={{ __html: template.assets }} />
                     </div>
                     )}

@@ -13,6 +13,7 @@ export type UserRow = {
   planStatus: string;
   generationLimit: number | null;
   stripeCustomerId: string | null;
+  lastLoginAt: Date | null;
   createdAt: Date;
   deletedAt?: Date | null;
 };
@@ -131,6 +132,7 @@ export default async function AdminPage() {
         planStatus: true,
         generationLimit: true,
         stripeCustomerId: true,
+        lastLoginAt: true,
         createdAt: true,
         deletedAt: true
       }

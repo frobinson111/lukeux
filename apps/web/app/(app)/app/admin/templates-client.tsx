@@ -474,7 +474,7 @@ export default function TemplatesAdmin({
               />
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600">Title *</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Description *</label>
               <input
                 type="text"
                 value={formData.title}
@@ -654,7 +654,7 @@ export default function TemplatesAdmin({
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-[12px] uppercase tracking-wide text-slate-600">
             <tr>
-              <th className="px-3 py-2">Title</th>
+              <th className="px-3 py-2">Description</th>
               <th className="px-3 py-2">Category</th>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2">Actions</th>
