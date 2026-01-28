@@ -132,10 +132,14 @@ export default async function AdminPage() {
         planStatus: true,
         generationLimit: true,
         stripeCustomerId: true,
-        lastLoginAt: true,
+        // Uncomment after running migration: npx prisma db push
+        // lastLoginAt: true,
         createdAt: true,
         deletedAt: true
       }
+    }).then((users: any[]) => {
+      // Temporarily add null lastLoginAt until migration is run
+      return users.map(u => ({ ...u, lastLoginAt: null }));
     }),
     prismaAny.taskTemplate.findMany({
       orderBy: [{ category: "asc" }, { title: "asc" }]
