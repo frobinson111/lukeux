@@ -6,8 +6,14 @@ node_modules
 
 # Env & secrets
 .env
+.env
 .env.local
 .env.*.local
+apps/web/.env
+apps/web/.env.local
+mongodb-backup-*
+apps/web/migration-output/
+apps/web/migration.log
 
 # Logs
 npm-debug.log*
