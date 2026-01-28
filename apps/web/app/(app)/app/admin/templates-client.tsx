@@ -771,14 +771,13 @@ export default function TemplatesAdmin({
               <th className="px-3 py-2 bg-slate-50">Category</th>
               <th className="px-3 py-2 bg-slate-50">Description</th>
               <th className="px-3 py-2 bg-slate-50">Status</th>
-              <th className="px-3 py-2 bg-slate-50">Date Updated</th>
               <th className="px-3 py-2 bg-slate-50">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredTemplates.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-slate-500">
+                <td colSpan={4} className="px-3 py-8 text-center text-slate-500">
                   {searchQuery ? "No templates match your search" : "No templates found"}
                 </td>
               </tr>
@@ -795,13 +794,6 @@ export default function TemplatesAdmin({
                   >
                     {t.isActive ? "Active" : "Inactive"}
                   </span>
-                </td>
-                <td className="px-3 py-2 text-slate-600 text-xs">
-                  {new Date(t.updatedAt).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })}
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
