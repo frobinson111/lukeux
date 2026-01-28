@@ -612,6 +612,12 @@ export default function CanvasPage() {
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [guidanceExpanded, setGuidanceExpanded] = useState({
+    useAiTo: false,
+    example: false,
+    outcome: false,
+    assets: false
+  });
   const MAX_IMAGE_DATAURL = 50_000; // chars
   const template = templateIndex !== null ? templateList[templateIndex] : null;
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
@@ -1014,6 +1020,13 @@ export default function CanvasPage() {
       }
     });
     return merged;
+  };
+
+  const toggleGuidanceSection = (section: keyof typeof guidanceExpanded) => {
+    setGuidanceExpanded(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
   async function handleUploadSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1765,29 +1778,137 @@ export default function CanvasPage() {
 
                   <div className={`space-y-2 px-5 py-4 text-sm ${inputsCollapsed ? "hidden" : ""}`}>
                     {template.guidanceUseAiTo && (
-                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#3b82f6] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold text-[#1e40af]">
-                        What LukeUX will check:
-                      </span>
-                        <div className="mt-2 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceUseAiTo }} />
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#3b82f6] bg-white text-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => toggleGuidanceSection('useAiTo')}
+                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+                        aria-expanded={guidanceExpanded.useAiTo}
+                        aria-controls="guidance-useAiTo"
+                      >
+                        <span className="text-[18px] font-semibold text-[#1e40af]">
+                          What LukeUX will check:
+                        </span>
+                        <svg 
+                          className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
+                            guidanceExpanded.useAiTo ? 'rotate-180' : ''
+                          }`}
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor" 
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {guidanceExpanded.useAiTo && (
+                        <div 
+                          id="guidance-useAiTo"
+                          role="region"
+                          className="px-5 pb-4 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" 
+                          dangerouslySetInnerHTML={{ __html: template.guidanceUseAiTo }} 
+                        />
+                      )}
                     </div>
                     )}
                     {template.guidanceExample && (
-                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#f59e0b] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold text-[#92400e]">Example of a problem:</span>
-                        <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceExample }} />
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#f59e0b] bg-white text-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => toggleGuidanceSection('example')}
+                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+                        aria-expanded={guidanceExpanded.example}
+                        aria-controls="guidance-example"
+                      >
+                        <span className="text-[18px] font-semibold text-[#92400e]">Example of a problem:</span>
+                        <svg 
+                          className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
+                            guidanceExpanded.example ? 'rotate-180' : ''
+                          }`}
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor" 
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {guidanceExpanded.example && (
+                        <div 
+                          id="guidance-example"
+                          role="region"
+                          className="px-5 pb-4 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" 
+                          dangerouslySetInnerHTML={{ __html: template.guidanceExample }} 
+                        />
+                      )}
                     </div>
                     )}
                     {template.guidanceOutcome && (
-                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#10b981] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold text-[#065f46]">How LukeUX helps:</span>
-                        <div className="mt-1 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" dangerouslySetInnerHTML={{ __html: template.guidanceOutcome }} />
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#10b981] bg-white text-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => toggleGuidanceSection('outcome')}
+                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+                        aria-expanded={guidanceExpanded.outcome}
+                        aria-controls="guidance-outcome"
+                      >
+                        <span className="text-[18px] font-semibold text-[#065f46]">How LukeUX helps:</span>
+                        <svg 
+                          className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
+                            guidanceExpanded.outcome ? 'rotate-180' : ''
+                          }`}
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor" 
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {guidanceExpanded.outcome && (
+                        <div 
+                          id="guidance-outcome"
+                          role="region"
+                          className="px-5 pb-4 prose prose-slate max-w-none [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1" 
+                          dangerouslySetInnerHTML={{ __html: template.guidanceOutcome }} 
+                        />
+                      )}
                     </div>
                     )}
                     {template.assets && (
-                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#6b7280] bg-white px-5 py-4 text-slate-800">
-                      <span className="inline-block text-[11px] font-semibold text-[#374151]">Upload the following files:</span>
-                        <div className="mt-1 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:space-y-1 [&_li]:my-0 [&_p]:my-1" dangerouslySetInnerHTML={{ __html: template.assets }} />
+                    <div className="rounded-lg border-[1.5px] border-[#e5e7eb] border-l-[4px] border-l-[#6b7280] bg-white text-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => toggleGuidanceSection('assets')}
+                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+                        aria-expanded={guidanceExpanded.assets}
+                        aria-controls="guidance-assets"
+                      >
+                        <span className="text-[18px] font-semibold text-[#374151]">Upload the following files:</span>
+                        <svg 
+                          className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
+                            guidanceExpanded.assets ? 'rotate-180' : ''
+                          }`}
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor" 
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {guidanceExpanded.assets && (
+                        <div 
+                          id="guidance-assets"
+                          role="region"
+                          className="px-5 pb-4 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:space-y-1 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:space-y-1 [&_li]:my-0 [&_p]:my-1" 
+                          dangerouslySetInnerHTML={{ __html: template.assets }} 
+                        />
+                      )}
                     </div>
                     )}
                   </div>
