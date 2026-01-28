@@ -59,6 +59,8 @@ export default function TemplatesAdmin({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   
   // Category management state
   const [showCategorySection, setShowCategorySection] = useState(false);
@@ -88,6 +90,15 @@ export default function TemplatesAdmin({
       t.subcategory?.toLowerCase().includes(query)
     );
   }, [templates, searchQuery]);
+
+  // Pagination
+  const paginatedTemplates = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredTemplates.slice(startIndex, endIndex);
+  }, [filteredTemplates, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredTemplates.length / rowsPerPage);
 
   const total = templates.length;
   const active = templates.filter((t) => t.isActive).length;
@@ -365,6 +376,109 @@ export default function TemplatesAdmin({
         </button>
       </div>
 
+      {/* Frameworks Section */}
+      <div className="mb-6 border-b border-slate-200 pb-4">
+        <button
+          onClick={() => setShowCategorySection(!showCategorySection)}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
+        >
+          <span className={`transform transition-transform ${showCategorySection ? "rotate-90" : ""}`}>▶</span>
+          Frameworks ({categories.length})
+        </button>
+
+        {showCategorySection && (
+          <div className="mt-3 space-y-3">
+            {/* Framework Form */}
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="mb-1 block text-xs font-medium text-slate-600">
+                    {editingCategoryId ? "Edit UX Framework" : "New UX Framework"}
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryName}
+                    onChange={(e) => setCategoryName(e.target.value)}
+                    placeholder="e.g., Research"
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <div className="w-24">
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Sort Order</label>
+                  <input
+                    type="number"
+                    value={categorySortOrder}
+                    onChange={(e) => setCategorySortOrder(parseInt(e.target.value) || 0)}
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveCategory}
+                    disabled={savingCategory}
+                    className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {savingCategory ? "Saving..." : editingCategoryId ? "Update" : "Add"}
+                  </button>
+                  {editingCategoryId && (
+                    <button
+                      onClick={handleCancelCategoryEdit}
+                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+              {categoryError && (
+                <p className="mt-2 text-xs text-red-600">{categoryError}</p>
+              )}
+            </div>
+
+            {/* Categories List */}
+            {categories.length === 0 ? (
+              <p className="text-sm text-slate-500">No categories yet. Add one above.</p>
+            ) : (
+              <div className="rounded-md border border-slate-200">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-[12px] uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th className="px-3 py-2">Name</th>
+                      <th className="px-3 py-2 w-24">Sort Order</th>
+                      <th className="px-3 py-2 w-32">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.map((cat) => (
+                      <tr key={cat.id} className="border-t border-slate-100">
+                        <td className="px-3 py-2 text-slate-900">{cat.name}</td>
+                        <td className="px-3 py-2 text-slate-600">{cat.sortOrder ?? 0}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditCategory(cat)}
+                              className="text-blue-600 hover:text-blue-800 text-xs"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(cat.id)}
+                              className="text-red-600 hover:text-red-800 text-xs"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Search Bar */}
       <div className="mb-4">
         <div className="relative">
@@ -488,25 +602,25 @@ export default function TemplatesAdmin({
               <textarea
                 value={formData.prompt}
                 onChange={(e) => setFormData((prev) => ({ ...prev, prompt: e.target.value }))}
-                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="min-h-[350px] w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
                 placeholder="The system prompt for this template..."
               />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600">WHAT LUKEUX WILL CHECK</label>
               <textarea
                 value={formData.guidanceUseAiTo}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceUseAiTo: e.target.value }))}
-                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="min-h-[350px] w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
                 placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600">EXAMPLE OF A PROBLEM</label>
               <textarea
                 value={formData.guidanceExample}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceExample: e.target.value }))}
-                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="min-h-[350px] w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
                 placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
@@ -515,7 +629,7 @@ export default function TemplatesAdmin({
               <textarea
                 value={formData.guidanceOutcome}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceOutcome: e.target.value }))}
-                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="min-h-[350px] w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
                 placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
@@ -524,7 +638,7 @@ export default function TemplatesAdmin({
               <textarea
                 value={formData.assets}
                 onChange={(e) => setFormData((prev) => ({ ...prev, assets: e.target.value }))}
-                className="h-24 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                className="min-h-[350px] w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
                 placeholder="Supports HTML: <strong>bold</strong>, <br>, <ul><li>list</li></ul>"
               />
             </div>
@@ -650,28 +764,29 @@ export default function TemplatesAdmin({
         </div>
       )}
 
-      <div className="max-h-80 overflow-auto rounded border border-slate-100">
+      <div className="overflow-auto rounded border border-slate-100" style={{ maxHeight: '600px' }}>
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-[12px] uppercase tracking-wide text-slate-600">
+          <thead className="bg-slate-50 text-left text-[12px] uppercase tracking-wide text-slate-600 sticky top-0">
             <tr>
-              <th className="px-3 py-2">Description</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Actions</th>
+              <th className="px-3 py-2 bg-slate-50">Category</th>
+              <th className="px-3 py-2 bg-slate-50">Description</th>
+              <th className="px-3 py-2 bg-slate-50">Status</th>
+              <th className="px-3 py-2 bg-slate-50">Date Updated</th>
+              <th className="px-3 py-2 bg-slate-50">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredTemplates.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-slate-500">
+                <td colSpan={5} className="px-3 py-8 text-center text-slate-500">
                   {searchQuery ? "No templates match your search" : "No templates found"}
                 </td>
               </tr>
             ) : (
-              filteredTemplates.map((t) => (
-              <tr key={t.id} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-slate-900">{t.title}</td>
+              paginatedTemplates.map((t) => (
+              <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
                 <td className="px-3 py-2 text-slate-700">{t.category || "Uncategorized"}</td>
+                <td className="px-3 py-2 text-slate-900">{t.title}</td>
                 <td className="px-3 py-2">
                   <span
                     className={`rounded-full px-2 py-[2px] text-[11px] font-semibold ${
@@ -680,6 +795,13 @@ export default function TemplatesAdmin({
                   >
                     {t.isActive ? "Active" : "Inactive"}
                   </span>
+                </td>
+                <td className="px-3 py-2 text-slate-600 text-xs">
+                  {new Date(t.updatedAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
@@ -704,108 +826,64 @@ export default function TemplatesAdmin({
         </table>
       </div>
 
-      {/* Frameworks Section */}
-      <div className="mt-6 border-t border-slate-200 pt-4">
-        <button
-          onClick={() => setShowCategorySection(!showCategorySection)}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
-        >
-          <span className={`transform transition-transform ${showCategorySection ? "rotate-90" : ""}`}>▶</span>
-          Frameworks ({categories.length})
-        </button>
-
-        {showCategorySection && (
-          <div className="mt-3 space-y-3">
-            {/* Framework Form */}
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[200px]">
-                  <label className="mb-1 block text-xs font-medium text-slate-600">
-                    {editingCategoryId ? "Edit UX Framework" : "New UX Framework"}
-                  </label>
-                  <input
-                    type="text"
-                    value={categoryName}
-                    onChange={(e) => setCategoryName(e.target.value)}
-                    placeholder="e.g., Research"
-                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-                  />
-                </div>
-                <div className="w-24">
-                  <label className="mb-1 block text-xs font-medium text-slate-600">Sort Order</label>
-                  <input
-                    type="number"
-                    value={categorySortOrder}
-                    onChange={(e) => setCategorySortOrder(parseInt(e.target.value) || 0)}
-                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSaveCategory}
-                    disabled={savingCategory}
-                    className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {savingCategory ? "Saving..." : editingCategoryId ? "Update" : "Add"}
-                  </button>
-                  {editingCategoryId && (
-                    <button
-                      onClick={handleCancelCategoryEdit}
-                      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-              {categoryError && (
-                <p className="mt-2 text-xs text-red-600">{categoryError}</p>
-              )}
-            </div>
-
-            {/* Categories List */}
-            {categories.length === 0 ? (
-              <p className="text-sm text-slate-500">No categories yet. Add one above.</p>
-            ) : (
-              <div className="rounded-md border border-slate-200">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-[12px] uppercase tracking-wide text-slate-600">
-                    <tr>
-                      <th className="px-3 py-2">Name</th>
-                      <th className="px-3 py-2 w-24">Sort Order</th>
-                      <th className="px-3 py-2 w-32">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((cat) => (
-                      <tr key={cat.id} className="border-t border-slate-100">
-                        <td className="px-3 py-2 text-slate-900">{cat.name}</td>
-                        <td className="px-3 py-2 text-slate-600">{cat.sortOrder ?? 0}</td>
-                        <td className="px-3 py-2">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditCategory(cat)}
-                              className="text-blue-600 hover:text-blue-800 text-xs"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCategory(cat.id)}
-                              className="text-red-600 hover:text-red-800 text-xs"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+      {/* Pagination Controls */}
+      {filteredTemplates.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600">Show:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded border border-slate-300 px-2 py-1 text-sm"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-slate-600">
+              Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, filteredTemplates.length)} of {filteredTemplates.length}
+            </span>
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              First
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-slate-600">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Last
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
