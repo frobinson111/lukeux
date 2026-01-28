@@ -251,19 +251,35 @@ function StructuredAnalysisOutput({
   // Parse numbered findings from the response
   const parseNumberedFindings = (text: string) => {
     const findings: { num: string; title: string; content: string }[] = [];
-    // Match patterns like:
-    // - "### Concept 1 — Title" (markdown heading with em dash)
-    // - "**Concept 1 — Title**" (bold with em dash)
-    // - "1) **Title:**" (numbered list with colon)
-    const pattern = /(?:###\s*|^\*\*)(?:Concept\s+)?(\d+)\s*[—\-–]\s*([^\n*]+?)(?:\*\*)?[\n\r]+\s*\*\*A\)\s*Concept\s+Summary\*\*([\s\S]*?)(?=(?:###\s*|^\*\*)(?:Concept\s+)?\d+\s*[—\-–]|$)/gim;
+    
+    // Pattern 1: Structured format with "Concept N — Title" and "**A) Concept Summary**"
+    const structuredPattern = /(?:###\s*|^\*\*)(?:Concept\s+)?(\d+)\s*[—\-–]\s*([^\n*]+?)(?:\*\*)?[\n\r]+\s*\*\*A\)\s*Concept\s+Summary\*\*([\s\S]*?)(?=(?:###\s*|^\*\*)(?:Concept\s+)?\d+\s*[—\-–]|$)/gim;
     let match;
     
-    while ((match = pattern.exec(text)) !== null) {
+    while ((match = structuredPattern.exec(text)) !== null) {
       findings.push({
         num: match[1],
         title: match[2].trim(),
         content: match[3].trim(),
       });
+    }
+    
+    // Pattern 2: Heading-based sections like "## 1. Title" or "### 1. Title"
+    if (findings.length === 0) {
+      const headingPattern = /(?:^|\n)(#{2,3})\s*(\d+)[\.\)]\s*([^\n]+)\n([\s\S]*?)(?=\n#{2,3}\s*\d+[\.\)]|\n#{1,2}\s+[A-Z]|$)/g;
+      let headingMatch;
+      
+      while ((headingMatch = headingPattern.exec(text)) !== null) {
+        const content = headingMatch[4].trim();
+        // Only include if there's meaningful content
+        if (content.length > 10) {
+          findings.push({
+            num: headingMatch[2],
+            title: headingMatch[3].trim(),
+            content: content,
+          });
+        }
+      }
     }
     
     console.log('Parsed findings:', findings.length, 'from response length:', text.length);
