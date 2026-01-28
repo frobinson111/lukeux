@@ -59,14 +59,9 @@ export default function TemplateTaskList() {
     body = (
       <div className="max-h-60 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-[0_6px_0_#eaebf1] pb-10 custom-scroll">
         {templates.map((t, idx) => {
-          const displayText = [
-            t.templateCategory?.name,
-            t.category,
-            t.subcategory,
-            t.title
-          ]
-            .filter(Boolean)
-            .join(" > ");
+          const displayText = t.category 
+            ? `${t.category}: ${t.title}`
+            : t.title;
           
           return (
             <button
@@ -93,22 +88,30 @@ export default function TemplateTaskList() {
       {body}
 
       {selected && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
-            <div className="mb-3 flex items-start justify-between gap-4">
+        <div 
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" 
+          role="dialog" 
+          aria-modal="true"
+          onClick={() => setSelected(null)}
+        >
+          <div 
+            className="w-full max-w-lg max-h-[90vh] rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 p-5 pb-3 border-b border-slate-200">
               <div>
                 <h4 className="text-lg font-bold text-slate-900">{selected.title}</h4>
               </div>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="rounded-full px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                className="rounded-full px-2 py-1 text-xl font-semibold text-slate-700 hover:bg-slate-100 leading-none"
                 aria-label="Close"
               >
                 ×
               </button>
             </div>
-            <div className="space-y-3 text-sm text-slate-800">
+            <div className="overflow-y-auto p-5 pt-3 space-y-3 text-sm text-slate-800">
               <Field label="Use AI To" value={selected.guidanceUseAiTo} bgClass="bg-[rgb(239,246,255)]" />
               <Field label="Example" value={selected.guidanceExample} bgClass="bg-[rgb(236,253,245)]" />
               <Field label="Outcome" value={selected.guidanceOutcome} bgClass="bg-[rgb(236,253,245)]" />
