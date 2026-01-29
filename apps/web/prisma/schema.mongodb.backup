@@ -1,0 +1,380 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPERUSER
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum PlanStatus {
+  ACTIVE
+  PAUSED
+  SUSPENDED
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum UsageType {
+  GENERATION
+  FOLLOWUP
+  IMAGE
+}
+
+enum FeatureFlagScope {
+  GLOBAL
+  USER
+  ROLE
+}
+
+model User {
+  id               String    @id @map("_id") @default(auto()) @db.ObjectId
+  firstName        String
+  lastName         String
+  workDescription  String?
+  email            String    @unique
+  passwordHash     String
+  emailVerifiedAt  DateTime?
+  role             UserRole  @default(USER)
+  plan             Plan      @default(FREE)
+  planStatus       PlanStatus @default(ACTIVE)
+  stripeCustomerId String?
+  generationLimit  Int?
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  deletedById      String?   @db.ObjectId
+
+  sessions          Session[]
+  oauthAccounts     OAuthAccount[]
+  emailVerifications EmailVerification[]
+  passwordResets     PasswordReset[]
+  projects           Project[]
+  tasks              Task[]
+  taskTemplates      TaskTemplate[] @relation("TemplateCreator")
+  billingEvents      BillingEvent[]
+  usageLedger        UsageLedger[]
+  historyEntries     HistoryEntry[]
+  apiKeys            ApiKey[]
+  supportRequests    SupportRequest[]
+  feedbacks          Feedback[]
+  recommendationFeedbacks RecommendationFeedback[]
+}
+
+model OAuthAccount {
+  id                 String   @id @map("_id") @default(auto()) @db.ObjectId
+  provider           String
+  providerAccountId  String
+  email              String?
+  userId             String   @db.ObjectId
+  user               User     @relation(fields: [userId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id         String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model SupportRequest {
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  firstName String
+  lastName  String
+  email     String
+  message   String
+  phone     String?
+  requestType String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Feedback {
+  id           String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId       String?  @db.ObjectId
+  user         User?    @relation(fields: [userId], references: [id])
+  type         String
+  message      String
+  source       String?
+  triggerCount Int?
+  taskId       String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([type])
+}
+
+model EmailVerification {
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id          String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  sortOrder   Int      @default(0)
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks Task[]
+  history HistoryEntry[]
+}
+
+model HistoryEntry {
+  id            String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId        String    @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id])
+  projectId     String?   @db.ObjectId
+  project       Project?  @relation(fields: [projectId], references: [id])
+  title         String
+  content       String
+  templateIndex Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  recommendationFeedbacks RecommendationFeedback[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model RecommendationFeedback {
+  id                String       @id @map("_id") @default(auto()) @db.ObjectId
+  userId            String       @db.ObjectId
+  user              User         @relation(fields: [userId], references: [id])
+  historyEntryId    String       @db.ObjectId
+  historyEntry      HistoryEntry @relation(fields: [historyEntryId], references: [id])
+  recommendationNum Int
+  feedback          String       // "UP" or "DOWN"
+  templateId        String?
+  templateTitle     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([userId, historyEntryId, recommendationNum])
+  @@index([userId])
+  @@index([historyEntryId])
+  @@index([createdAt])
+}
+
+model TaskTemplate {
+  id                  String   @id @map("_id") @default(auto()) @db.ObjectId
+  category            String
+  subcategory         String
+  title               String
+  guidanceUseAiTo     String?
+  guidanceExample     String?
+  guidanceOutcome     String?
+  prompt              String
+  assets              String?
+  allowedModes        String[]
+  allowedModels       String[]
+  allowUrlInput       Boolean  @default(false)
+  allowFileUploads    Boolean  @default(true)
+  // Controls whether users can access the post-affordance "Mockup Generation" UI.
+  // Default enabled for backward compatibility.
+  allowMockupGeneration Boolean @default(true)
+  // Controls whether users can access the post-affordance "Refine the Analysis" UI.
+  // Default enabled for backward compatibility.
+  allowRefineAnalysis  Boolean @default(true)
+  isActive            Boolean  @default(true)
+  templateCategoryId  String?  @db.ObjectId
+  templateCategory    TemplateCategory? @relation(fields: [templateCategoryId], references: [id])
+  createdById         String?  @db.ObjectId
+  createdBy           User?    @relation("TemplateCreator", fields: [createdById], references: [id])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tasks Task[]
+
+  @@index([isActive, category, title])
+}
+
+model TemplateCategory {
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  templates TaskTemplate[]
+}
+
+model PaymentConfig {
+  id         String   @id @map("_id") @default(auto()) @db.ObjectId
+  pricePro   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Task {
+  id             String       @id @map("_id") @default(auto()) @db.ObjectId
+  projectId      String?      @db.ObjectId
+  project        Project?     @relation(fields: [projectId], references: [id])
+  userId         String       @db.ObjectId
+  user           User         @relation(fields: [userId], references: [id])
+  templateId     String?      @db.ObjectId
+  template       TaskTemplate? @relation(fields: [templateId], references: [id])
+  prompt         String
+  mode           String
+  model          String
+  status         TaskStatus   @default(PENDING)
+  response       Json?
+  error          String?
+  contextThreadId String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  assets        TaskAsset[]
+  ledgerEntries UsageLedger[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([templateId])
+}
+
+model TaskAsset {
+  id          String   @id @map("_id") @default(auto()) @db.ObjectId
+  taskId      String   @db.ObjectId
+  task        Task     @relation(fields: [taskId], references: [id])
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  storagePath String
+  createdAt   DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model UsageLedger {
+  id              String    @id @map("_id") @default(auto()) @db.ObjectId
+  userId          String    @db.ObjectId
+  user            User      @relation(fields: [userId], references: [id])
+  taskId          String?   @db.ObjectId
+  task            Task?     @relation(fields: [taskId], references: [id])
+  type            UsageType
+  costEstimateUsd Float?
+  tokensIn        Int?
+  tokensOut       Int?
+  model           String?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([createdAt])
+}
+
+model BillingEvent {
+  id            String   @id @map("_id") @default(auto()) @db.ObjectId
+  userId        String?  @db.ObjectId
+  user          User?    @relation(fields: [userId], references: [id])
+  stripeEventId String   @unique
+  type          String
+  data          Json
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model FeatureFlag {
+  key       String            @id @map("_id")
+  scope     FeatureFlagScope
+  value     Json
+  userId    String?
+  role      UserRole?
+  createdAt DateTime          @default(now())
+}
+
+model PlanConfig {
+  id         String    @id @map("_id") @default(auto()) @db.ObjectId
+  plan       Plan      @unique
+  dailyLimit Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model ApiKey {
+  id          String   @id @map("_id") @default(auto()) @db.ObjectId
+  provider    String
+  displayName String
+  key         String
+  isActive    Boolean  @default(true)
+  createdById String?  @db.ObjectId
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([provider, isActive])
+}
+
+model PromoSignup {
+  id              String    @id @map("_id") @default(auto()) @db.ObjectId
+  firstName       String
+  lastName        String
+  email           String    @unique
+  yearsExperience String    // "5-7", "8-10", "11-15", "15+"
+  status          String    @default("PENDING") // PENDING, ACTIVATED, EXPIRED
+  activatedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+}

@@ -8,10 +8,343 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum UserRole {
+model ApiKey {
+  id          String   @id
+  provider    String
+  displayName String
+  key         String
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  User        User?    @relation(fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@index([provider, isActive])
+}
+
+model BillingEvent {
+  id            String   @id
+  userId        String?
+  stripeEventId String   @unique
+  type          String
+  data          Json
+  createdAt     DateTime @default(now())
+  User          User?    @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model EmailVerification {
+  id        String    @id
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model FeatureFlag {
+  key       String           @id
+  scope     FeatureFlagScope
+  value     Json
+  userId    String?
+  role      UserRole?
+  createdAt DateTime         @default(now())
+}
+
+model Feedback {
+  id           String   @id
+  userId       String?
+  type         String
+  message      String
+  source       String?
+  triggerCount Int?
+  taskId       String?
+  createdAt    DateTime @default(now())
+  User         User?    @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([userId])
+}
+
+model HistoryEntry {
+  id                     String                   @id
+  userId                 String
+  projectId              String?
+  title                  String
+  content                String
+  templateIndex          Int?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  Project                Project?                 @relation(fields: [projectId], references: [id])
+  User                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  RecommendationFeedback RecommendationFeedback[]
+
+  @@index([createdAt])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model OAuthAccount {
+  id                String   @id
+  provider          String
+  providerAccountId String
+  email             String?
+  userId            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+  User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([provider, providerAccountId])
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String    @id
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PaymentConfig {
+  id        String   @id
+  pricePro  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model PlanConfig {
+  id         String   @id
+  plan       Plan     @unique
+  dailyLimit Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+}
+
+model Project {
+  id           String         @id
+  userId       String
+  name         String
+  sortOrder    Int            @default(0)
+  description  String?
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  HistoryEntry HistoryEntry[]
+  User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Task         Task[]
+
+  @@index([userId])
+}
+
+model PromoSignup {
+  id              String    @id
+  firstName       String
+  lastName        String
+  email           String    @unique
+  yearsExperience String
+  status          String    @default("PENDING")
+  activatedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+
+  @@index([email])
+  @@index([status])
+}
+
+model RecommendationFeedback {
+  id                String       @id
+  userId            String
+  historyEntryId    String
+  recommendationNum Int
+  feedback          String
+  templateId        String?
+  templateTitle     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime
+  HistoryEntry      HistoryEntry @relation(fields: [historyEntryId], references: [id], onDelete: Cascade)
+  User              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, historyEntryId, recommendationNum])
+  @@index([createdAt])
+  @@index([historyEntryId])
+  @@index([userId])
+}
+
+model Session {
+  id        String    @id
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model SupportRequest {
+  id          String   @id
+  userId      String?
+  firstName   String
+  lastName    String
+  email       String
+  message     String
+  phone       String?
+  requestType String?
+  createdAt   DateTime @default(now())
+  User        User?    @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model Task {
+  id              String        @id
+  projectId       String?
+  userId          String
+  templateId      String?
+  prompt          String
+  mode            String
+  model           String
+  status          TaskStatus    @default(PENDING)
+  response        Json?
+  error           String?
+  contextThreadId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  Project         Project?      @relation(fields: [projectId], references: [id])
+  TaskTemplate    TaskTemplate? @relation(fields: [templateId], references: [id])
+  User            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  TaskAsset       TaskAsset[]
+  UsageLedger     UsageLedger[]
+
+  @@index([projectId])
+  @@index([status, createdAt])
+  @@index([templateId])
+  @@index([userId, createdAt])
+}
+
+model TaskAsset {
+  id          String   @id
+  taskId      String
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  storagePath String
+  createdAt   DateTime @default(now())
+  Task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}
+
+model TaskTemplate {
+  id                    String            @id
+  category              String
+  subcategory           String
+  title                 String
+  guidanceUseAiTo       String?
+  guidanceExample       String?
+  guidanceOutcome       String?
+  prompt                String
+  assets                String?
+  allowedModes          String[]
+  allowedModels         String[]
+  allowUrlInput         Boolean           @default(false)
+  allowFileUploads      Boolean           @default(true)
+  allowMockupGeneration Boolean           @default(true)
+  allowRefineAnalysis   Boolean           @default(true)
+  isActive              Boolean           @default(true)
+  templateCategoryId    String?
+  createdById           String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime
+  Task                  Task[]
+  User                  User?             @relation(fields: [createdById], references: [id])
+  TemplateCategory      TemplateCategory? @relation(fields: [templateCategoryId], references: [id])
+
+  @@index([isActive, category, title])
+  @@index([templateCategoryId])
+}
+
+model TemplateCategory {
+  id           String         @id
+  name         String         @unique
+  sortOrder    Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  TaskTemplate TaskTemplate[]
+}
+
+model UsageLedger {
+  id              String    @id
+  userId          String
+  taskId          String?
+  type            UsageType
+  costEstimateUsd Float?
+  tokensIn        Int?
+  tokensOut       Int?
+  model           String?
+  createdAt       DateTime  @default(now())
+  Task            Task?     @relation(fields: [taskId], references: [id])
+  User            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([taskId])
+  @@index([userId])
+}
+
+model User {
+  id                     String                   @id
+  firstName              String
+  lastName               String
+  workDescription        String?
+  email                  String                   @unique
+  passwordHash           String
+  emailVerifiedAt        DateTime?
+  role                   UserRole                 @default(USER)
+  plan                   Plan                     @default(FREE)
+  planStatus             PlanStatus               @default(ACTIVE)
+  stripeCustomerId       String?
+  generationLimit        Int?
+  lastLoginAt            DateTime?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  deletedAt              DateTime?
+  deletedById            String?
+  ApiKey                 ApiKey[]
+  BillingEvent           BillingEvent[]
+  EmailVerification      EmailVerification[]
+  Feedback               Feedback[]
+  HistoryEntry           HistoryEntry[]
+  OAuthAccount           OAuthAccount[]
+  PasswordReset          PasswordReset[]
+  Project                Project[]
+  RecommendationFeedback RecommendationFeedback[]
+  Session                Session[]
+  SupportRequest         SupportRequest[]
+  Task                   Task[]
+  TaskTemplate           TaskTemplate[]
+  UsageLedger            UsageLedger[]
+}
+
+enum FeatureFlagScope {
+  GLOBAL
   USER
-  ADMIN
-  SUPERUSER
+  ROLE
 }
 
 enum Plan {
@@ -38,347 +371,8 @@ enum UsageType {
   IMAGE
 }
 
-enum FeatureFlagScope {
-  GLOBAL
+enum UserRole {
   USER
-  ROLE
-}
-
-model User {
-  id               String    @id @default(cuid())
-  firstName        String
-  lastName         String
-  workDescription  String?
-  email            String    @unique
-  passwordHash     String
-  emailVerifiedAt  DateTime?
-  role             UserRole  @default(USER)
-  plan             Plan      @default(FREE)
-  planStatus       PlanStatus @default(ACTIVE)
-  stripeCustomerId String?
-  generationLimit  Int?
-  lastLoginAt      DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
-  deletedById      String?
-
-  sessions               Session[]
-  oauthAccounts          OAuthAccount[]
-  emailVerifications     EmailVerification[]
-  passwordResets         PasswordReset[]
-  projects               Project[]
-  tasks                  Task[]
-  taskTemplates          TaskTemplate[] @relation("TemplateCreator")
-  billingEvents          BillingEvent[]
-  usageLedger            UsageLedger[]
-  historyEntries         HistoryEntry[]
-  apiKeys                ApiKey[]
-  supportRequests        SupportRequest[]
-  feedbacks              Feedback[]
-  recommendationFeedbacks RecommendationFeedback[]
-}
-
-model OAuthAccount {
-  id                 String   @id @default(cuid())
-  provider           String
-  providerAccountId  String
-  email              String?
-  userId             String
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  @@index([provider, providerAccountId])
-  @@index([userId])
-}
-
-model Session {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash  String    @unique
-  expiresAt  DateTime
-  revokedAt  DateTime?
-  createdAt  DateTime  @default(now())
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model SupportRequest {
-  id          String   @id @default(cuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  firstName   String
-  lastName    String
-  email       String
-  message     String   @db.Text
-  phone       String?
-  requestType String?
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-model Feedback {
-  id           String   @id @default(cuid())
-  userId       String?
-  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  type         String
-  message      String   @db.Text
-  source       String?
-  triggerCount Int?
-  taskId       String?
-  createdAt    DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([userId])
-  @@index([type])
-}
-
-model EmailVerification {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([userId])
-}
-
-model PasswordReset {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([userId])
-}
-
-model Project {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  sortOrder   Int      @default(0)
-  description String?  @db.Text
-  metadata    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  tasks   Task[]
-  history HistoryEntry[]
-
-  @@index([userId])
-}
-
-model HistoryEntry {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId     String?
-  project       Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  title         String
-  content       String   @db.Text
-  templateIndex Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  recommendationFeedbacks RecommendationFeedback[]
-
-  @@index([userId])
-  @@index([projectId])
-  @@index([createdAt])
-}
-
-model RecommendationFeedback {
-  id                String       @id @default(cuid())
-  userId            String
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  historyEntryId    String
-  historyEntry      HistoryEntry @relation(fields: [historyEntryId], references: [id], onDelete: Cascade)
-  recommendationNum Int
-  feedback          String
-  templateId        String?
-  templateTitle     String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-
-  @@unique([userId, historyEntryId, recommendationNum])
-  @@index([userId])
-  @@index([historyEntryId])
-  @@index([createdAt])
-}
-
-model TaskTemplate {
-  id                    String   @id @default(cuid())
-  category              String
-  subcategory           String
-  title                 String
-  guidanceUseAiTo       String?  @db.Text
-  guidanceExample       String?  @db.Text
-  guidanceOutcome       String?  @db.Text
-  prompt                String   @db.Text
-  assets                String?  @db.Text
-  allowedModes          String[]
-  allowedModels         String[]
-  allowUrlInput         Boolean  @default(false)
-  allowFileUploads      Boolean  @default(true)
-  allowMockupGeneration Boolean  @default(true)
-  allowRefineAnalysis   Boolean  @default(true)
-  isActive              Boolean  @default(true)
-  templateCategoryId    String?
-  templateCategory      TemplateCategory? @relation(fields: [templateCategoryId], references: [id], onDelete: SetNull)
-  createdById           String?
-  createdBy             User?    @relation("TemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  tasks Task[]
-
-  @@index([isActive, category, title])
-  @@index([templateCategoryId])
-}
-
-model TemplateCategory {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  templates TaskTemplate[]
-}
-
-model PaymentConfig {
-  id        String   @id @default(cuid())
-  pricePro  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Task {
-  id              String        @id @default(cuid())
-  projectId       String?
-  project         Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  templateId      String?
-  template        TaskTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  prompt          String        @db.Text
-  mode            String
-  model           String
-  status          TaskStatus    @default(PENDING)
-  response        Json?
-  error           String?       @db.Text
-  contextThreadId String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  assets        TaskAsset[]
-  ledgerEntries UsageLedger[]
-
-  @@index([userId, createdAt])
-  @@index([status, createdAt])
-  @@index([templateId])
-  @@index([projectId])
-}
-
-model TaskAsset {
-  id          String   @id @default(cuid())
-  taskId      String
-  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  filename    String
-  mimeType    String
-  sizeBytes   Int
-  storagePath String
-  createdAt   DateTime @default(now())
-
-  @@index([taskId])
-}
-
-model UsageLedger {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taskId          String?
-  task            Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  type            UsageType
-  costEstimateUsd Float?
-  tokensIn        Int?
-  tokensOut       Int?
-  model           String?
-  createdAt       DateTime  @default(now())
-
-  @@index([userId])
-  @@index([taskId])
-  @@index([createdAt])
-}
-
-model BillingEvent {
-  id            String   @id @default(cuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  stripeEventId String   @unique
-  type          String
-  data          Json
-  createdAt     DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([userId])
-}
-
-model FeatureFlag {
-  key       String           @id
-  scope     FeatureFlagScope
-  value     Json
-  userId    String?
-  role      UserRole?
-  createdAt DateTime         @default(now())
-}
-
-model PlanConfig {
-  id         String   @id @default(cuid())
-  plan       Plan     @unique
-  dailyLimit Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
-model ApiKey {
-  id          String   @id @default(cuid())
-  provider    String
-  displayName String
-  key         String
-  isActive    Boolean  @default(true)
-  createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([provider, isActive])
-  @@index([createdById])
-}
-
-model PromoSignup {
-  id              String    @id @default(cuid())
-  firstName       String
-  lastName        String
-  email           String    @unique
-  yearsExperience String
-  status          String    @default("PENDING")
-  activatedAt     DateTime?
-  expiresAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@index([status])
-  @@index([email])
+  ADMIN
+  SUPERUSER
 }

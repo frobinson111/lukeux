@@ -32,7 +32,7 @@ export async function GET(
   try {
     const template = await prisma.taskTemplate.findUnique({
       where: { id: params.id },
-      include: { templateCategory: true }
+      include: { TemplateCategory: true }
     });
 
     if (!template) {

@@ -29,8 +29,8 @@ export async function GET() {
     where: { isActive: true },
     orderBy: [{ category: "asc" }, { subcategory: "asc" }, { title: "asc" }],
     include: {
-      templateCategory: {
-        select: { name: true }
+      TemplateCategory: {
+        select: { name: true, sortOrder: true }
       }
     }
   });

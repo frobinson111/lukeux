@@ -107,7 +107,7 @@ type Template = {
   allowFileUploads?: boolean;
   allowMockupGeneration?: boolean;
   allowRefineAnalysis?: boolean;
-  templateCategory?: { name: string } | null;
+  templateCategory?: { name: string; sortOrder: number } | null;
 };
 
 const projects = ["New UX Task"];
@@ -543,6 +543,27 @@ type FeedbackType = "LIKE" | "DISLIKE" | "SUGGESTION";
 const FEEDBACK_MAX_LEN = 1000;
 
 export default function CanvasPage() {
+  // Add styles for bold optgroup labels
+  useEffect(() => {
+    const styleId = 'template-select-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.innerHTML = `
+        select.template-select optgroup {
+          font-weight: 700 !important;
+          font-size: 14px !important;
+          color: #0f172a !important;
+        }
+        select.template-select option {
+          font-weight: 400 !important;
+          font-size: 12px !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingElapsedTime, setLoadingElapsedTime] = useState(0);
@@ -634,7 +655,8 @@ export default function CanvasPage() {
   const groupedTemplates = useMemo(() => {
     // Group by Framework (templateCategory.name) first
     const frameworkGroups: Record<string, { 
-      framework: string; 
+      framework: string;
+      sortOrder: number;
       categories: Record<string, {
         category: string;
         items: { t: Template; idx: number }[]
@@ -643,10 +665,11 @@ export default function CanvasPage() {
     
     templateList.forEach((t, idx) => {
       const framework = t.templateCategory?.name || "No Framework";
+      const sortOrder = t.templateCategory?.sortOrder ?? 999;
       const category = t.category || "Uncategorized";
       
       if (!frameworkGroups[framework]) {
-        frameworkGroups[framework] = { framework, categories: {} };
+        frameworkGroups[framework] = { framework, sortOrder, categories: {} };
       }
       
       if (!frameworkGroups[framework].categories[category]) {
@@ -656,9 +679,14 @@ export default function CanvasPage() {
       frameworkGroups[framework].categories[category].items.push({ t, idx });
     });
     
-    // Convert to sorted array
+    // Convert to sorted array using sortOrder, then alphabetically as fallback
     return Object.values(frameworkGroups)
-      .sort((a, b) => a.framework.localeCompare(b.framework))
+      .sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) {
+          return a.sortOrder - b.sortOrder;
+        }
+        return a.framework.localeCompare(b.framework);
+      })
       .map(fGroup => ({
         framework: fGroup.framework,
         categories: Object.values(fGroup.categories)
@@ -1716,7 +1744,7 @@ export default function CanvasPage() {
                     setImagePrompt("");
                     setResultsCollapsed(false);
                   }}
-                  className="flex-1 w-full rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none appearance-none"
+                  className="flex-1 w-full rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none appearance-none template-select"
                   style={{
                     backgroundImage: "url('/images/rotate.svg')",
                     backgroundRepeat: "no-repeat",

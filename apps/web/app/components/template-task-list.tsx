@@ -59,10 +59,6 @@ export default function TemplateTaskList() {
     body = (
       <div className="max-h-60 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-[0_6px_0_#eaebf1] pb-10 custom-scroll">
         {templates.map((t, idx) => {
-          const displayText = t.category 
-            ? `${t.category}: ${t.title}`
-            : t.title;
-          
           return (
             <button
               key={t.id}
@@ -74,7 +70,16 @@ export default function TemplateTaskList() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
                 <Image src="/images/help.svg" alt="" width={16} height={16} className="h-4 w-4" />
               </div>
-              <span className="font-semibold truncate">{displayText}</span>
+              <span className="truncate">
+                {t.category ? (
+                  <>
+                    <span className="font-bold">{t.category}</span>
+                    <span className="font-normal">: {t.title}</span>
+                  </>
+                ) : (
+                  <span className="font-semibold">{t.title}</span>
+                )}
+              </span>
             </button>
           );
         })}

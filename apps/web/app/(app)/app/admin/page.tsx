@@ -36,6 +36,7 @@ export type TemplateRow = {
   allowRefineAnalysis?: boolean;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
   templateCategoryId: string | null;
 };
 

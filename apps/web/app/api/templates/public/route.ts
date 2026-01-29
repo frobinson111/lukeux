@@ -15,7 +15,7 @@ export async function GET() {
       guidanceUseAiTo: true,
       guidanceExample: true,
       guidanceOutcome: true,
-      templateCategory: {
+      TemplateCategory: {
         select: {
           name: true
         }
