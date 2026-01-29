@@ -24,9 +24,8 @@ export const MODEL_MAP: Record<string, ModelConfig> = {
   "gpt-4.0": { provider: "openai", defaultMode: "auto", supportsVision: true },
   "gpt-4o": { provider: "openai", defaultMode: "auto", supportsVision: true },
   "gpt-4o-mini": { provider: "openai", defaultMode: "auto", supportsVision: true },
-  // Anthropic requires versioned model IDs
-  "claude-3-opus-20240229": { provider: "anthropic", defaultMode: "auto", supportsVision: true },
-  "claude-3-sonnet-20240229": { provider: "anthropic", defaultMode: "auto", supportsVision: true },
+  "claude-sonnet-4-20250514": { provider: "anthropic", defaultMode: "auto", supportsVision: true },
+  "claude-3-5-sonnet-latest": { provider: "anthropic", defaultMode: "auto", supportsVision: true },
   "claude-3-haiku-20240307": { provider: "anthropic", defaultMode: "auto", supportsVision: true }
 };
 

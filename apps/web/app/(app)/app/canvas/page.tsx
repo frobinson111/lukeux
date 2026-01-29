@@ -118,8 +118,8 @@ const models = [
   "gpt-4.0",
   "gpt-4o",
   "gpt-4o-mini",
-  "claude-3-opus-20240229",
-  "claude-3-sonnet-20240229",
+  "claude-sonnet-4-20250514",
+  "claude-3-5-sonnet-latest",
   "claude-3-haiku-20240307"
 ] as const;
 const modes = ["auto", "instant", "thinking"] as const;
