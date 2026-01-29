@@ -154,7 +154,7 @@ export default async function AdminPage() {
         model: true,
         tokensIn: true,
         tokensOut: true,
-        user: { select: { email: true } }
+        User: { select: { email: true } }
       }
     }),
     prismaAny.billingEvent.findMany({
@@ -164,7 +164,7 @@ export default async function AdminPage() {
         id: true,
         type: true,
         createdAt: true,
-        user: { select: { email: true } }
+        User: { select: { email: true } }
       }
     }),
     prismaAny.apiKey.findMany({
@@ -182,7 +182,7 @@ export default async function AdminPage() {
     prismaAny.feedback.findMany({
       orderBy: { createdAt: "desc" },
       take: 200,
-      include: { user: { select: { email: true, firstName: true, lastName: true } } }
+      include: { User: { select: { email: true, firstName: true, lastName: true } } }
     }),
     prismaAny.usageLedger.count({ where: { type: "GENERATION", createdAt: { gte: startOfToday } } }),
     prismaAny.usageLedger.count({ where: { type: "FOLLOWUP", createdAt: { gte: startOfToday } } }),
@@ -201,7 +201,7 @@ export default async function AdminPage() {
   const templatesData = templates as TemplateRow[];
   const usageData: UsageRow[] = usage.map((u: any) => ({
     id: u.id,
-    userEmail: u.user?.email ?? "—",
+    userEmail: u.User?.email ?? "—",
     model: u.model,
     createdAt: u.createdAt,
     tokensIn: u.tokensIn,
@@ -211,7 +211,7 @@ export default async function AdminPage() {
     id: e.id,
     type: e.type,
     createdAt: e.createdAt,
-    userEmail: e.user?.email ?? null
+    userEmail: e.User?.email ?? null
   }));
   const keyData: KeyRow[] = keys.map((k: any) => ({
     id: k.id,
@@ -253,8 +253,8 @@ export default async function AdminPage() {
           triggerCount: f.triggerCount ?? null,
           message: f.message,
           createdAt: f.createdAt instanceof Date ? f.createdAt.toISOString() : f.createdAt,
-          userEmail: f.user?.email ?? null,
-          userName: f.user ? `${f.user.firstName ?? ""} ${f.user.lastName ?? ""}`.trim() || null : null
+          userEmail: f.User?.email ?? null,
+          userName: f.User ? `${f.User.firstName ?? ""} ${f.User.lastName ?? ""}`.trim() || null : null
         })) as FeedbackRow[]
       }
       usageTotals={usageTotals}
