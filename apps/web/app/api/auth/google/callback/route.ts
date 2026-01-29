@@ -90,7 +90,7 @@ export async function GET(req: Request) {
       where: {
         OR: [
           { email: email ?? "" },
-          { oauthAccounts: { some: { provider: "google", providerAccountId: sub } } }
+          { OAuthAccount: { some: { provider: "google", providerAccountId: sub } } }
         ],
         deletedAt: null
       }
@@ -105,7 +105,7 @@ export async function GET(req: Request) {
             email: email || `google-${sub}@placeholder.local`,
             passwordHash: "oauth", // placeholder; not used for OAuth
             emailVerifiedAt: decoded.email_verified ? now : null,
-            oauthAccounts: {
+            OAuthAccount: {
               create: {
                 provider: "google",
                 providerAccountId: sub,

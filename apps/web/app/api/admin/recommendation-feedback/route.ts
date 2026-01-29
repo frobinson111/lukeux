@@ -17,8 +17,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 500,
       include: {
-        user: { select: { email: true, firstName: true, lastName: true } },
-        historyEntry: { select: { title: true, templateIndex: true } }
+        User: { select: { email: true, firstName: true, lastName: true } },
+        HistoryEntry: { select: { title: true, templateIndex: true } }
       }
     });
 
@@ -52,9 +52,9 @@ export async function GET() {
     return NextResponse.json({
       feedbacks: feedbacks.map(f => ({
         id: f.id,
-        userEmail: f.user?.email || null,
-        userName: f.user ? `${f.user.firstName} ${f.user.lastName}` : null,
-        historyTitle: f.historyEntry?.title || null,
+        userEmail: f.User?.email || null,
+        userName: f.User ? `${f.User.firstName} ${f.User.lastName}` : null,
+        historyTitle: f.HistoryEntry?.title || null,
         recommendationNum: f.recommendationNum,
         feedback: f.feedback,
         templateId: f.templateId,

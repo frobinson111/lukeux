@@ -9,14 +9,14 @@ datasource db {
 }
 
 model ApiKey {
-  id          String   @id
+  id          String   @id @default(cuid())
   provider    String
   displayName String
   key         String
   isActive    Boolean  @default(true)
   createdById String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
   User        User?    @relation(fields: [createdById], references: [id])
 
   @@index([createdById])
@@ -24,7 +24,7 @@ model ApiKey {
 }
 
 model BillingEvent {
-  id            String   @id
+  id            String   @id @default(cuid())
   userId        String?
   stripeEventId String   @unique
   type          String
@@ -37,7 +37,7 @@ model BillingEvent {
 }
 
 model EmailVerification {
-  id        String    @id
+  id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique
   expiresAt DateTime
@@ -58,7 +58,7 @@ model FeatureFlag {
 }
 
 model Feedback {
-  id           String   @id
+  id           String   @id @default(cuid())
   userId       String?
   type         String
   message      String
@@ -74,14 +74,14 @@ model Feedback {
 }
 
 model HistoryEntry {
-  id                     String                   @id
+  id                     String                   @id @default(cuid())
   userId                 String
   projectId              String?
   title                  String
   content                String
   templateIndex          Int?
   createdAt              DateTime                 @default(now())
-  updatedAt              DateTime
+  updatedAt              DateTime                 @updatedAt
   Project                Project?                 @relation(fields: [projectId], references: [id])
   User                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   RecommendationFeedback RecommendationFeedback[]
@@ -92,13 +92,13 @@ model HistoryEntry {
 }
 
 model OAuthAccount {
-  id                String   @id
+  id                String   @id @default(cuid())
   provider          String
   providerAccountId String
   email             String?
   userId            String
   createdAt         DateTime @default(now())
-  updatedAt         DateTime
+  updatedAt         DateTime @updatedAt
   User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([provider, providerAccountId])
@@ -106,7 +106,7 @@ model OAuthAccount {
 }
 
 model PasswordReset {
-  id        String    @id
+  id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique
   expiresAt DateTime
@@ -118,29 +118,29 @@ model PasswordReset {
 }
 
 model PaymentConfig {
-  id        String   @id
+  id        String   @id @default(cuid())
   pricePro  String?
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model PlanConfig {
-  id         String   @id
+  id         String   @id @default(cuid())
   plan       Plan     @unique
   dailyLimit Int
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
 }
 
 model Project {
-  id           String         @id
+  id           String         @id @default(cuid())
   userId       String
   name         String
   sortOrder    Int            @default(0)
   description  String?
   metadata     Json?
   createdAt    DateTime       @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime       @updatedAt
   HistoryEntry HistoryEntry[]
   User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   Task         Task[]
@@ -149,7 +149,7 @@ model Project {
 }
 
 model PromoSignup {
-  id              String    @id
+  id              String    @id @default(cuid())
   firstName       String
   lastName        String
   email           String    @unique
@@ -158,14 +158,14 @@ model PromoSignup {
   activatedAt     DateTime?
   expiresAt       DateTime?
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime  @updatedAt
 
   @@index([email])
   @@index([status])
 }
 
 model RecommendationFeedback {
-  id                String       @id
+  id                String       @id @default(cuid())
   userId            String
   historyEntryId    String
   recommendationNum Int
@@ -173,7 +173,7 @@ model RecommendationFeedback {
   templateId        String?
   templateTitle     String?
   createdAt         DateTime     @default(now())
-  updatedAt         DateTime
+  updatedAt         DateTime     @updatedAt
   HistoryEntry      HistoryEntry @relation(fields: [historyEntryId], references: [id], onDelete: Cascade)
   User              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -184,7 +184,7 @@ model RecommendationFeedback {
 }
 
 model Session {
-  id        String    @id
+  id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique
   expiresAt DateTime
@@ -197,7 +197,7 @@ model Session {
 }
 
 model SupportRequest {
-  id          String   @id
+  id          String   @id @default(cuid())
   userId      String?
   firstName   String
   lastName    String
@@ -213,7 +213,7 @@ model SupportRequest {
 }
 
 model Task {
-  id              String        @id
+  id              String        @id @default(cuid())
   projectId       String?
   userId          String
   templateId      String?
@@ -225,7 +225,7 @@ model Task {
   error           String?
   contextThreadId String?
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime      @updatedAt
   Project         Project?      @relation(fields: [projectId], references: [id])
   TaskTemplate    TaskTemplate? @relation(fields: [templateId], references: [id])
   User            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -239,7 +239,7 @@ model Task {
 }
 
 model TaskAsset {
-  id          String   @id
+  id          String   @id @default(cuid())
   taskId      String
   filename    String
   mimeType    String
@@ -252,7 +252,7 @@ model TaskAsset {
 }
 
 model TaskTemplate {
-  id                    String            @id
+  id                    String            @id @default(cuid())
   category              String
   subcategory           String
   title                 String
@@ -271,7 +271,7 @@ model TaskTemplate {
   templateCategoryId    String?
   createdById           String?
   createdAt             DateTime          @default(now())
-  updatedAt             DateTime
+  updatedAt             DateTime          @updatedAt
   Task                  Task[]
   User                  User?             @relation(fields: [createdById], references: [id])
   TemplateCategory      TemplateCategory? @relation(fields: [templateCategoryId], references: [id])
@@ -281,16 +281,16 @@ model TaskTemplate {
 }
 
 model TemplateCategory {
-  id           String         @id
+  id           String         @id @default(cuid())
   name         String         @unique
   sortOrder    Int            @default(0)
   createdAt    DateTime       @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime       @updatedAt
   TaskTemplate TaskTemplate[]
 }
 
 model UsageLedger {
-  id              String    @id
+  id              String    @id @default(cuid())
   userId          String
   taskId          String?
   type            UsageType
@@ -308,7 +308,7 @@ model UsageLedger {
 }
 
 model User {
-  id                     String                   @id
+  id                     String                   @id @default(cuid())
   firstName              String
   lastName               String
   workDescription        String?
@@ -322,7 +322,7 @@ model User {
   generationLimit        Int?
   lastLoginAt            DateTime?
   createdAt              DateTime                 @default(now())
-  updatedAt              DateTime
+  updatedAt              DateTime                 @updatedAt
   deletedAt              DateTime?
   deletedById            String?
   ApiKey                 ApiKey[]

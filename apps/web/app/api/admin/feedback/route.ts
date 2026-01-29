@@ -15,7 +15,7 @@ export async function GET() {
     const feedback = await prisma.feedback.findMany({
       orderBy: { createdAt: "desc" },
       take: 200,
-      include: { user: { select: { email: true, firstName: true, lastName: true } } }
+      include: { User: { select: { email: true, firstName: true, lastName: true } } }
     });
     return NextResponse.json({ feedback });
   } catch (err) {

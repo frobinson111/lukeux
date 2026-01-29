@@ -14,7 +14,7 @@ export async function GET() {
     orderBy: { sortOrder: "asc" },
     include: {
       _count: {
-        select: { templates: true }
+        select: { TaskTemplate: true }
       }
     }
   });
@@ -124,16 +124,16 @@ export async function DELETE(req: NextRequest) {
   // Check if category has templates
   const category = await prisma.templateCategory.findUnique({
     where: { id },
-    include: { _count: { select: { templates: true } } },
+    include: { _count: { select: { TaskTemplate: true } } },
   });
 
   if (!category) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  if (category._count.templates > 0) {
+  if (category._count.TaskTemplate > 0) {
     return NextResponse.json(
-      { error: `Cannot delete category with ${category._count.templates} linked templates` },
+      { error: `Cannot delete category with ${category._count.TaskTemplate} linked templates` },
       { status: 400 }
     );
   }
