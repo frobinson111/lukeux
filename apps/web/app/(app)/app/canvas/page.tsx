@@ -787,7 +787,15 @@ export default function CanvasPage() {
           return;
         }
         const data = await res.json().catch(() => null);
-        const list: Template[] = data?.templates ?? [];
+        const list: Template[] = (data?.templates ?? []).map((t: any) => {
+          const templateCategory = t?.templateCategory ?? t?.TemplateCategory ?? null;
+          const normalizedCategory = t?.category?.trim() || templateCategory?.name || "";
+          return {
+            ...t,
+            category: normalizedCategory,
+            templateCategory,
+          };
+        });
         setTemplateList(list);
         if (templateIndex !== null && templateIndex >= list.length) {
           setTemplateIndex(null);
@@ -1643,7 +1651,7 @@ export default function CanvasPage() {
               </button>
               {modelMenuOpen && (
                 <div
-                  className="absolute z-30 mt-2 w-[360px] rounded-lg border border-slate-200 bg-white p-3 shadow-xl"
+                  className="absolute z-30 mt-2 w-[520px] max-w-[90vw] rounded-lg border border-slate-200 bg-white p-3 shadow-xl"
                   onMouseLeave={() => setModelMenuOpen(false)}
                 >
                   <div className="grid grid-cols-3 gap-3 text-xs font-semibold text-slate-700">
@@ -1660,7 +1668,7 @@ export default function CanvasPage() {
                             }`}
                           >
                             <span className="w-4 text-slate-900">{model === m ? "✓" : ""}</span>
-                            <span className="truncate">{m}</span>
+                            <span className="whitespace-nowrap">{m}</span>
                           </button>
                         ))}
                       </div>
@@ -1760,9 +1768,9 @@ export default function CanvasPage() {
                       {frameworkGroup.categories.map((categoryGroup) => 
                         categoryGroup.items.map(({ t, idx }) => {
                           const parts = [];
-                          
+                          const categoryLabel = t.category?.trim() || t.templateCategory?.name;
                           // Add category
-                          if (t.category) parts.push(t.category);
+                          if (categoryLabel) parts.push(categoryLabel);
                           
                           // Add subcategory if it exists
                           if (t.subcategory) parts.push(t.subcategory);
