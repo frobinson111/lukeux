@@ -641,6 +641,7 @@ export default function CanvasPage() {
   });
   const MAX_IMAGE_DATAURL = 50_000; // chars
   const template = templateIndex !== null ? templateList[templateIndex] : null;
+  const frameworkLabel = template?.templateCategory?.name || template?.category || "Framework";
   const pdfLibsRef = useRef<{ toPng: any; jsPDF: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const followupFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -2133,9 +2134,9 @@ export default function CanvasPage() {
                       type="button"
                       onClick={handleGenerate}
                       disabled={loading || !template}
-                      className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70 md:w-80"
+                      className="inline-flex w-auto max-w-full items-center justify-center whitespace-nowrap rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-6 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {loading ? "Working..." : "Run Affordance Check"}
+                      {loading ? "Working..." : `Analyze ${frameworkLabel}`}
                     </button>
                   </div>
                 </div>
