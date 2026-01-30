@@ -7,9 +7,7 @@ import AvatarDropdown from "./components/avatar-dropdown";
 // SignOutButton is client-side; keep logout via form below to avoid client boundary here.
 
 export const metadata = {
-  icons: {
-    icon: "/favicon.svg"
-  }
+  // Icons are defined at the root app/layout.tsx so they apply everywhere.
 };
 
 export const dynamic = "force-dynamic";

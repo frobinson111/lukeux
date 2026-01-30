@@ -5,7 +5,19 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Luke UX | AI-Augmented UX Design Copilot",
   description:
-    "Desktop-first UX design copilot with structured prompts, LLM selection, and admin-controlled models."
+    "Desktop-first UX design copilot with structured prompts, LLM selection, and admin-controlled models.",
+  icons: {
+    // SVG works in modern browsers, but we also provide a PNG for Safari/iOS.
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png" }
+    ],
+    shortcut: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png" }]
+  }
 };
 
 export default function RootLayout({
