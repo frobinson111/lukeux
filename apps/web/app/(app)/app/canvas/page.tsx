@@ -2038,8 +2038,8 @@ export default function CanvasPage() {
             {template && !inputsCollapsed && template.allowUrlInput && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-left">
-                  <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype:</p>
-                  <p className="text-xs text-slate-500">One URL at a time: webpage or Figma/Framer prototype.</p>
+                  <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype link:</p>
+                  <p className="text-xs text-slate-500">One URL at a time: webpage or Figma/Framer prototype link.</p>
                 </div>
                 
                 {urlError && (
