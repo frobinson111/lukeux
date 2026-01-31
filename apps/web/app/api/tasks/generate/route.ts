@@ -169,7 +169,13 @@ export async function POST(req: Request) {
     images: images.length > 0 ? images : undefined,
     pdfPages: pdfPages.length > 0 ? pdfPages : undefined
   });
-  await logUsage(user.id, { type: "GENERATION", taskId, model });
+  await logUsage(user.id, {
+    type: "GENERATION",
+    taskId,
+    model,
+    tokensIn: response.tokensIn,
+    tokensOut: response.tokensOut
+  });
   return NextResponse.json({
     content: response.content,
     tokensIn: response.tokensIn,

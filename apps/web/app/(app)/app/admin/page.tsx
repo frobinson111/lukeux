@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { requireUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { getAvailableModelsFromKeys } from "../../../../lib/llm/models";
+import { getProviderFromModel, MODEL_PRICING, calculateCost } from "../../../../lib/llm/pricing";
 import AdminClient from "./admin-client";
 
 export type UserRow = {
@@ -112,6 +113,16 @@ export type FeedbackRow = {
   userName: string | null;
 };
 
+export type LlmModelStats = {
+  model: string;
+  provider: string;
+  totalTokensIn: number;
+  totalTokensOut: number;
+  totalTokens: number;
+  estimatedCost: number;
+  requestCount: number;
+};
+
 export default async function AdminPage() {
   const user = await requireUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPERUSER")) {
@@ -127,7 +138,7 @@ export default async function AdminPage() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows, initialCount, followupCount, imageCount, userUsageCounts] =
+  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows, initialCount, followupCount, imageCount, userUsageCounts, llmUsageByModel] =
     await Promise.all([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
@@ -189,11 +200,17 @@ export default async function AdminPage() {
       take: 200,
       include: { User: { select: { email: true, firstName: true, lastName: true } } }
     }),
-    prismaAny.usageLedger.count({ where: { type: "GENERATION", createdAt: { gte: startOfToday } } }),
-    prismaAny.usageLedger.count({ where: { type: "FOLLOWUP", createdAt: { gte: startOfToday } } }),
-    prismaAny.usageLedger.count({ where: { type: "IMAGE", createdAt: { gte: startOfToday } } }),
+    prismaAny.usageLedger.count({ where: { type: "GENERATION" } }),
+    prismaAny.usageLedger.count({ where: { type: "FOLLOWUP" } }),
+    prismaAny.usageLedger.count({ where: { type: "IMAGE" } }),
     prismaAny.usageLedger.groupBy({
       by: ["userId", "type"],
+      _count: { id: true }
+    }),
+    // LLM usage stats by model
+    prismaAny.usageLedger.groupBy({
+      by: ["model"],
+      _sum: { tokensIn: true, tokensOut: true, costEstimateUsd: true },
       _count: { id: true }
     })
   ]);
@@ -267,6 +284,25 @@ export default async function AdminPage() {
     };
   }
 
+  // Build LLM model stats
+  const llmModelStats: LlmModelStats[] = (llmUsageByModel as any[])
+    .filter((row) => row.model) // Filter out null models
+    .map((row) => {
+      const tokensIn = row._sum.tokensIn || 0;
+      const tokensOut = row._sum.tokensOut || 0;
+      const estimatedCost = row._sum.costEstimateUsd || calculateCost(row.model, tokensIn, tokensOut) || 0;
+      return {
+        model: row.model,
+        provider: getProviderFromModel(row.model),
+        totalTokensIn: tokensIn,
+        totalTokensOut: tokensOut,
+        totalTokens: tokensIn + tokensOut,
+        estimatedCost,
+        requestCount: row._count.id
+      };
+    })
+    .sort((a, b) => b.estimatedCost - a.estimatedCost); // Sort by cost descending
+
   return (
     <AdminClient
       userRole={user.role}
@@ -298,6 +334,7 @@ export default async function AdminPage() {
       }
       usageTotals={usageTotals}
       userUsageCounts={userUsageByEmail}
+      llmModelStats={llmModelStats}
     />
   );
 }
