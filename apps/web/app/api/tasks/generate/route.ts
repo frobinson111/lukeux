@@ -35,11 +35,6 @@ export async function POST(req: Request) {
       ? "Provide an in-depth response with clear sections and 8-12 detailed points."
       : "Provide a balanced response with 5-8 clear points.";
 
-  // Instruction for Luke UX Recommendation section at end of every response
-  const recommendationInstruction = `
-
-At the end of your analysis, include a section titled "## Luke UX Recommendation" with a concise, actionable recommendation (2-4 sentences) that summarizes the single most important thing the user should prioritize or do next based on your findings. This should be a clear call-to-action.`;
-
   const assetsArray: { name?: string; type?: string; content?: string; mimeType?: string }[] = Array.isArray(assets) ? assets : [];
   
   // Debug: Log what assets we received
@@ -143,8 +138,8 @@ At the end of your analysis, include a section titled "## Luke UX Recommendation
 
   const fullPrompt =
     assetsSection && assetsSection.length > 0
-      ? `${prompt}${imageContext}\n\nText Assets provided:\n${assetsSection}\n\n${detailSuffix}${recommendationInstruction}`
-      : `${prompt}${imageContext}\n\n${detailSuffix}${recommendationInstruction}`;
+      ? `${prompt}${imageContext}\n\nText Assets provided:\n${assetsSection}\n\n${detailSuffix}`
+      : `${prompt}${imageContext}\n\n${detailSuffix}`;
 
   // Define ids up front
   const taskId = crypto.randomUUID();
@@ -167,9 +162,9 @@ At the end of your analysis, include a section titled "## Luke UX Recommendation
     console.log(`[LLM Request] Image names: ${images.map(i => i.name).join(", ")}`);
   }
 
-  const response = await callLlm({ 
-    prompt: fullPrompt, 
-    model, 
+  const response = await callLlm({
+    prompt: fullPrompt,
+    model,
     mode: selectedMode as any,
     images: images.length > 0 ? images : undefined,
     pdfPages: pdfPages.length > 0 ? pdfPages : undefined
@@ -181,8 +176,31 @@ At the end of your analysis, include a section titled "## Luke UX Recommendation
     tokensIn: response.tokensIn,
     tokensOut: response.tokensOut
   });
+
+  // Generate Luke UX Recommendation by analyzing the response
+  const recommendationPrompt = `You are a UX expert assistant. Based on the following UX analysis output, provide a single concise, actionable recommendation (2-4 sentences) that summarizes the most important thing the user should prioritize or do next.
+
+Analysis Output:
+${response.content}
+
+Provide ONLY the recommendation text - no headers, no markdown formatting, no bullet points. Just 2-4 clear sentences with a specific action to take.`;
+
+  let recommendation: string | null = null;
+  try {
+    const recResponse = await callLlm({
+      prompt: recommendationPrompt,
+      model,
+      mode: "instant" as any
+    });
+    recommendation = recResponse.content?.trim() || null;
+  } catch (err) {
+    console.error("Failed to generate recommendation:", err);
+    // Continue without recommendation if it fails
+  }
+
   return NextResponse.json({
     content: response.content,
+    recommendation,
     tokensIn: response.tokensIn,
     tokensOut: response.tokensOut,
     taskId,
