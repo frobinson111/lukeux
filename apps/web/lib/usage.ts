@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { calculateCost } from "./llm/pricing";
 
 const FREE_GENERATION_LIMIT = 2;
 
@@ -31,15 +32,26 @@ function isValidObjectId(id?: string | null) {
 
 export async function logUsage(
   userId: string,
-  opts: { type: "GENERATION" | "FOLLOWUP" | "IMAGE"; taskId?: string | null; model?: string }
+  opts: {
+    type: "GENERATION" | "FOLLOWUP" | "IMAGE";
+    taskId?: string | null;
+    model?: string;
+    tokensIn?: number;
+    tokensOut?: number;
+  }
 ) {
   const safeTaskId = isValidObjectId(opts.taskId) ? opts.taskId : undefined;
+  const costEstimateUsd = calculateCost(opts.model, opts.tokensIn, opts.tokensOut);
+
   await prisma.usageLedger.create({
     data: {
       userId,
       taskId: safeTaskId,
       type: opts.type,
-      model: opts.model
+      model: opts.model,
+      tokensIn: opts.tokensIn,
+      tokensOut: opts.tokensOut,
+      costEstimateUsd
     }
   });
 }

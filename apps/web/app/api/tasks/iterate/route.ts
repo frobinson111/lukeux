@@ -63,7 +63,13 @@ export async function POST(req: Request) {
   }
 
   const response = await callLlm({ prompt: fullPrompt, model, mode: selectedMode as any, contextThreadId: threadId });
-  await logUsage(user.id, { type: "FOLLOWUP", taskId, model });
+  await logUsage(user.id, {
+    type: "FOLLOWUP",
+    taskId,
+    model,
+    tokensIn: response.tokensIn,
+    tokensOut: response.tokensOut
+  });
   return NextResponse.json({
     content: response.content,
     tokensIn: response.tokensIn,

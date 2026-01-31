@@ -16,7 +16,8 @@ import type {
   SupportRow,
   FeedbackRow,
   UsageTotals,
-  UserUsageCounts
+  UserUsageCounts,
+  LlmModelStats
 } from "./page";
 import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
@@ -40,7 +41,8 @@ export default function AdminClient({
   support,
   feedback,
   usageTotals,
-  userUsageCounts
+  userUsageCounts,
+  llmModelStats
 }: {
   userRole: string;
   users: UserRow[];
@@ -55,6 +57,7 @@ export default function AdminClient({
   feedback: FeedbackRow[];
   usageTotals: UsageTotals;
   userUsageCounts: UserUsageCounts;
+  llmModelStats: LlmModelStats[];
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [page, setPage] = useState(1);
@@ -167,35 +170,48 @@ export default function AdminClient({
   }, [usage, usagePage, usagePageSize]);
 
   const stats = useMemo(
-    () => ({
-      usersTotal: usersState.length,
-      admins: usersState.filter((u) => u.role === "ADMIN" || u.role === "SUPERUSER").length,
-      pros: usersState.filter((u) => u.plan === "PRO").length,
-      templatesTotal: templates.length,
-      templatesActive: templates.filter((t) => t.isActive).length,
-      apiKeysTotal: keys.length,
-      apiKeysActive: keys.filter((k) => k.isActive).length,
-      recentUsageCount: usage.length,
-      recentEventsCount: events.length,
-      initialResponses: usageTotals.initialCount,
-      followupResponses: usageTotals.followupCount,
-      imagesGenerated: usageTotals.imageCount
-    }),
-    [usersState, templates, keys, usage, events, usageTotals]
+    () => {
+      // Calculate provider-specific stats from llmModelStats
+      const anthropicStats = llmModelStats.filter(s => s.provider === "anthropic");
+      const openaiStats = llmModelStats.filter(s => s.provider === "openai");
+
+      const claudeEstCost = anthropicStats.reduce((sum, s) => sum + s.estimatedCost, 0);
+      const claudeRequests = anthropicStats.reduce((sum, s) => sum + s.requestCount, 0);
+      const chatgptEstCost = openaiStats.reduce((sum, s) => sum + s.estimatedCost, 0);
+      const chatgptRequests = openaiStats.reduce((sum, s) => sum + s.requestCount, 0);
+
+      return {
+        usersTotal: usersState.length,
+        admins: usersState.filter((u) => u.role === "ADMIN" || u.role === "SUPERUSER").length,
+        pros: usersState.filter((u) => u.plan === "PRO").length,
+        templatesTotal: templates.length,
+        templatesActive: templates.filter((t) => t.isActive).length,
+        apiKeysTotal: keys.length,
+        apiKeysActive: keys.filter((k) => k.isActive).length,
+        recentUsageCount: usage.length,
+        initialResponses: usageTotals.initialCount,
+        followupResponses: usageTotals.followupCount,
+        imagesGenerated: usageTotals.imageCount,
+        claudeEstCost,
+        claudeRequests,
+        chatgptEstCost,
+        chatgptRequests
+      };
+    },
+    [usersState, templates, keys, usage, usageTotals, llmModelStats]
   );
 
   const menu: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
-    { id: "users", label: "Users & Limits" },
+    { id: "users", label: "Users & Usage" },
     { id: "limits", label: "Plan Limits" },
-    { id: "templates", label: "UX Objective" },
-    { id: "keys", label: "LLM API Keys" },
-    { id: "payments", label: "Payments" },
+    { id: "templates", label: "UX Objectives" },
+    { id: "keys", label: "LLM Models" },
+    { id: "payments", label: "Payment Gateways" },
     { id: "feedback", label: "Feedback & Enquirer" },
     { id: "rec-feedback", label: "Rec Feedback" },
     { id: "promo", label: "Promo Signups" },
-    { id: "usage", label: "Usage" },
-    { id: "events", label: "Events" }
+    { id: "usage", label: "Recent Usage" }
   ];
 
   async function togglePlan(userId: string, currentPlan: string) {
@@ -291,8 +307,11 @@ export default function AdminClient({
                 <StatCard label="Initial Responses" value={stats.initialResponses} helper="Total generated" />
                 <StatCard label="Follow-up Responses" value={stats.followupResponses} helper="Total refinements" />
                 <StatCard label="Images/Mockups" value={stats.imagesGenerated} helper="Total generated" />
-                <StatCard label="Recent Usage" value={stats.recentUsageCount} helper="last 20" />
-                <StatCard label="Recent Events" value={stats.recentEventsCount} helper="last 20" />
+                <StatCard label="Recent Usage" value={stats.recentUsageCount} helper="last 200" />
+                <CostCard label="Claude Est. Cost" value={stats.claudeEstCost} helper="All Anthropic models" />
+                <StatCard label="Claude Requests" value={stats.claudeRequests} helper="All Anthropic models" />
+                <CostCard label="ChatGPT Est. Cost" value={stats.chatgptEstCost} helper="All OpenAI models" />
+                <StatCard label="ChatGPT Requests" value={stats.chatgptRequests} helper="All OpenAI models" />
               </div>
 
               <div className="space-y-3">
@@ -606,12 +625,104 @@ export default function AdminClient({
           )}
 
           {tab === "keys" && (
-            <section className="space-y-3">
+            <section className="space-y-6">
               <div className="flex items-center gap-2">
                 <Image src="/images/share.svg" alt="LLM Keys" width={18} height={18} className="h-5 w-5" />
                 <h2 className="text-lg font-semibold text-slate-900">LLM API Keys</h2>
               </div>
               <KeysAdmin initialKeys={keys} />
+
+              {/* LLM Usage Stats */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-md font-semibold text-slate-900">LLM Usage by Model</h3>
+                  <button
+                    type="button"
+                    onClick={() => exportToCSV(
+                      llmModelStats,
+                      [
+                        { key: "model", label: "Model" },
+                        { key: "provider", label: "Provider" },
+                        { key: "totalTokensIn", label: "Tokens In" },
+                        { key: "totalTokensOut", label: "Tokens Out" },
+                        { key: "totalTokens", label: "Total Tokens" },
+                        { key: "estimatedCost", label: "Est. Cost (USD)", format: (v) => typeof v === "number" ? `$${v.toFixed(4)}` : "—" },
+                        { key: "requestCount", label: "Requests" }
+                      ],
+                      "llm-usage-by-model"
+                    )}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Export CSV
+                  </button>
+                </div>
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="grid grid-cols-6 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
+                    <div>Model</div>
+                    <div>Provider</div>
+                    <div className="text-right">Total Tokens</div>
+                    <div className="text-right">Tokens In</div>
+                    <div className="text-right">Est. Cost</div>
+                    <div className="text-right">Requests</div>
+                  </div>
+                  <div className="divide-y divide-slate-200">
+                    {llmModelStats.map((stat) => (
+                      <div key={stat.model} className="grid grid-cols-6 items-center px-4 py-3 text-sm">
+                        <div className="font-semibold text-slate-900">{stat.model}</div>
+                        <div>
+                          <span className={`rounded-full px-2 py-[2px] text-[11px] font-semibold ${
+                            stat.provider === "openai"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : stat.provider === "anthropic"
+                              ? "bg-orange-50 text-orange-700 border border-orange-200"
+                              : "bg-slate-50 text-slate-700 border border-slate-200"
+                          }`}>
+                            {stat.provider}
+                          </span>
+                        </div>
+                        <div className="text-right text-slate-700">
+                          {stat.totalTokens > 0 ? stat.totalTokens.toLocaleString() : "—"}
+                        </div>
+                        <div className="text-right text-[12px] text-slate-500">
+                          {stat.totalTokensIn > 0 || stat.totalTokensOut > 0
+                            ? `${stat.totalTokensIn.toLocaleString()} / ${stat.totalTokensOut.toLocaleString()}`
+                            : "—"}
+                        </div>
+                        <div className="text-right font-semibold text-slate-900">
+                          {stat.estimatedCost > 0 ? `$${stat.estimatedCost.toFixed(4)}` : "—"}
+                        </div>
+                        <div className="text-right text-slate-700">{stat.requestCount.toLocaleString()}</div>
+                      </div>
+                    ))}
+                    {llmModelStats.length > 0 && (
+                      <div className="grid grid-cols-6 items-center px-4 py-3 text-sm bg-slate-50 font-semibold">
+                        <div className="text-slate-900">TOTAL</div>
+                        <div></div>
+                        <div className="text-right text-slate-900">
+                          {llmModelStats.reduce((sum, s) => sum + s.totalTokens, 0).toLocaleString()}
+                        </div>
+                        <div className="text-right text-[12px] text-slate-600">
+                          {llmModelStats.reduce((sum, s) => sum + s.totalTokensIn, 0).toLocaleString()} / {llmModelStats.reduce((sum, s) => sum + s.totalTokensOut, 0).toLocaleString()}
+                        </div>
+                        <div className="text-right text-slate-900">
+                          ${llmModelStats.reduce((sum, s) => sum + s.estimatedCost, 0).toFixed(4)}
+                        </div>
+                        <div className="text-right text-slate-900">
+                          {llmModelStats.reduce((sum, s) => sum + s.requestCount, 0).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                    {llmModelStats.length === 0 && (
+                      <div className="px-4 py-8 text-center text-sm text-slate-600">
+                        No usage data yet. Token tracking will begin with new requests.
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Note: Historical requests before token tracking was enabled will show "—" for tokens and cost.
+                </p>
+              </div>
             </section>
           )}
 
@@ -677,32 +788,6 @@ export default function AdminClient({
             </section>
           )}
 
-          {tab === "events" && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Image src="/images/logout.svg" alt="Events" width={18} height={18} className="h-5 w-5" />
-                <h2 className="text-lg font-semibold text-slate-900">Recent Events</h2>
-              </div>
-              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="grid grid-cols-4 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
-                  <div>Type</div>
-                  <div>User</div>
-                  <div>When</div>
-                  <div>ID</div>
-                </div>
-                <div className="divide-y divide-slate-200">
-                  {events.map((e) => (
-                    <div key={e.id} className="grid grid-cols-4 items-center px-4 py-3 text-sm">
-                      <div className="font-semibold text-slate-900">{e.type}</div>
-                      <div className="text-xs text-slate-700">{e.userEmail ?? "—"}</div>
-                      <div className="text-[12px] text-slate-500">{e.createdAt.toISOString().slice(0, 10)}</div>
-                      <div className="text-[11px] text-slate-400 truncate">{e.id}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
         </main>
       </div>
     </div>
@@ -713,7 +798,19 @@ function StatCard({ label, value, helper }: { label: string; value: number; help
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-2xl font-bold text-slate-900 mt-1">{value}</div>
+      <div className="text-2xl font-bold text-slate-900 mt-1">{value.toLocaleString()}</div>
+      {helper && <div className="text-xs text-slate-600 mt-1">{helper}</div>}
+    </div>
+  );
+}
+
+function CostCard({ label, value, helper }: { label: string; value: number; helper?: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-2xl font-bold text-slate-900 mt-1">
+        {value > 0 ? `$${value.toFixed(2)}` : "$0.00"}
+      </div>
       {helper && <div className="text-xs text-slate-600 mt-1">{helper}</div>}
     </div>
   );
