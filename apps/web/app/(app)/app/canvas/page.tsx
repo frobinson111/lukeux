@@ -308,8 +308,26 @@ function StructuredAnalysisOutput({
     if (findings.length > 0) {
       console.log('Sample finding:', findings[0]);
     }
-    
+
     return findings;
+  };
+
+  // Parse "Luke UX Recommendation" section from response
+  const parseRecommendation = (text: string): string | null => {
+    // Pattern to match "## Luke UX Recommendation" or similar headers
+    const patterns = [
+      /(?:^|\n)#{1,3}\s*(?:Luke\s*UX\s*)?Recommendation[s]?\s*\n([\s\S]*?)(?=\n#{1,3}\s|$)/i,
+      /(?:^|\n)\*\*(?:Luke\s*UX\s*)?Recommendation[s]?\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i,
+      /(?:^|\n)(?:Luke\s*UX\s*)?Recommendation:\s*\n?([\s\S]*?)(?=\n#{1,3}\s|$)/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]?.trim().length > 20) {
+        return match[1].trim();
+      }
+    }
+    return null;
   };
 
   // Custom markdown components for content rendering
@@ -332,6 +350,31 @@ function StructuredAnalysisOutput({
     li: ({ children }) => (
       <li className="flex items-start gap-2 text-[15px] leading-relaxed text-[#4b5563]">
         <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#9ca3af]"></span>
+        <span>{children}</span>
+      </li>
+    ),
+  };
+
+  // Amber-colored markdown components for recommendation section
+  const recommendationMarkdownComponents: Components = {
+    p: ({ children }) => (
+      <p className="mb-3 last:mb-0 text-[15px] leading-relaxed text-amber-800">{children}</p>
+    ),
+    strong: ({ children }) => (
+      <strong className="font-semibold text-amber-900">{children}</strong>
+    ),
+    em: ({ children }) => (
+      <em className="italic">{children}</em>
+    ),
+    ul: ({ children }) => (
+      <ul className="mb-3 last:mb-0 space-y-1.5 pl-0 list-none">{children}</ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="mb-3 last:mb-0 space-y-1.5 pl-0 list-none">{children}</ol>
+    ),
+    li: ({ children }) => (
+      <li className="flex items-start gap-2 text-[15px] leading-relaxed text-amber-800">
+        <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500"></span>
         <span>{children}</span>
       </li>
     ),
@@ -535,6 +578,40 @@ function StructuredAnalysisOutput({
           </div>
         </div>
       )}
+
+      {/* Luke UX Recommendation Section */}
+      {(() => {
+        const recommendation = parseRecommendation(response);
+        if (!recommendation) return null;
+
+        return (
+          <div
+            className="mt-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-6"
+            style={{ boxShadow: "0 2px 8px rgba(251, 191, 36, 0.15)" }}
+          >
+            <div className="flex items-start gap-3">
+              {/* Light bulb icon */}
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-400">
+                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1">
+                <h4 className="mb-3 text-[17px] font-bold text-amber-900">
+                  Luke UX Recommendation
+                </h4>
+                <div className="text-[15px] leading-relaxed text-amber-800">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={recommendationMarkdownComponents}>
+                    {recommendation}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
