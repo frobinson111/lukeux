@@ -35,6 +35,11 @@ export async function POST(req: Request) {
       ? "Provide an in-depth response with clear sections and 8-12 detailed points."
       : "Provide a balanced response with 5-8 clear points.";
 
+  // Instruction for Luke UX Recommendation section at end of every response
+  const recommendationInstruction = `
+
+At the end of your analysis, include a section titled "## Luke UX Recommendation" with a concise, actionable recommendation (2-4 sentences) that summarizes the single most important thing the user should prioritize or do next based on your findings. This should be a clear call-to-action.`;
+
   const assetsArray: { name?: string; type?: string; content?: string; mimeType?: string }[] = Array.isArray(assets) ? assets : [];
   
   // Debug: Log what assets we received
@@ -138,8 +143,8 @@ export async function POST(req: Request) {
 
   const fullPrompt =
     assetsSection && assetsSection.length > 0
-      ? `${prompt}${imageContext}\n\nText Assets provided:\n${assetsSection}\n\n${detailSuffix}`
-      : `${prompt}${imageContext}\n\n${detailSuffix}`;
+      ? `${prompt}${imageContext}\n\nText Assets provided:\n${assetsSection}\n\n${detailSuffix}${recommendationInstruction}`
+      : `${prompt}${imageContext}\n\n${detailSuffix}${recommendationInstruction}`;
 
   // Define ids up front
   const taskId = crypto.randomUUID();
