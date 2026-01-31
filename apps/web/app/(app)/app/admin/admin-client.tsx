@@ -720,7 +720,7 @@ export default function AdminClient({
                   </div>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Note: Historical requests before token tracking was enabled will show "—" for tokens and cost.
+                  Note: Historical requests before token tracking was enabled will show &ldquo;—&rdquo; for tokens and cost.
                 </p>
               </div>
             </section>
