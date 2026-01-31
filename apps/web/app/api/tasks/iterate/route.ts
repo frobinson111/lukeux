@@ -75,8 +75,31 @@ At the end of your analysis, include a section titled "## Luke UX Recommendation
     tokensIn: response.tokensIn,
     tokensOut: response.tokensOut
   });
+
+  // Generate Luke UX Recommendation by analyzing the response
+  const recommendationPrompt = `You are a UX expert assistant. Based on the following UX analysis output, provide a single concise, actionable recommendation (2-4 sentences) that summarizes the most important thing the user should prioritize or do next.
+
+Analysis Output:
+${response.content}
+
+Provide ONLY the recommendation text - no headers, no markdown formatting, no bullet points. Just 2-4 clear sentences with a specific action to take.`;
+
+  let recommendation: string | null = null;
+  try {
+    const recResponse = await callLlm({
+      prompt: recommendationPrompt,
+      model,
+      mode: "instant" as any
+    });
+    recommendation = recResponse.content?.trim() || null;
+  } catch (err) {
+    console.error("Failed to generate recommendation:", err);
+    // Continue without recommendation if it fails
+  }
+
   return NextResponse.json({
     content: response.content,
+    recommendation,
     tokensIn: response.tokensIn,
     tokensOut: response.tokensOut,
     taskId,
