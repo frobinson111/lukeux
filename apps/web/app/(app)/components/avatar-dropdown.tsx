@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { User } from "@prisma/client";
 
 type Props = {
@@ -13,6 +14,8 @@ type Props = {
 
 export default function AvatarDropdown({ user, initials, fullName }: Props) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isOnAdminPage = pathname?.startsWith("/app/admin");
   const hoverRef = useRef<NodeJS.Timeout | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -87,10 +90,17 @@ export default function AvatarDropdown({ user, initials, fullName }: Props) {
           </div>
           <div className="flex flex-col divide-y divide-slate-200 text-sm font-semibold text-slate-800">
             {(user.role === "ADMIN" || user.role === "SUPERUSER") && (
-              <Link className="flex items-center gap-2 px-4 py-3 hover:bg-slate-50" href="/app/admin" role="menuitem">
-                <Image src="/images/settings.svg" alt="Admin" width={18} height={18} className="h-5 w-5" />
-                <span>Admin</span>
-              </Link>
+              isOnAdminPage ? (
+                <Link className="flex items-center gap-2 px-4 py-3 hover:bg-slate-50" href="/app/canvas" role="menuitem">
+                  <Image src="/images/share.svg" alt="Canvas" width={18} height={18} className="h-5 w-5" />
+                  <span>Canvas</span>
+                </Link>
+              ) : (
+                <Link className="flex items-center gap-2 px-4 py-3 hover:bg-slate-50" href="/app/admin" role="menuitem">
+                  <Image src="/images/settings.svg" alt="Admin" width={18} height={18} className="h-5 w-5" />
+                  <span>Admin</span>
+                </Link>
+              )
             )}
             <Link className="flex items-center gap-2 px-4 py-3 hover:bg-slate-50" href="/app/settings" role="menuitem">
               <Image src="/images/settings.svg" alt="Settings" width={18} height={18} className="h-5 w-5" />
