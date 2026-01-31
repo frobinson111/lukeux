@@ -16,6 +16,9 @@ export type UserRow = {
   lastLoginAt: Date | null;
   createdAt: Date;
   deletedAt?: Date | null;
+  initialCount: number;
+  followupCount: number;
+  imageCount: number;
 };
 
 export type TemplateRow = {
@@ -43,10 +46,9 @@ export type TemplateRow = {
 export type UsageRow = {
   id: string;
   userEmail: string;
+  type: "GENERATION" | "FOLLOWUP" | "IMAGE";
   model: string | null;
   createdAt: Date;
-  tokensIn: number | null;
-  tokensOut: number | null;
 };
 
 export type EventRow = {
@@ -60,6 +62,10 @@ export type UsageTotals = {
   initialCount: number;
   followupCount: number;
   imageCount: number;
+};
+
+export type UserUsageCounts = {
+  [email: string]: { initial: number; followup: number; image: number };
 };
 
 export type KeyRow = {
@@ -121,7 +127,7 @@ export default async function AdminPage() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows, initialCount, followupCount, imageCount] =
+  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows, initialCount, followupCount, imageCount, userUsageCounts] =
     await Promise.all([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
@@ -146,14 +152,13 @@ export default async function AdminPage() {
       orderBy: [{ category: "asc" }, { title: "asc" }]
     }),
     prismaAny.usageLedger.findMany({
-      take: 20,
+      take: 200,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        type: true,
         createdAt: true,
         model: true,
-        tokensIn: true,
-        tokensOut: true,
         User: { select: { email: true } }
       }
     }),
@@ -186,7 +191,11 @@ export default async function AdminPage() {
     }),
     prismaAny.usageLedger.count({ where: { type: "GENERATION", createdAt: { gte: startOfToday } } }),
     prismaAny.usageLedger.count({ where: { type: "FOLLOWUP", createdAt: { gte: startOfToday } } }),
-    prismaAny.usageLedger.count({ where: { type: "IMAGE", createdAt: { gte: startOfToday } } })
+    prismaAny.usageLedger.count({ where: { type: "IMAGE", createdAt: { gte: startOfToday } } }),
+    prismaAny.usageLedger.groupBy({
+      by: ["userId", "type"],
+      _count: { id: true }
+    })
   ]);
 
   const secret = process.env.STRIPE_SECRET_KEY || "";
@@ -197,15 +206,35 @@ export default async function AdminPage() {
       ? "test"
       : "unknown";
 
-  const usersData = (users as UserRow[]).filter((u) => !u.deletedAt);
+  // Build a map of user usage counts
+  const userCountsMap = new Map<string, { initial: number; followup: number; image: number }>();
+  for (const row of userUsageCounts as any[]) {
+    const userId = row.userId;
+    if (!userCountsMap.has(userId)) {
+      userCountsMap.set(userId, { initial: 0, followup: 0, image: 0 });
+    }
+    const counts = userCountsMap.get(userId)!;
+    if (row.type === "GENERATION") counts.initial = row._count.id;
+    else if (row.type === "FOLLOWUP") counts.followup = row._count.id;
+    else if (row.type === "IMAGE") counts.image = row._count.id;
+  }
+
+  const usersData = (users as any[]).filter((u) => !u.deletedAt).map((u) => {
+    const counts = userCountsMap.get(u.id) || { initial: 0, followup: 0, image: 0 };
+    return {
+      ...u,
+      initialCount: counts.initial,
+      followupCount: counts.followup,
+      imageCount: counts.image
+    } as UserRow;
+  });
   const templatesData = templates as TemplateRow[];
   const usageData: UsageRow[] = usage.map((u: any) => ({
     id: u.id,
     userEmail: u.User?.email ?? "—",
+    type: u.type,
     model: u.model,
-    createdAt: u.createdAt,
-    tokensIn: u.tokensIn,
-    tokensOut: u.tokensOut
+    createdAt: u.createdAt
   }));
   const eventData: EventRow[] = events.map((e: any) => ({
     id: e.id,
@@ -227,6 +256,16 @@ export default async function AdminPage() {
     followupCount: followupCount as number,
     imageCount: imageCount as number
   };
+
+  // Build email-keyed usage counts for the Usage table
+  const userUsageByEmail: UserUsageCounts = {};
+  for (const u of usersData) {
+    userUsageByEmail[u.email] = {
+      initial: u.initialCount,
+      followup: u.followupCount,
+      image: u.imageCount
+    };
+  }
 
   return (
     <AdminClient
@@ -258,6 +297,7 @@ export default async function AdminPage() {
         })) as FeedbackRow[]
       }
       usageTotals={usageTotals}
+      userUsageCounts={userUsageByEmail}
     />
   );
 }

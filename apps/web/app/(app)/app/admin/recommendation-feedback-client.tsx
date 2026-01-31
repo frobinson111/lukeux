@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { exportToCSV } from "./export-utils";
 
 export type RecommendationFeedbackRow = {
   id: string;
@@ -112,8 +113,26 @@ export default function RecommendationFeedbackAdmin({
 
       {/* Recent Feedbacks */}
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <h3 className="font-semibold text-slate-900">Recent Recommendation Feedbacks</h3>
+          <button
+            type="button"
+            onClick={() => exportToCSV(
+              feedbacks,
+              [
+                { key: "userEmail", label: "User Email" },
+                { key: "userName", label: "User Name" },
+                { key: "templateTitle", label: "Template" },
+                { key: "recommendationNum", label: "Rec #" },
+                { key: "feedback", label: "Feedback" },
+                { key: "createdAt", label: "Created At", format: (v) => formatDate(v as string | Date) }
+              ],
+              "recommendation-feedback"
+            )}
+            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Export CSV
+          </button>
         </div>
         <div className="max-h-64 overflow-auto">
           <table className="min-w-full text-sm">
