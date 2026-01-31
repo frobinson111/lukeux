@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { CategoryRow, TemplateRow } from "./page";
+import { exportToCSV } from "./export-utils";
 
 type TemplateFormData = {
   id?: string;
@@ -368,12 +369,32 @@ export default function TemplatesAdmin({
             {categories.length} categories
           </span>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Add Template
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => exportToCSV(
+              filteredTemplates,
+              [
+                { key: "category", label: "Category" },
+                { key: "subcategory", label: "Subcategory" },
+                { key: "title", label: "Title" },
+                { key: "prompt", label: "Prompt" },
+                { key: "isActive", label: "Status", format: (v) => v ? "Active" : "Inactive" },
+                { key: "createdAt", label: "Created At", format: (v) => v instanceof Date ? v.toISOString().split("T")[0] : String(v) }
+              ],
+              "ux-objectives"
+            )}
+            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={handleAddNew}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + Add Template
+          </button>
+        </div>
       </div>
 
       {/* Frameworks Section */}

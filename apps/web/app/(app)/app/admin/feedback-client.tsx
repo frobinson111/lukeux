@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { exportToCSV } from "./export-utils";
 
 export type FeedbackRow = {
   id: string;
@@ -23,6 +24,30 @@ export default function FeedbackAdmin({ feedback }: { feedback: FeedbackRow[] })
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between bg-slate-50 px-4 py-2">
+        <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-600">
+          Feedback ({feedback.length} items)
+        </div>
+        <button
+          type="button"
+          onClick={() => exportToCSV(
+            feedback,
+            [
+              { key: "userEmail", label: "User Email" },
+              { key: "userName", label: "User Name" },
+              { key: "type", label: "Type" },
+              { key: "source", label: "Source" },
+              { key: "triggerCount", label: "Trigger Count" },
+              { key: "message", label: "Message" },
+              { key: "createdAt", label: "Created At", format: (v) => formatDate(v as string | Date) }
+            ],
+            "feedback"
+          )}
+          className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Export CSV
+        </button>
+      </div>
       <div className="grid grid-cols-6 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
         <div>User</div>
         <div>Type</div>
@@ -59,4 +84,3 @@ function formatDate(d: string | Date) {
     return d as string;
   }
 }
-

@@ -15,12 +15,14 @@ import type {
   PaymentConfigRow,
   SupportRow,
   FeedbackRow,
-  UsageTotals
+  UsageTotals,
+  UserUsageCounts
 } from "./page";
 import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
 import RecommendationFeedbackAdmin, { type RecommendationFeedbackRow, type TemplateStat, type FeedbackSummary } from "./recommendation-feedback-client";
 import { PromoSignupsClient } from "./promo-signups-client";
+import { exportToCSV } from "./export-utils";
 
 const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "promo", "usage", "events"] as const;
 type Tab = (typeof TABS)[number];
@@ -37,7 +39,8 @@ export default function AdminClient({
   payments,
   support,
   feedback,
-  usageTotals
+  usageTotals,
+  userUsageCounts
 }: {
   userRole: string;
   users: UserRow[];
@@ -51,6 +54,7 @@ export default function AdminClient({
   support: SupportRow[];
   feedback: FeedbackRow[];
   usageTotals: UsageTotals;
+  userUsageCounts: UserUsageCounts;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [page, setPage] = useState(1);
@@ -65,6 +69,10 @@ export default function AdminClient({
   const [sortBy, setSortBy] = useState<"email" | "createdAt" | "lastLoginAt">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   
+  // Usage pagination
+  const [usagePage, setUsagePage] = useState(1);
+  const usagePageSize = 10;
+
   // Recommendation feedback state (loaded on demand)
   const [recFeedbacks, setRecFeedbacks] = useState<RecommendationFeedbackRow[]>([]);
   const [recSummary, setRecSummary] = useState<FeedbackSummary>({ totalUp: 0, totalDown: 0, total: 0, ratio: 0 });
@@ -150,6 +158,13 @@ export default function AdminClient({
     const start = (page - 1) * pageSize;
     return filteredAndSortedUsers.slice(start, start + pageSize);
   }, [filteredAndSortedUsers, page, pageSize]);
+
+  // Usage pagination
+  const usageTotalPages = Math.max(1, Math.ceil(usage.length / usagePageSize));
+  const pagedUsage = useMemo(() => {
+    const start = (usagePage - 1) * usagePageSize;
+    return usage.slice(start, start + usagePageSize);
+  }, [usage, usagePage, usagePageSize]);
 
   const stats = useMemo(
     () => ({
@@ -348,9 +363,33 @@ export default function AdminClient({
                   <Image src="/images/settings.svg" alt="Users" width={18} height={18} className="h-5 w-5" />
                   <h2 className="text-lg font-semibold text-slate-900">Users & Limits</h2>
                 </div>
-                <span className="text-xs text-slate-500">
-                  Showing {filteredAndSortedUsers.length} of {usersState.length} users
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-500">
+                    Showing {filteredAndSortedUsers.length} of {usersState.length} users
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => exportToCSV(
+                      filteredAndSortedUsers,
+                      [
+                        { key: "email", label: "Email" },
+                        { key: "role", label: "Role" },
+                        { key: "plan", label: "Plan" },
+                        { key: "planStatus", label: "Plan Status" },
+                        { key: "generationLimit", label: "Generation Limit" },
+                        { key: "initialCount", label: "Initial Count" },
+                        { key: "followupCount", label: "Follow-up Count" },
+                        { key: "imageCount", label: "Image Count" },
+                        { key: "lastLoginAt", label: "Last Login", format: (v) => v instanceof Date ? v.toISOString().split("T")[0] : "" },
+                        { key: "createdAt", label: "Created At", format: (v) => v instanceof Date ? v.toISOString().split("T")[0] : String(v) }
+                      ],
+                      "users"
+                    )}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Export CSV
+                  </button>
+                </div>
               </div>
               
               {/* Search and Filter Controls */}
@@ -430,18 +469,19 @@ export default function AdminClient({
               </div>
 
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="grid grid-cols-8 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
+                <div className="grid grid-cols-9 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
                   <div className="col-span-2">User</div>
                   <div>Role</div>
                   <div>Plan</div>
                   <div>Limit</div>
+                  <div>Usage</div>
                   <div>Last Login</div>
                   <div>Created</div>
                   <div>Actions</div>
                 </div>
                 <div className="divide-y divide-slate-200">
                   {pagedUsers.map((u) => (
-                    <div key={u.id} className="grid grid-cols-8 items-center px-4 py-3 text-sm">
+                    <div key={u.id} className="grid grid-cols-9 items-center px-4 py-3 text-sm">
                       <div className="col-span-2">
                         <div className="font-semibold text-slate-900">{u.email}</div>
                         <div className="text-[11px] text-slate-500">
@@ -453,6 +493,13 @@ export default function AdminClient({
                         {u.plan} · {u.planStatus}
                       </div>
                       <div className="text-xs text-slate-700">{u.generationLimit ?? "—"}</div>
+                      <div className="text-[11px] text-slate-600" title={`Initial: ${u.initialCount}, Follow-up: ${u.followupCount}, Image: ${u.imageCount}`}>
+                        <span className="text-blue-600">{u.initialCount}</span>
+                        {" / "}
+                        <span className="text-amber-600">{u.followupCount}</span>
+                        {" / "}
+                        <span className="text-purple-600">{u.imageCount}</span>
+                      </div>
                       <div className="text-[12px] text-slate-600" title={u.lastLoginAt ? u.lastLoginAt.toISOString() : "Never"}>
                         {formatRelativeTime(u.lastLoginAt)}
                       </div>
@@ -570,30 +617,61 @@ export default function AdminClient({
 
           {tab === "usage" && (
             <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Image src="/images/share.svg" alt="Usage" width={18} height={18} className="h-5 w-5" />
-                <h2 className="text-lg font-semibold text-slate-900">Recent Usage</h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Image src="/images/share.svg" alt="Usage" width={18} height={18} className="h-5 w-5" />
+                  <h2 className="text-lg font-semibold text-slate-900">Recent Usage</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-500">{usage.length} records</span>
+                  <button
+                    type="button"
+                    onClick={() => exportToCSV(
+                      usage,
+                      [
+                        { key: "userEmail", label: "User Email" },
+                        { key: "type", label: "Type" },
+                        { key: "model", label: "Model" },
+                        { key: "createdAt", label: "Date", format: (v) => v instanceof Date ? v.toISOString().split("T")[0] : String(v) }
+                      ],
+                      "recent-usage"
+                    )}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Export CSV
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <Pagination page={usagePage} totalPages={usageTotalPages} onPageChange={setUsagePage} />
               </div>
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="grid grid-cols-5 bg-slate-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-slate-600">
                   <div>User</div>
+                  <div>Type</div>
+                  <div>User Total</div>
                   <div>Model</div>
-                  <div>Tokens</div>
                   <div>When</div>
-                  <div>ID</div>
                 </div>
                 <div className="divide-y divide-slate-200">
-                  {usage.map((u) => (
-                    <div key={u.id} className="grid grid-cols-5 items-center px-4 py-3 text-sm">
-                      <div className="font-semibold text-slate-900">{u.userEmail}</div>
-                      <div className="text-xs text-slate-700">{u.model ?? "—"}</div>
-                      <div className="text-xs text-slate-700">
-                        {u.tokensIn ?? 0} / {u.tokensOut ?? 0}
+                  {pagedUsage.map((u) => {
+                    const counts = userUsageCounts[u.userEmail] || { initial: 0, followup: 0, image: 0 };
+                    return (
+                      <div key={u.id} className="grid grid-cols-5 items-center px-4 py-3 text-sm">
+                        <div className="font-semibold text-slate-900">{u.userEmail}</div>
+                        <div><TypeBadge type={u.type} /></div>
+                        <div className="text-[11px] text-slate-600" title={`Initial: ${counts.initial}, Follow-up: ${counts.followup}, Image: ${counts.image}`}>
+                          <span className="text-blue-600">{counts.initial}</span>
+                          {" / "}
+                          <span className="text-amber-600">{counts.followup}</span>
+                          {" / "}
+                          <span className="text-purple-600">{counts.image}</span>
+                        </div>
+                        <div className="text-xs text-slate-700">{u.model ?? "—"}</div>
+                        <div className="text-[12px] text-slate-500">{u.createdAt.toISOString().slice(0, 10)}</div>
                       </div>
-                      <div className="text-[12px] text-slate-500">{u.createdAt.toISOString().slice(0, 10)}</div>
-                      <div className="text-[11px] text-slate-400 truncate">{u.id}</div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </section>
@@ -724,3 +802,16 @@ function PlanLimitForm({ onStatus }: { onStatus: (msg: string | null) => void })
   );
 }
 
+function TypeBadge({ type }: { type: "GENERATION" | "FOLLOWUP" | "IMAGE" }) {
+  const config = {
+    GENERATION: { label: "Initial", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+    FOLLOWUP: { label: "Follow-up", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+    IMAGE: { label: "Image", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" }
+  };
+  const { label, bg, text, border } = config[type];
+  return (
+    <span className={`rounded-full px-2 py-[2px] text-[11px] font-semibold ${bg} ${text} border ${border}`}>
+      {label}
+    </span>
+  );
+}

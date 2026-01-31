@@ -1,15 +1,37 @@
 "use client";
 
 import type { SupportRow } from "./page";
+import { exportToCSV } from "./export-utils";
 
 export default function SupportAdmin({ requests }: { requests: SupportRow[] }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-sm text-slate-700">
-        <span className="font-semibold text-slate-900">Support Requests</span>
-        <span className="rounded-full bg-slate-100 px-2 py-[2px] text-xs text-slate-800">
-          {requests.length} items
-        </span>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-slate-700">
+          <span className="font-semibold text-slate-900">Support Requests</span>
+          <span className="rounded-full bg-slate-100 px-2 py-[2px] text-xs text-slate-800">
+            {requests.length} items
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => exportToCSV(
+            requests,
+            [
+              { key: "firstName", label: "First Name" },
+              { key: "lastName", label: "Last Name" },
+              { key: "email", label: "Email" },
+              { key: "phone", label: "Phone" },
+              { key: "requestType", label: "Request Type" },
+              { key: "message", label: "Message" },
+              { key: "createdAt", label: "Created At", format: (v) => v instanceof Date ? v.toISOString().split("T")[0] : String(v) }
+            ],
+            "support-requests"
+          )}
+          className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Export CSV
+        </button>
       </div>
       <div className="max-h-80 overflow-auto rounded border border-slate-100">
         <table className="min-w-full text-sm">
@@ -38,4 +60,3 @@ export default function SupportAdmin({ requests }: { requests: SupportRow[] }) {
     </div>
   );
 }
-
