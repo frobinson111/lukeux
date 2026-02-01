@@ -270,6 +270,8 @@ model TaskTemplate {
   isActive              Boolean           @default(true)
   templateCategoryId    String?
   createdById           String?
+  taskType              String            @default("llm") // "llm" | "accessibility"
+  accessibilityConfig   Json?             // { maxPages: number }
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   Task                  Task[]

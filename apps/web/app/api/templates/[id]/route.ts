@@ -4,6 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 import { getCurrentUser } from "../../../../lib/auth";
 import { z } from "zod";
 import { sanitizeTemplateHtml } from "@luke-ux/shared";
+import { Prisma } from "@prisma/client";
 
 const updateTemplateSchema = z.object({
   category: z.string().min(1).optional(),
@@ -22,6 +23,10 @@ const updateTemplateSchema = z.object({
   allowRefineAnalysis: z.boolean().optional(),
   isActive: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
+  taskType: z.enum(["llm", "accessibility"]).optional(),
+  accessibilityConfig: z.object({
+    maxPages: z.number().min(1).max(10).optional(),
+  }).nullable().optional(),
 });
 
 // GET - Get a single template by ID
@@ -108,6 +113,12 @@ export async function PATCH(
         ...(parsed.data.allowRefineAnalysis !== undefined && { allowRefineAnalysis: parsed.data.allowRefineAnalysis }),
         ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
         ...(parsed.data.templateCategoryId !== undefined && { templateCategoryId: parsed.data.templateCategoryId }),
+        ...(parsed.data.taskType !== undefined && { taskType: parsed.data.taskType }),
+        ...(parsed.data.accessibilityConfig !== undefined && {
+          accessibilityConfig: parsed.data.accessibilityConfig === null
+            ? Prisma.JsonNull
+            : parsed.data.accessibilityConfig
+        }),
       }
     });
 

@@ -8,6 +8,7 @@ import { convertPdfToImages } from "../../../../lib/pdf-to-images";
 import { prisma } from "../../../../lib/prisma";
 import { parseFigmaUrl, buildAnalysisPrompt, detectAnalysisType } from "../../../../lib/figma-mcp";
 import { decryptToken, getFigmaFile, getFigmaComments } from "../../../../lib/figma";
+import { runAccessibilityAudit, parseUrls } from "../../../../lib/accessibility/audit-service";
 
 // Supported image MIME types for vision models
 const IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"] as const;
@@ -22,9 +23,14 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const { model, prompt, mode, detailLevel, assets, figmaUrl } = body || {};
+  const { model, prompt, mode, detailLevel, assets, figmaUrl, taskType, templateId } = body || {};
   if (!model || !prompt) {
     return NextResponse.json({ error: "Missing model or prompt" }, { status: 400 });
+  }
+
+  // Check for accessibility audit task type
+  if (taskType === "accessibility") {
+    return handleAccessibilityAudit(user, prompt, templateId);
   }
 
   // Handle Figma URL if provided - fetch design context
@@ -355,4 +361,102 @@ function buildFigmaContextString(fileData: any, comments: any, nodeId?: string):
   }
 
   return sections.join('\n');
+}
+
+/**
+ * Handle accessibility audit task type
+ */
+async function handleAccessibilityAudit(
+  user: { id: string; plan: any; planStatus: any },
+  prompt: string,
+  templateId?: string
+) {
+  // Assert usage limits
+  try {
+    await assertCanGenerate({
+      userId: user.id,
+      plan: user.plan as any,
+      planStatus: user.planStatus as any,
+      generationLimit: (user as any).generationLimit ?? null,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err?.message || "Generation limit reached." },
+      { status: 402 }
+    );
+  }
+
+  // Parse URLs from the prompt (user enters URLs in the text input)
+  const urls = parseUrls(prompt);
+
+  if (urls.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Please enter one or more valid URLs to audit (e.g., https://example.com). Separate multiple URLs with commas or newlines.",
+      },
+      { status: 400 }
+    );
+  }
+
+  // Get accessibility config from template if available
+  let maxPages = 3;
+  if (templateId) {
+    try {
+      const template = await prisma.taskTemplate.findUnique({
+        where: { id: templateId },
+        select: { accessibilityConfig: true },
+      });
+      if (template?.accessibilityConfig) {
+        const config = template.accessibilityConfig as { maxPages?: number };
+        maxPages = config.maxPages ?? 3;
+      }
+    } catch {
+      // Use default config
+    }
+  }
+
+  console.log(
+    `[Accessibility Audit] Starting audit for ${urls.length} URL(s): ${urls.join(", ")}`
+  );
+
+  try {
+    const result = await runAccessibilityAudit({
+      urls,
+      config: { maxPages },
+    });
+
+    // Log usage
+    await logUsage(user.id, {
+      type: "GENERATION",
+      taskId: result.taskId,
+      model: "accessibility-audit",
+      tokensIn: 0, // No LLM tokens for accessibility audits
+      tokensOut: 0,
+    });
+
+    console.log(
+      `[Accessibility Audit] Completed: ${result.auditMetadata.urlsScanned} URLs scanned, ${result.auditMetadata.totalViolations} violations found, status: ${result.auditMetadata.overallStatus}`
+    );
+
+    return NextResponse.json({
+      content: result.content,
+      recommendation: result.recommendation,
+      taskId: result.taskId,
+      threadId: result.threadId,
+      tokensIn: 0,
+      tokensOut: 0,
+      auditMetadata: result.auditMetadata,
+    });
+  } catch (err: any) {
+    console.error("[Accessibility Audit] Error:", err);
+    return NextResponse.json(
+      {
+        error:
+          err?.message ||
+          "Failed to run accessibility audit. Please check the URLs and try again.",
+      },
+      { status: 500 }
+    );
+  }
 }
