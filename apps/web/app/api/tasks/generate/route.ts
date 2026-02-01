@@ -5,6 +5,9 @@ import { callLlm } from "../../../../lib/llm/service";
 import { assertCanGenerate, logUsage } from "../../../../lib/usage";
 import type { LlmImage, LlmPdfPage } from "@luke-ux/shared";
 import { convertPdfToImages } from "../../../../lib/pdf-to-images";
+import { prisma } from "../../../../lib/prisma";
+import { parseFigmaUrl, buildAnalysisPrompt, detectAnalysisType } from "../../../../lib/figma-mcp";
+import { decryptToken, getFigmaFile, getFigmaComments } from "../../../../lib/figma";
 
 // Supported image MIME types for vision models
 const IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"] as const;
@@ -19,9 +22,47 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const { model, prompt, mode, detailLevel, assets } = body || {};
+  const { model, prompt, mode, detailLevel, assets, figmaUrl } = body || {};
   if (!model || !prompt) {
     return NextResponse.json({ error: "Missing model or prompt" }, { status: 400 });
+  }
+
+  // Handle Figma URL if provided - fetch design context
+  let figmaContext = "";
+  if (figmaUrl) {
+    const urlParts = parseFigmaUrl(figmaUrl);
+    if (urlParts) {
+      try {
+        const figmaConnection = await prisma.figmaConnection.findUnique({
+          where: { userId: user.id },
+        });
+
+        if (figmaConnection && (!figmaConnection.expiresAt || figmaConnection.expiresAt > new Date())) {
+          const accessToken = decryptToken(figmaConnection.accessToken);
+          const fileData = await getFigmaFile(accessToken, urlParts.fileKey);
+
+          // Detect analysis type from prompt
+          const analysisType = detectAnalysisType(prompt);
+
+          // Fetch comments if needed
+          let comments = null;
+          if (analysisType === 'comments' || analysisType === 'full') {
+            try {
+              comments = await getFigmaComments(accessToken, urlParts.fileKey);
+            } catch {
+              // Comments might not be available
+            }
+          }
+
+          // Build Figma context
+          figmaContext = buildFigmaContextString(fileData, comments, urlParts.nodeId);
+          console.log(`[Figma Context] Loaded context for file: ${fileData.name}, analysis type: ${analysisType}`);
+        }
+      } catch (err) {
+        console.error("Failed to fetch Figma context:", err);
+        // Continue without Figma context
+      }
+    }
   }
   const allowedModes = ["auto", "instant", "thinking"];
   const allowedDetail = ["brief", "standard", "in-depth"];
@@ -141,10 +182,26 @@ At the end of your analysis, include a section titled "## Luke UX Recommendation
     ? `\n\nI have attached ${images.length} image(s)${pdfPages.length > 0 ? ` and ${pdfPages.length} PDF page(s)` : ""} for your visual analysis.`
     : "";
 
-  const fullPrompt =
-    assetsSection && assetsSection.length > 0
-      ? `${prompt}${imageContext}\n\nText Assets provided:\n${assetsSection}\n\n${detailSuffix}${recommendationInstruction}`
-      : `${prompt}${imageContext}\n\n${detailSuffix}${recommendationInstruction}`;
+  // Build the full prompt with optional Figma context
+  let fullPrompt = prompt;
+
+  // Add Figma context if available
+  if (figmaContext) {
+    fullPrompt = `${prompt}\n\n## Figma Design Context\n${figmaContext}`;
+  }
+
+  // Add image context
+  if (imageContext) {
+    fullPrompt = `${fullPrompt}${imageContext}`;
+  }
+
+  // Add text assets
+  if (assetsSection && assetsSection.length > 0) {
+    fullPrompt = `${fullPrompt}\n\nText Assets provided:\n${assetsSection}`;
+  }
+
+  // Add detail suffix and recommendation instruction
+  fullPrompt = `${fullPrompt}\n\n${detailSuffix}${recommendationInstruction}`;
 
   // Define ids up front
   const taskId = crypto.randomUUID();
@@ -209,6 +266,98 @@ Provide ONLY the recommendation text - no headers, no markdown formatting, no bu
     tokensIn: response.tokensIn,
     tokensOut: response.tokensOut,
     taskId,
-    threadId
+    threadId,
+    figmaContextLoaded: !!figmaContext
   });
+}
+
+/**
+ * Build a context string from Figma file data for LLM analysis
+ */
+function buildFigmaContextString(fileData: any, comments: any, nodeId?: string): string {
+  const sections: string[] = [];
+
+  sections.push(`### File: ${fileData.name}`);
+  sections.push(`Last Modified: ${fileData.lastModified}`);
+  sections.push('');
+
+  // Components summary
+  const components = fileData.components || {};
+  const componentSets = fileData.componentSets || {};
+  const componentCount = Object.keys(components).length;
+  const componentSetCount = Object.keys(componentSets).length;
+
+  if (componentCount > 0 || componentSetCount > 0) {
+    sections.push('### Components');
+    sections.push(`- ${componentCount} components defined`);
+    sections.push(`- ${componentSetCount} component sets (variants)`);
+
+    // List top component names
+    const componentNames = Object.values(components)
+      .map((c: any) => c.name)
+      .slice(0, 15);
+    if (componentNames.length > 0) {
+      sections.push('');
+      sections.push('Key components:');
+      componentNames.forEach((name) => sections.push(`  - ${name}`));
+    }
+    sections.push('');
+  }
+
+  // Styles summary
+  const styles = fileData.styles || {};
+  const styleCount = Object.keys(styles).length;
+  if (styleCount > 0) {
+    const styleList = Object.values(styles) as any[];
+    const textStyles = styleList.filter((s) => s.styleType === 'TEXT').length;
+    const fillStyles = styleList.filter((s) => s.styleType === 'FILL').length;
+    const effectStyles = styleList.filter((s) => s.styleType === 'EFFECT').length;
+
+    sections.push('### Design Tokens');
+    sections.push(`- ${textStyles} text styles`);
+    sections.push(`- ${fillStyles} color/fill styles`);
+    sections.push(`- ${effectStyles} effect styles`);
+    sections.push('');
+  }
+
+  // Document structure summary
+  if (fileData.document) {
+    const doc = fileData.document;
+    const pages = doc.children || [];
+    sections.push('### Document Structure');
+    sections.push(`- ${pages.length} pages`);
+
+    pages.slice(0, 5).forEach((page: any) => {
+      const frameCount = page.children?.filter((c: any) => c.type === 'FRAME').length || 0;
+      sections.push(`  - ${page.name}: ${frameCount} frames`);
+    });
+
+    if (pages.length > 5) {
+      sections.push(`  ... and ${pages.length - 5} more pages`);
+    }
+    sections.push('');
+  }
+
+  // Comments summary
+  if (comments?.comments && comments.comments.length > 0) {
+    const allComments = comments.comments;
+    const unresolvedComments = allComments.filter((c: any) => !c.resolved_at);
+
+    sections.push('### Comments');
+    sections.push(`- ${allComments.length} total comments`);
+    sections.push(`- ${unresolvedComments.length} unresolved`);
+
+    if (unresolvedComments.length > 0) {
+      sections.push('');
+      sections.push('Recent unresolved feedback:');
+      unresolvedComments.slice(0, 5).forEach((comment: any) => {
+        const msg = comment.message?.substring(0, 80) || '';
+        const user = comment.user?.handle || 'Unknown';
+        sections.push(`  - "${msg}${msg.length >= 80 ? '...' : ''}" - @${user}`);
+      });
+    }
+    sections.push('');
+  }
+
+  return sections.join('\n');
 }
