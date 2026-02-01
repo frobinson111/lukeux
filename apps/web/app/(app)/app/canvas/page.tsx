@@ -10,6 +10,7 @@ import { PromoModal } from "../components/promo-modal";
 import UxExtensionsSection from "./components/ux-extensions-section";
 import SearchableCategoryDropdown from "./components/searchable-category-dropdown";
 import FigmaConnectInline from "./components/figma-connect-inline";
+import HistoryItem from "./components/history-item";
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
@@ -1243,10 +1244,10 @@ export default function CanvasPage() {
     }
   }
 
-  async function renameHistory(id: string) {
+  async function renameHistory(id: string, newTitle?: string) {
     const current = history.find((h) => h.id === id);
     if (!current) return;
-    const next = historyRename.trim();
+    const next = (newTitle ?? historyRename).trim();
     if (!next) return;
     try {
       const res = await fetch(`/api/history/${id}`, {
@@ -1453,11 +1454,11 @@ export default function CanvasPage() {
               <Image src="/images/expand.svg" alt="Toggle" width={20} height={20} className="h-5 w-5" />
             </button>
           </div>
-          <nav className="flex-1 overflow-y-auto space-y-2 px-2 text-sm font-semibold text-slate-800">
+          <nav className="flex-1 flex flex-col min-h-0 space-y-2 px-2 text-sm font-semibold text-slate-800">
             {projects.map((proj, idx) => (
-              <div key={proj} className={`space-y-1 ${proj === "New UX Task" ? "mt-[10px]" : ""}`}>
+              <div key={proj} className={`flex flex-col flex-1 min-h-0 space-y-1 ${proj === "New UX Task" ? "mt-[10px]" : ""}`}>
                 <button
-                  className="flex w-full items-center gap-3 px-3 py-2 transition hover:-translate-y-[1px]"
+                  className="flex w-full flex-shrink-0 items-center gap-3 px-3 py-2 transition hover:-translate-y-[1px]"
                   onClick={() => {
                     if (proj === "New UX Task") {
                       setTemplateIndex(null);
@@ -1481,7 +1482,7 @@ export default function CanvasPage() {
                   <UxExtensionsSection collapsed={railCollapsed} />
                 )}
                 {proj === "New UX Task" && !railCollapsed && (
-                  <div className="space-y-1">
+                  <div className="flex-shrink-0 space-y-1">
                     <div className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Projects</div>
                     <button
                       type="button"
@@ -1567,104 +1568,25 @@ export default function CanvasPage() {
                   </div>
                 )}
                 {idx === 0 && !railCollapsed && (
-                  <div className="space-y-1">
-                    <div className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">History</div>
-                    <div className="max-h-[600px] space-y-1 overflow-y-auto">
+                  <div className="flex flex-1 flex-col min-h-0">
+                    <div className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 flex-shrink-0">History</div>
+                    <div className="flex-1 min-h-0 space-y-1 overflow-y-auto">
                       {history.filter((h) => !h.projectId).length === 0 && (
                         <div className="px-3 text-[11px] text-slate-500">No history yet</div>
                       )}
                       {history.filter((h) => !h.projectId).map((item) => (
-                        <div key={item.id} className="group flex items-center gap-2 px-3 py-1 rounded hover:bg-slate-100 transition">
-                          <button
-                            type="button"
-                            className="flex-1 text-left text-sm font-semibold text-slate-800"
-                            onClick={() => loadHistory(item.id)}
-                          >
-                            {item.title}
-                          </button>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              className="hidden h-6 w-6 items-center justify-center rounded-full text-slate-600 transition group-hover:flex"
-                              onClick={() => {
-                                setHistoryMenu((m) => (m === item.id ? null : item.id));
-                                setHistoryRename(item.title);
-                                setHistoryMoveProject(projectFolders[0]?.id ?? "");
-                              }}
-                              aria-label="History actions"
-                            >
-                              ⋯
-                            </button>
-                            {historyMenu === item.id && (
-                              <div className="absolute right-0 top-7 z-10 w-44 space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-lg text-xs font-semibold text-slate-800">
-                                <div className="space-y-1">
-                                  <label className="text-[11px] font-semibold uppercase text-slate-600">Rename</label>
-                                  <input
-                                    value={historyRename}
-                                    onChange={(e) => setHistoryRename(e.target.value)}
-                                    className="w-full rounded-md border border-slate-300 px-2 py-1 text-[12px] font-medium text-slate-800 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                                  />
-                                  <div className="flex justify-end gap-2">
-                                    <button
-                                      className="rounded-full border border-slate-300 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:-translate-y-[1px] hover:shadow"
-                                      onClick={() => {
-                                        setHistoryMenu(null);
-                                        setHistoryRename("");
-                                      }}
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      className="rounded-full bg-black px-3 py-1 text-[11px] font-bold uppercase text-white shadow-[0_4px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_6px_0_#111]"
-                                      onClick={() => renameHistory(item.id)}
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="text-[11px] font-semibold uppercase text-slate-600">Move to Project</div>
-                                  {projectFolders.length === 0 ? (
-                                    <div className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-[11px] text-slate-500">
-                                      No project folders yet
-                                    </div>
-                                  ) : (
-                                    <div className="space-y-2">
-                                      <select
-                                        value={historyMoveProject}
-                                        onChange={(e) => setHistoryMoveProject(e.target.value)}
-                                        className="w-full rounded-md border border-slate-300 px-2 py-1 text-[12px] font-medium text-slate-800 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                                      >
-                                        {projectFolders.map((folder) => (
-                                    <option key={folder.id} value={folder.id}>
-                                      {folder.name}
-                                          </option>
-                                        ))}
-                                      </select>
-                                      <button
-                                className="w-full rounded-full bg-black px-3 py-2 text-[11px] font-bold uppercase text-white shadow-[0_4px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_6px_0_#111] disabled:opacity-60"
-                                disabled={!historyMoveProject}
-                                        onClick={() => historyMoveProject && moveHistoryToFolder(item.id, historyMoveProject)}
-                                      >
-                                        Move
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                      <button
-                                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-red-600 hover:bg-red-50"
-                          onClick={() => {
-                                    deleteHistory(item.id);
-                                    setHistoryMenu(null);
-                                  }}
-                                  aria-label="Delete history item"
-                                >
-                                  <Image src="/images/trash.svg" alt="Delete" width={16} height={16} className="h-4 w-4" />
-                                </button>
-                              </div>
-                            )}
-                            </div>
-                                </div>
+                        <HistoryItem
+                          key={item.id}
+                          item={item}
+                          isMenuOpen={historyMenu === item.id}
+                          onMenuToggle={() => setHistoryMenu((m) => (m === item.id ? null : item.id))}
+                          onMenuClose={() => setHistoryMenu(null)}
+                          onLoadHistory={() => loadHistory(item.id)}
+                          onRename={(newTitle) => renameHistory(item.id, newTitle)}
+                          onMoveToProject={(projectId) => moveHistoryToFolder(item.id, projectId)}
+                          onDelete={() => deleteHistory(item.id)}
+                          projectFolders={projectFolders}
+                        />
                       ))}
                                 </div>
                           </div>
