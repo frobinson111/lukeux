@@ -7,6 +7,7 @@ import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dynamic from "next/dynamic";
 import { PromoModal } from "../components/promo-modal";
+import UxExtensionsSection from "./components/ux-extensions-section";
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
@@ -1405,10 +1406,10 @@ export default function CanvasPage() {
     <div className="min-h-screen bg-[#f6f8fb] text-slate-900">
       <div className="mx-auto flex max-w-6xl gap-6 px-6 pt-0 pb-10 min-h-[calc(100vh-5rem)] items-stretch">
         <aside
-          className={`hidden shrink-0 flex-col gap-4 border-r-2 border-[#EEEEEE] transition-all duration-200 md:flex ${railCollapsed ? "w-16" : "w-64"}`}
+          className={`hidden shrink-0 flex-col border-r-2 border-[#EEEEEE] transition-all duration-200 md:flex ${railCollapsed ? "w-16" : "w-64"}`}
         >
-          <div className="pt-5">
-          <div className="flex items-center justify-between px-3">
+          <div className="flex flex-col h-full pt-5 overflow-hidden">
+          <div className="flex items-center justify-between px-3 flex-shrink-0">
             <Image src="/images/logo-icon.svg" alt="Home" width={32} height={32} className="h-8 w-8" />
             <button
               type="button"
@@ -1419,7 +1420,7 @@ export default function CanvasPage() {
               <Image src="/images/expand.svg" alt="Toggle" width={20} height={20} className="h-5 w-5" />
             </button>
           </div>
-          <nav className="space-y-2 px-2 text-sm font-semibold text-slate-800">
+          <nav className="flex-1 overflow-y-auto space-y-2 px-2 text-sm font-semibold text-slate-800">
             {projects.map((proj, idx) => (
               <div key={proj} className={`space-y-1 ${proj === "New UX Task" ? "mt-[10px]" : ""}`}>
                 <button
@@ -1442,6 +1443,9 @@ export default function CanvasPage() {
                   {!railCollapsed && <span className="flex-1 text-left">{proj}</span>}
 
                 </button>
+                {proj === "New UX Task" && (
+                  <UxExtensionsSection collapsed={railCollapsed} />
+                )}
                 {proj === "New UX Task" && !railCollapsed && (
                   <div className="space-y-1">
                     <div className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Projects</div>
@@ -1634,7 +1638,7 @@ export default function CanvasPage() {
                     </div>
                   ))}
           </nav>
-              </div>
+          </div>
         </aside>
 
         <main className="flex-1 space-y-6 pt-5">
