@@ -2541,7 +2541,7 @@ export default function CanvasPage() {
                 <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-bold text-slate-900">
-                      {template?.title ? `Luke UX ${template.title} Analysis` : "Analysis"}
+                      {template?.title ? `Luke UX: ${template.title} Analysis` : "Analysis"}
                     </p>
                     <button
                       type="button"
