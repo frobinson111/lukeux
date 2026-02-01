@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import dynamic from "next/dynamic";
 import { PromoModal } from "../components/promo-modal";
 import UxExtensionsSection from "./components/ux-extensions-section";
+import SearchableCategoryDropdown from "./components/searchable-category-dropdown";
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
@@ -1766,12 +1767,15 @@ export default function CanvasPage() {
 
           <section className="space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-3 text-sm font-semibold text-slate-900">
-                <span className="shrink-0">{template ? (template.templateCategory?.name || template.category) : "Define Your UX Objective"}</span>
-                <select
-                  value={templateIndex ?? ""}
-                  onChange={(e) => {
-                    const idx = e.target.value === "" ? null : Number(e.target.value);
+              <div className="border-b border-slate-200 px-5 py-3">
+                <div className="mb-2 text-sm font-semibold text-slate-900">
+                  {template ? (template.templateCategory?.name || template.category) : "Define Your UX Objective"}
+                </div>
+                <SearchableCategoryDropdown
+                  templateList={templateList}
+                  groupedTemplates={groupedTemplates}
+                  selectedIndex={templateIndex}
+                  onSelect={(idx) => {
                     setTemplateIndex(idx);
                     const nextTemplate = idx !== null ? templateList[idx] : null;
                     setEditablePrompt(nextTemplate?.prompt || "");
@@ -1790,44 +1794,8 @@ export default function CanvasPage() {
                     setImagePrompt("");
                     setResultsCollapsed(false);
                   }}
-                  className="flex-1 w-full rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-xs font-semibold text-slate-800 focus:border-black focus:outline-none appearance-none template-select"
-                  style={{
-                    backgroundImage: "url('/images/rotate.svg')",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 0.75rem center",
-                    backgroundSize: "14px 14px"
-                  }}
-                  name="template"
-                  id="template"
-                >
-                  <option value="">Choose…</option>
-                  {groupedTemplates.map((frameworkGroup) => (
-                    <optgroup key={frameworkGroup.framework} label={`📁 ${frameworkGroup.framework}`}>
-                      {frameworkGroup.categories.map((categoryGroup) => 
-                        categoryGroup.items.map(({ t, idx }) => {
-                          const parts = [];
-                          const categoryLabel = t.category?.trim() || t.templateCategory?.name;
-                          // Add category
-                          if (categoryLabel) parts.push(categoryLabel);
-                          
-                          // Add subcategory if it exists
-                          if (t.subcategory) parts.push(t.subcategory);
-                          
-                          // Add title
-                          parts.push(t.title);
-                          
-                          const displayText = parts.join(": ");
-                          
-                          return (
-                            <option key={t.id} value={idx}>
-                              {displayText}
-                            </option>
-                          );
-                        })
-                      )}
-                    </optgroup>
-                  ))}
-                </select>
+                  placeholder="Select a Category"
+                />
               </div>
 
               {template && (
