@@ -1531,7 +1531,7 @@ export default function CanvasPage() {
                                 )
                               }
                             >
-                              <Image src="/images/close-folder.svg" alt="Project Folder" width={20} height={20} className="h-5 w-5 flex-shrink-0" />
+                              <Image src={folder.open ? "/images/open-folder.svg" : "/images/close-folder.svg"} alt="Project Folder" width={20} height={20} className="h-5 w-5 flex-shrink-0" />
                               <span className="flex-1 text-left">{folder.name}</span>
                               <span className={`text-xs text-slate-500 transition ${folder.open ? "rotate-90" : ""}`}>⌄</span>
                             </button>
