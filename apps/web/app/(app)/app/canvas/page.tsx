@@ -540,7 +540,7 @@ function StructuredAnalysisOutput({
         </div>
       )}
 
-      {/* Luke UX Recommendation Section */}
+      {/* What to Do Next Section */}
       {recommendation && (
         <div
           className="mt-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-6"
@@ -557,7 +557,7 @@ function StructuredAnalysisOutput({
             {/* Content */}
             <div className="flex-1">
               <h4 className="mb-3 text-[17px] font-bold text-amber-900">
-                Luke UX Recommendation
+                What to Do Next
               </h4>
               <div className="text-[15px] leading-relaxed text-amber-800">
                 {recommendation}
