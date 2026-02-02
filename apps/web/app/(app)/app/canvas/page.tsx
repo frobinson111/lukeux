@@ -689,6 +689,7 @@ export default function CanvasPage() {
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isViewingHistoryItem, setIsViewingHistoryItem] = useState(false);
   const [guidanceExpanded, setGuidanceExpanded] = useState({
     useAiTo: false,
     example: false,
@@ -1369,6 +1370,7 @@ export default function CanvasPage() {
     setLastResponse(item.content);
     setStatus("Loaded from history");
     setHistoryMenu(null);
+    setIsViewingHistoryItem(true); // Flag that we're viewing history
     
     // Set the current history entry ID and fetch existing feedbacks
     setCurrentHistoryEntryId(id);
@@ -1517,6 +1519,7 @@ export default function CanvasPage() {
                       setThreadId(null);
                       setEditablePrompt("");
                       setPromptEditing(false);
+                      setIsViewingHistoryItem(false); // Reset history flag
                     }
                   }}
                 >
@@ -1762,12 +1765,13 @@ export default function CanvasPage() {
                     setImageError(null);
                     setImagePrompt("");
                     setResultsCollapsed(false);
+                    setIsViewingHistoryItem(false); // Clear history flag when selecting new template
                   }}
                   placeholder="Select a Category"
                 />
               </div>
 
-              {template && (
+              {template && !isViewingHistoryItem && (
                 <>
                   <div className="flex items-center justify-between px-5 py-2">
                     <span className="text-xs font-semibold text-slate-700">UX Guidance</span>
@@ -1958,7 +1962,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && (userRole === "ADMIN" || userRole === "SUPERUSER") && template.taskType !== "accessibility" && (
+            {template && !inputsCollapsed && !isViewingHistoryItem && (userRole === "ADMIN" || userRole === "SUPERUSER") && template.taskType !== "accessibility" && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase text-amber-700">AI Prompt</p>
@@ -2009,7 +2013,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && template.allowUrlInput && template.taskType !== "accessibility" && (
+            {template && !inputsCollapsed && !isViewingHistoryItem && template.allowUrlInput && template.taskType !== "accessibility" && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-left">
                   <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype link:</p>
@@ -2039,7 +2043,7 @@ export default function CanvasPage() {
             )}
 
             {/* Accessibility Audit URL Input */}
-            {template && !inputsCollapsed && template.taskType === "accessibility" && (
+            {template && !inputsCollapsed && !isViewingHistoryItem && template.taskType === "accessibility" && (
               <div className="space-y-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-6 shadow-sm">
                 <div className="text-left">
                   <p className="text-xs font-semibold text-blue-700">Enter URLs to audit for WCAG 2.x AA + Section 508:</p>
@@ -2061,7 +2065,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && (
+            {template && !inputsCollapsed && !isViewingHistoryItem && (
               <>
                 {/* Upload UI (only when enabled for this template) */}
                 {fileUploadsAllowed && (
