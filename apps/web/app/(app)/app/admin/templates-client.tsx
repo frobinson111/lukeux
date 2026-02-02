@@ -22,6 +22,8 @@ type TemplateFormData = {
   allowRefineAnalysis: boolean;
   isActive: boolean;
   templateCategoryId: string | null;
+  taskType: "llm" | "accessibility";
+  accessibilityConfig: { maxPages?: number } | null;
 };
 
 const emptyForm: TemplateFormData = {
@@ -41,6 +43,8 @@ const emptyForm: TemplateFormData = {
   allowRefineAnalysis: true,
   isActive: true,
   templateCategoryId: null,
+  taskType: "llm",
+  accessibilityConfig: null,
 };
 
 export default function TemplatesAdmin({
@@ -117,6 +121,8 @@ export default function TemplatesAdmin({
   const handleEdit = (template: TemplateRow) => {
     const allowMockupGeneration = (template as any).allowMockupGeneration ?? true;
     const allowRefineAnalysis = (template as any).allowRefineAnalysis ?? true;
+    const taskType = (template as any).taskType || "llm";
+    const accessibilityConfig = (template as any).accessibilityConfig || null;
     setEditingTemplate({
       id: template.id,
       category: template.category,
@@ -135,6 +141,8 @@ export default function TemplatesAdmin({
       allowRefineAnalysis,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
+      taskType,
+      accessibilityConfig,
     });
     setFormData({
       id: template.id,
@@ -154,6 +162,8 @@ export default function TemplatesAdmin({
       allowRefineAnalysis,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
+      taskType,
+      accessibilityConfig,
     });
     setShowForm(true);
     setError(null);
@@ -206,6 +216,8 @@ export default function TemplatesAdmin({
           allowRefineAnalysis: formData.allowRefineAnalysis,
           isActive: formData.isActive,
           templateCategoryId: formData.templateCategoryId,
+          taskType: formData.taskType,
+          accessibilityConfig: formData.accessibilityConfig,
         }),
       });
 
@@ -755,6 +767,44 @@ export default function TemplatesAdmin({
                 Controls whether users can access the post-affordance follow-up (Refine the Analysis) UI.
               </p>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Task Type</label>
+              <select
+                value={formData.taskType}
+                onChange={(e) => setFormData((prev) => ({
+                  ...prev,
+                  taskType: e.target.value as "llm" | "accessibility",
+                  // Reset accessibility config when switching to llm
+                  accessibilityConfig: e.target.value === "llm" ? null : prev.accessibilityConfig,
+                }))}
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="llm">LLM (Standard AI Analysis)</option>
+                <option value="accessibility">Accessibility Audit (WCAG/508)</option>
+              </select>
+              <p className="mt-1 text-xs text-slate-500">
+                LLM uses AI analysis. Accessibility runs automated WCAG 2.x AA + Section 508 scans.
+              </p>
+            </div>
+            {formData.taskType === "accessibility" && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Max Pages to Scan</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={formData.accessibilityConfig?.maxPages || 3}
+                  onChange={(e) => setFormData((prev) => ({
+                    ...prev,
+                    accessibilityConfig: { maxPages: Math.min(10, Math.max(1, parseInt(e.target.value) || 3)) },
+                  }))}
+                  className="mt-1 w-20 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Maximum number of URLs to scan per audit (1-10). Higher values increase scan time.
+                </p>
+              </div>
+            )}
             <div>
               <label className="flex items-center gap-2 text-sm">
                 <input

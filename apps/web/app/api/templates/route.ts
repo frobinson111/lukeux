@@ -4,6 +4,7 @@ import { prisma } from "../../../lib/prisma";
 import { getCurrentUser } from "../../../lib/auth";
 import { z } from "zod";
 import { sanitizeTemplateHtml } from "@luke-ux/shared";
+import { Prisma } from "@prisma/client";
 
 const templateSchema = z.object({
   category: z.string().min(1),
@@ -22,6 +23,10 @@ const templateSchema = z.object({
   allowRefineAnalysis: z.boolean().optional(),
   isActive: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
+  taskType: z.enum(["llm", "accessibility"]).optional(),
+  accessibilityConfig: z.object({
+    maxPages: z.number().min(1).max(10).optional(),
+  }).nullable().optional(),
 });
 
 export async function GET() {
@@ -87,6 +92,8 @@ export async function POST(request: NextRequest) {
         allowRefineAnalysis: parsed.data.allowRefineAnalysis ?? true,
         isActive: parsed.data.isActive ?? true,
         templateCategoryId: parsed.data.templateCategoryId || null,
+        taskType: parsed.data.taskType || "llm",
+        accessibilityConfig: parsed.data.accessibilityConfig ?? Prisma.JsonNull,
         createdById: user.id,
       }
     });

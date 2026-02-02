@@ -112,6 +112,7 @@ type Template = {
   allowMockupGeneration?: boolean;
   allowRefineAnalysis?: boolean;
   templateCategory?: { name: string; sortOrder: number } | null;
+  taskType?: string | null; // "llm" | "accessibility"
 };
 
 const projects = ["New UX Task"];
@@ -211,7 +212,7 @@ const styledMarkdownComponents: Components = {
   ),
   table: ({ node, ...props }) => (
     <div className="my-4 w-full overflow-x-auto">
-      <table className="w-full border-collapse text-left text-[14px]" {...props} />
+      <table className="min-w-full w-full border-collapse text-left text-[14px]" {...props} />
     </div>
   ),
   thead: ({ node, ...props }) => (
@@ -259,7 +260,8 @@ function StructuredAnalysisOutput({
     const findings: { num: string; title: string; content: string }[] = [];
     
     // Pattern 1: Structured format with "Concept N — Title" and "**A) Concept Summary**"
-    const structuredPattern = /(?:###\s*|^\*\*)(?:Concept\s+)?(\d+)\s*[—\-–]\s*([^\n*]+?)(?:\*\*)?[\n\r]+\s*\*\*A\)\s*Concept\s+Summary\*\*([\s\S]*?)(?=(?:###\s*|^\*\*)(?:Concept\s+)?\d+\s*[—\-–]|$)/gim;
+    // Note: Using (?![\r\n]) after $ to ensure we match true end of string, not end of line
+    const structuredPattern = /###\s*Concept\s+(\d+)\s*[—\-–]\s*([^\n]+)\n+\*\*A\)\s*Concept\s+Summary\*\*\n+([\s\S]*?)(?=###\s*Concept\s+\d+|$(?![\r\n]))/gi;
     let match;
     
     while ((match = structuredPattern.exec(text)) !== null) {
@@ -340,6 +342,26 @@ function StructuredAnalysisOutput({
         <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#9ca3af]"></span>
         <span>{children}</span>
       </li>
+    ),
+    table: ({ children }) => (
+      <div className="my-4 w-full overflow-x-auto">
+        <table className="min-w-full w-full border-collapse text-left text-[14px]">{children}</table>
+      </div>
+    ),
+    thead: ({ children }) => (
+      <thead className="bg-[#f8fafc] text-[13px] font-semibold text-[#111827]">{children}</thead>
+    ),
+    tbody: ({ children }) => (
+      <tbody className="text-[14px] text-[#374151]">{children}</tbody>
+    ),
+    th: ({ children }) => (
+      <th className="border border-[#e5e7eb] px-4 py-3 font-semibold text-left">{children}</th>
+    ),
+    td: ({ children }) => (
+      <td className="border border-[#e5e7eb] px-4 py-3 align-top">{children}</td>
+    ),
+    tr: ({ children }) => (
+      <tr className="hover:bg-[#f8fafc]">{children}</tr>
     ),
   };
 
@@ -542,7 +564,7 @@ function StructuredAnalysisOutput({
         </div>
       )}
 
-      {/* What to Do Next Section */}
+      {/* Key Takeaway Section */}
       {recommendation && (
         <div
           className="mt-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-6"
@@ -559,7 +581,7 @@ function StructuredAnalysisOutput({
             {/* Content */}
             <div className="flex-1">
               <h4 className="mb-3 text-[17px] font-bold text-amber-900">
-                What to Do Next
+                Key Takeaway
               </h4>
               <div className="text-[15px] leading-relaxed text-amber-800">
                 {recommendation}
@@ -853,7 +875,13 @@ export default function CanvasPage() {
 
   useEffect(() => {
     if (template) {
-      setEditablePrompt(template.prompt);
+      // For accessibility templates, don't pre-fill with the template prompt
+      // since users need to enter URLs instead
+      if (template.taskType === "accessibility") {
+        setEditablePrompt("");
+      } else {
+        setEditablePrompt(template.prompt);
+      }
       setPromptEditing(false);
       const allowed = template.allowedModes && template.allowedModes.length ? template.allowedModes : modes;
       if (!allowed.includes(mode)) {
@@ -1369,11 +1397,22 @@ export default function CanvasPage() {
     setUrlError(null);
     
     try {
+      // Validate accessibility template has URLs
+      if (template.taskType === "accessibility") {
+        const urls = editablePrompt?.trim();
+        if (!urls) {
+          setStatus("Please enter at least one URL to audit.");
+          setLoading(false);
+          setInputsCollapsed(false);
+          return;
+        }
+      }
+
       // Include URL content as an asset if URL input is provided
       const allAssets = fileUploadsAllowed ? [...assetPayloads] : [];
-      
-      // Fetch URL content inline if URL is provided
-      if (template.allowUrlInput && urlInput.trim()) {
+
+      // Fetch URL content inline if URL is provided (for non-accessibility templates)
+      if (template.allowUrlInput && template.taskType !== "accessibility" && urlInput.trim()) {
         try {
           const urlRes = await fetch("/api/url/fetch", {
             method: "POST",
@@ -1403,6 +1442,11 @@ export default function CanvasPage() {
         }
       }
       
+      // For accessibility tasks, prompt contains URLs (not the template's LLM prompt)
+      const promptToSend = template.taskType === "accessibility"
+        ? editablePrompt?.trim() || ""
+        : editablePrompt?.trim() || template.prompt;
+
       const res = await fetch("/api/tasks/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1411,9 +1455,11 @@ export default function CanvasPage() {
           model,
           mode,
           detailLevel,
-          prompt: editablePrompt?.trim() || template.prompt,
+          prompt: promptToSend,
           files: fileUploadsAllowed ? files.map((f) => f.name) : [],
-          assets: allAssets
+          assets: allAssets,
+          taskType: template.taskType || "llm",
+          templateId: template.id
         })
       });
       const data = await res.json().catch(() => null);
@@ -1912,7 +1958,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && (userRole === "ADMIN" || userRole === "SUPERUSER") && (
+            {template && !inputsCollapsed && (userRole === "ADMIN" || userRole === "SUPERUSER") && template.taskType !== "accessibility" && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase text-amber-700">AI Prompt</p>
@@ -1963,19 +2009,19 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && template.allowUrlInput && (
+            {template && !inputsCollapsed && template.allowUrlInput && template.taskType !== "accessibility" && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-left">
                   <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype link:</p>
                   <p className="text-xs text-slate-500">One URL at a time: webpage or Figma/Framer prototype link.</p>
                 </div>
-                
+
                 {urlError && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                     {urlError}
                   </div>
                 )}
-                
+
                 <div className="flex flex-col gap-3">
                   <input
                     type="url"
@@ -1988,6 +2034,29 @@ export default function CanvasPage() {
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
                   />
                   <FigmaConnectInline />
+                </div>
+              </div>
+            )}
+
+            {/* Accessibility Audit URL Input */}
+            {template && !inputsCollapsed && template.taskType === "accessibility" && (
+              <div className="space-y-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-6 shadow-sm">
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-blue-700">Enter URLs to audit for WCAG 2.x AA + Section 508:</p>
+                  <p className="text-xs text-blue-600">Enter one URL per line (up to 3 URLs for MVP).</p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <textarea
+                    value={editablePrompt}
+                    onChange={(e) => setEditablePrompt(e.target.value)}
+                    placeholder={"https://example.com\nhttps://example.com/about\nhttps://example.com/contact"}
+                    rows={4}
+                    className="w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <p className="text-xs text-blue-600">
+                    Automated scan checks for: color contrast, alt text, form labels, heading structure, link text, ARIA attributes, and more.
+                  </p>
                 </div>
               </div>
             )}
