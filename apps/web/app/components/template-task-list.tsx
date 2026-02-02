@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import SearchableTemplateDropdown from "./searchable-template-dropdown";
 
 type TemplateRow = {
   id: string;
@@ -11,7 +11,7 @@ type TemplateRow = {
   guidanceUseAiTo: string | null;
   guidanceExample: string | null;
   guidanceOutcome: string | null;
-  templateCategory: {
+  TemplateCategory: {
     name: string;
   } | null;
 };
@@ -27,7 +27,6 @@ export default function TemplateTaskList() {
       const res = await fetch("/api/templates/public");
       if (!res.ok) throw new Error("Failed");
       const json = await res.json();
-      console.log("Templates loaded:", json.templates?.[0]); // Debug: check first template structure
       setTemplates(json.templates ?? []);
       setError(null);
     } catch {
@@ -48,53 +47,37 @@ export default function TemplateTaskList() {
     };
   }, []);
 
-  let body = null;
-  if (error) {
-    body = <div className="py-6 text-center text-sm text-slate-600">{error}</div>;
-  } else if (loading) {
-    body = <div className="py-6 text-center text-sm text-slate-600">Loading templates…</div>;
-  } else if (!templates.length) {
-    body = <div className="py-6 text-center text-sm text-slate-600">No templates available yet.</div>;
-  } else {
-    body = (
-      <div className="max-h-60 overflow-y-auto rounded-2xl border-2 border-slate-200 bg-white shadow-[0_6px_0_#eaebf1] pb-10 custom-scroll">
-        {templates.map((t, idx) => {
-          return (
-            <button
-              key={t.id}
-              onClick={() => setSelected(t)}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-800 transition ${
-                idx !== 0 ? "border-t border-slate-200" : ""
-              } hover:bg-slate-50 active:bg-slate-100`}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
-                <Image src="/images/help.svg" alt="" width={16} height={16} className="h-4 w-4" />
-              </div>
-              <span className="truncate">
-                {t.category ? (
-                  <>
-                    <span className="font-bold">{t.category}</span>
-                    <span className="font-normal">: {t.title}</span>
-                  </>
-                ) : (
-                  <span className="font-semibold">{t.title}</span>
-                )}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
+  const handleTemplateSelect = (template: TemplateRow) => {
+    setSelected(template);
+  };
 
   return (
     <div className="mt-6 mb-8 space-y-3">
-      <h3 className="text-[20px] font-bold tracking-wide text-black uppercase">What Luke UX Can Help You Do</h3>
-      {body}
+      <h3 className="text-[20px] font-bold tracking-wide text-black">What Luke UX can help you do</h3>
+      
+      {error && (
+        <div className="py-6 text-center text-sm text-slate-600">{error}</div>
+      )}
+      
+      {loading && (
+        <div className="py-6 text-center text-sm text-slate-600">Loading templates…</div>
+      )}
+      
+      {!loading && !error && templates.length === 0 && (
+        <div className="py-6 text-center text-sm text-slate-600">No templates available yet.</div>
+      )}
+      
+      {!loading && !error && templates.length > 0 && (
+        <SearchableTemplateDropdown
+          templates={templates}
+          onTemplateSelect={handleTemplateSelect}
+          placeholder="Select a UX task category"
+        />
+      )}
 
       {selected && (
         <div 
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4" 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" 
           role="dialog" 
           aria-modal="true"
           onClick={() => setSelected(null)}

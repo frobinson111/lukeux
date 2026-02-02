@@ -436,6 +436,9 @@ export default function HomePage() {
                 />
               </div>
             </div>
+            <div className="mt-6">
+              <p className="text-lg text-slate-700 leading-relaxed"><strong>Luke is a guard dog for design quality.</strong> He protects UX designers from bad assumptions, unclear flows, and production issues.</p>
+            </div>
             <TemplateTaskList />
           </div>
           <div className="hidden w-full flex-wrap items-center justify-between gap-4 text-xs text-slate-600 lg:flex mt-[50px]">
