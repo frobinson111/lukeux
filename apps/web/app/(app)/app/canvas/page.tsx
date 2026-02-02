@@ -1368,7 +1368,7 @@ export default function CanvasPage() {
     if (!item) return;
     setTemplateIndex(item.templateIndex);
     setLastResponse(item.content);
-    setStatus("Loaded from history");
+    setStatus(null);
     setHistoryMenu(null);
     setIsViewingHistoryItem(true); // Flag that we're viewing history
     
@@ -2665,11 +2665,33 @@ export default function CanvasPage() {
                         if (!res.ok) {
                           setStatus(json?.error || "Iteration failed.");
                         } else {
-                          setLastResponse(json?.content || null);
+                          const newContent = json?.content || null;
+                          setLastResponse(newContent);
                           setLastRecommendation(json?.recommendation || null);
                           setSelectedRecommendation(null); // Reset selection on new response
                           setStatus("Iteration completed.");
                           setFollowupText("");
+                          
+                          // If viewing a history item, update it with the refined content
+                          if (currentHistoryEntryId && newContent) {
+                            try {
+                              const updateRes = await fetch(`/api/history/${currentHistoryEntryId}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ content: newContent })
+                              });
+                              if (updateRes.ok) {
+                                // Update local history state
+                                setHistory((prev) => 
+                                  prev.map((h) => 
+                                    h.id === currentHistoryEntryId ? { ...h, content: newContent } : h
+                                  )
+                                );
+                              }
+                            } catch (err) {
+                              console.error("Failed to update history with refinement:", err);
+                            }
+                          }
                         }
                       } else {
                         // New thread from history-loaded context
@@ -2695,10 +2717,32 @@ export default function CanvasPage() {
                           setStatus("Iteration completed.");
                           setTaskId(json?.taskId || null);
                           setThreadId(json?.threadId || null);
-                          setLastResponse(json?.content || null);
+                          const newContent = json?.content || null;
+                          setLastResponse(newContent);
                           setLastRecommendation(json?.recommendation || null);
                           setSelectedRecommendation(null); // Reset selection on new response
                           setFollowupText("");
+                          
+                          // If viewing a history item, update it with the refined content
+                          if (currentHistoryEntryId && newContent) {
+                            try {
+                              const updateRes = await fetch(`/api/history/${currentHistoryEntryId}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ content: newContent })
+                              });
+                              if (updateRes.ok) {
+                                // Update local history state
+                                setHistory((prev) => 
+                                  prev.map((h) => 
+                                    h.id === currentHistoryEntryId ? { ...h, content: newContent } : h
+                                  )
+                                );
+                              }
+                            } catch (err) {
+                              console.error("Failed to update history with refinement:", err);
+                            }
+                          }
                         }
                       }
                     } catch (err) {
