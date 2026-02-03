@@ -1774,7 +1774,7 @@ export default function CanvasPage() {
               {template && !isViewingHistoryItem && (
                 <>
                   <div className="flex items-center justify-between px-5 py-2">
-                    <span className="text-xs font-semibold text-slate-700">UX Guidance</span>
+                    <span className="text-sm font-semibold text-slate-700">UX Guidance</span>
                     <button
                       type="button"
                       onClick={() => setInputsCollapsed((v) => !v)}
