@@ -1802,7 +1802,7 @@ export default function CanvasPage() {
                         aria-controls="guidance-useAiTo"
                       >
                         <span className="text-[18px] font-semibold text-[#1e40af]">
-                          What LukeUX will check:
+                          What Luke UX will check:
                         </span>
                         <svg 
                           className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
@@ -1869,7 +1869,7 @@ export default function CanvasPage() {
                         aria-expanded={guidanceExpanded.outcome}
                         aria-controls="guidance-outcome"
                       >
-                        <span className="text-[18px] font-semibold text-[#065f46]">How LukeUX helps:</span>
+                        <span className="text-[18px] font-semibold text-[#065f46]">How Luke UX helps:</span>
                         <svg 
                           className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
                             guidanceExpanded.outcome ? 'rotate-180' : ''
@@ -1902,7 +1902,7 @@ export default function CanvasPage() {
                         aria-expanded={guidanceExpanded.assets}
                         aria-controls="guidance-assets"
                       >
-                        <span className="text-[18px] font-semibold text-[#374151]">Upload the following files:</span>
+                        <span className="text-[18px] font-semibold text-[#374151]">What Luke UX needs:</span>
                         <svg 
                           className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
                             guidanceExpanded.assets ? 'rotate-180' : ''
