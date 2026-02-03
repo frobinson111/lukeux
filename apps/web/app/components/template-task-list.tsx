@@ -100,7 +100,7 @@ export default function TemplateTaskList() {
               </button>
             </div>
             <div className="overflow-y-auto p-5 pt-3 space-y-3 text-sm text-slate-800">
-              <Field label="Use AI To" value={selected.guidanceUseAiTo} bgClass="bg-[rgb(239,246,255)]" />
+              <Field label="What Luke UX will check" value={selected.guidanceUseAiTo} bgClass="bg-[rgb(239,246,255)]" />
               <Field label="Example" value={selected.guidanceExample} bgClass="bg-[rgb(236,253,245)]" />
               <Field label="Outcome" value={selected.guidanceOutcome} bgClass="bg-[rgb(236,253,245)]" />
             </div>
