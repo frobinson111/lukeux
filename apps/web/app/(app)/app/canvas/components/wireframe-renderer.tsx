@@ -105,7 +105,7 @@ export default function WireframeRenderer() {
 
     try {
       const payload: any = {
-        size: "1080x1920",
+        size: "1024x1792",
         n: 1,
         style: "lofi"
       };
@@ -201,8 +201,8 @@ export default function WireframeRenderer() {
                   <Image
                     src={src}
                     alt={`Wireframe ${idx + 1}`}
-                    width={1080}
-                    height={1920}
+                    width={1024}
+                    height={1792}
                     unoptimized
                     className="h-auto w-full rounded-md object-contain"
                   />
@@ -340,8 +340,8 @@ export default function WireframeRenderer() {
               <Image
                 src={expandedSrc}
                 alt="Expanded wireframe"
-                width={1080}
-                height={1920}
+                width={1024}
+                height={1792}
                 unoptimized
                 className="h-auto w-full"
               />
