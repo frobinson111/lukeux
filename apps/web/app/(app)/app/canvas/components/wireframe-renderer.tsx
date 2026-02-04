@@ -122,33 +122,111 @@ export default function WireframeRenderer() {
 
   return (
     <div className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold text-slate-900">High‑Fidelity → Low‑Fidelity Wireframe</p>
-          <p className="mt-1 text-xs text-slate-600">
-            Upload a hi‑fi UI screenshot (or paste a live URL). I’ll generate a structurally faithful lo‑fi wireframe.
-          </p>
+      {wireframes.length === 0 && (
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-slate-900">High‑Fidelity → Low‑Fidelity Wireframe</p>
+            <p className="mt-1 text-xs text-slate-600">
+              Upload a hi‑fi UI screenshot (or paste a live URL). I&apos;ll generate a structurally faithful lo‑fi wireframe.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+            onClick={() => {
+              setSourceFile(null);
+              setSourceImageDataUrl(null);
+              setSourceUrl("");
+              setWireframes([]);
+              setSpecText(null);
+              setSpecOpen(false);
+              setError(null);
+            }}
+          >
+            Clear
+          </button>
         </div>
-        <button
-          type="button"
-          className="text-xs font-semibold text-slate-600 hover:text-slate-900"
-          onClick={() => {
-            setSourceFile(null);
-            setSourceImageDataUrl(null);
-            setSourceUrl("");
-            setWireframes([]);
-            setSpecText(null);
-            setSpecOpen(false);
-            setError(null);
-          }}
-        >
-          Clear
-        </button>
-      </div>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
           {error}
+        </div>
+      )}
+
+      {wireframes.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Wireframe output</div>
+            <button
+              type="button"
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+              onClick={() => {
+                setSourceFile(null);
+                setSourceImageDataUrl(null);
+                setSourceUrl("");
+                setWireframes([]);
+                setSpecText(null);
+                setSpecOpen(false);
+                setError(null);
+              }}
+            >
+              Clear
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {wireframes.map((src, idx) => (
+              <div
+                key={`${src}-${idx}`}
+                className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedSrc(src)}
+                  className="block w-full"
+                  aria-label="Expand wireframe image"
+                >
+                  <Image
+                    src={src}
+                    alt={`Wireframe ${idx + 1}`}
+                    width={1024}
+                    height={1024}
+                    unoptimized
+                    className="h-auto w-full rounded-md object-contain"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = src;
+                    link.download = `wireframe-${idx + 1}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {specText && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => setSpecOpen((v) => !v)}
+            className="flex w-full items-center justify-between text-left text-xs font-semibold text-slate-700"
+            aria-expanded={specOpen}
+          >
+            <span>Wireframe blueprint (optional)</span>
+            <span className="text-slate-500">{specOpen ? "Hide" : "Show"}</span>
+          </button>
+          {specOpen && <pre className="mt-2 whitespace-pre-wrap text-[11px] text-slate-700">{specText}</pre>}
         </div>
       )}
 
@@ -228,64 +306,6 @@ export default function WireframeRenderer() {
         </button>
       </div>
 
-      {specText && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <button
-            type="button"
-            onClick={() => setSpecOpen((v) => !v)}
-            className="flex w-full items-center justify-between text-left text-xs font-semibold text-slate-700"
-            aria-expanded={specOpen}
-          >
-            <span>Wireframe blueprint (optional)</span>
-            <span className="text-slate-500">{specOpen ? "Hide" : "Show"}</span>
-          </button>
-          {specOpen && <pre className="mt-2 whitespace-pre-wrap text-[11px] text-slate-700">{specText}</pre>}
-        </div>
-      )}
-
-      {wireframes.length > 0 && (
-        <div className="space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Wireframe output</div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {wireframes.map((src, idx) => (
-              <div
-                key={`${src}-${idx}`}
-                className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm"
-              >
-                <button
-                  type="button"
-                  onClick={() => setExpandedSrc(src)}
-                  className="block w-full"
-                  aria-label="Expand wireframe image"
-                >
-                  <Image
-                    src={src}
-                    alt={`Wireframe ${idx + 1}`}
-                    width={1024}
-                    height={1024}
-                    unoptimized
-                    className="h-auto w-full rounded-md object-contain"
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const link = document.createElement("a");
-                    link.href = src;
-                    link.download = `wireframe-${idx + 1}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  Download
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {expandedSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
