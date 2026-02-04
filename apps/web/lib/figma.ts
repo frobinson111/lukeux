@@ -61,21 +61,38 @@ export async function exchangeFigmaCode(code: string): Promise<{
     throw new Error("Figma OAuth not configured");
   }
 
+  console.log("[figma] Exchanging code for token", {
+    clientId,
+    redirectUri,
+    codeLength: code.length,
+  });
+
   const response = await fetch("https://www.figma.com/api/oauth/token", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { 
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: new URLSearchParams({
       client_id: clientId,
       client_secret: clientSecret,
       redirect_uri: redirectUri,
       code,
       grant_type: "authorization_code",
-    }),
+    }).toString(),
+  });
+
+  console.log("[figma] Token exchange response", {
+    status: response.status,
+    statusText: response.statusText,
   });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Figma token exchange failed: ${text}`);
+    console.error("[figma] Token exchange failed", {
+      status: response.status,
+      body: text,
+    });
+    throw new Error(`Figma token exchange failed (${response.status}): ${text}`);
   }
 
   return response.json();
