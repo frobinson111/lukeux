@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"]);
@@ -51,11 +51,23 @@ export default function WireframeRenderer() {
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [sourceImageDataUrl, setSourceImageDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [wireframes, setWireframes] = useState<string[]>([]);
   const [expandedSrc, setExpandedSrc] = useState<string | null>(null);
   const [specOpen, setSpecOpen] = useState(false);
   const [specText, setSpecText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const canGenerate = useMemo(() => {
     return !!sourceImageDataUrl || !!sourceUrl.trim();
@@ -93,7 +105,7 @@ export default function WireframeRenderer() {
 
     try {
       const payload: any = {
-        size: "1024x1024",
+        size: "1080x1920",
         n: 1,
         style: "lofi"
       };
@@ -189,8 +201,8 @@ export default function WireframeRenderer() {
                   <Image
                     src={src}
                     alt={`Wireframe ${idx + 1}`}
-                    width={1024}
-                    height={1024}
+                    width={1080}
+                    height={1920}
                     unoptimized
                     className="h-auto w-full rounded-md object-contain"
                   />
@@ -294,7 +306,7 @@ export default function WireframeRenderer() {
         </div>
       </div>
 
-      <div className="flex justify-center pt-1">
+      <div className="flex flex-col items-center gap-3 pt-1">
         <button
           type="button"
           disabled={!canGenerate || loading}
@@ -304,6 +316,12 @@ export default function WireframeRenderer() {
         >
           {loading ? "Rendering…" : "Render wireframe"}
         </button>
+        {loading && (
+          <div className="text-center text-xs text-slate-600">
+            <p className="font-semibold">Generating…This can take up to ~30–60s</p>
+            <p className="mt-1">Thinking: {elapsedSeconds}s</p>
+          </div>
+        )}
       </div>
 
 
@@ -322,8 +340,8 @@ export default function WireframeRenderer() {
               <Image
                 src={expandedSrc}
                 alt="Expanded wireframe"
-                width={1792}
-                height={1024}
+                width={1080}
+                height={1920}
                 unoptimized
                 className="h-auto w-full"
               />
