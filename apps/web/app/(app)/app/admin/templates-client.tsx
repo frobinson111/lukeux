@@ -20,6 +20,7 @@ type TemplateFormData = {
   allowFileUploads: boolean;
   allowMockupGeneration: boolean;
   allowRefineAnalysis: boolean;
+  allowWireframeRenderer: boolean;
   isActive: boolean;
   templateCategoryId: string | null;
   taskType: "llm" | "accessibility";
@@ -41,6 +42,7 @@ const emptyForm: TemplateFormData = {
   allowFileUploads: true,
   allowMockupGeneration: true,
   allowRefineAnalysis: true,
+  allowWireframeRenderer: false,
   isActive: true,
   templateCategoryId: null,
   taskType: "llm",
@@ -121,6 +123,7 @@ export default function TemplatesAdmin({
   const handleEdit = (template: TemplateRow) => {
     const allowMockupGeneration = (template as any).allowMockupGeneration ?? true;
     const allowRefineAnalysis = (template as any).allowRefineAnalysis ?? true;
+    const allowWireframeRenderer = (template as any).allowWireframeRenderer ?? false;
     const taskType = (template as any).taskType || "llm";
     const accessibilityConfig = (template as any).accessibilityConfig || null;
     setEditingTemplate({
@@ -139,6 +142,7 @@ export default function TemplatesAdmin({
       allowFileUploads: (template as any).allowFileUploads ?? true,
       allowMockupGeneration,
       allowRefineAnalysis,
+      allowWireframeRenderer,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
       taskType,
@@ -160,6 +164,7 @@ export default function TemplatesAdmin({
       allowFileUploads: (template as any).allowFileUploads ?? true,
       allowMockupGeneration,
       allowRefineAnalysis,
+      allowWireframeRenderer,
       isActive: template.isActive,
       templateCategoryId: template.templateCategoryId || null,
       taskType,
@@ -214,6 +219,7 @@ export default function TemplatesAdmin({
           allowFileUploads: formData.allowFileUploads,
           allowMockupGeneration: formData.allowMockupGeneration,
           allowRefineAnalysis: formData.allowRefineAnalysis,
+          allowWireframeRenderer: formData.allowWireframeRenderer,
           isActive: formData.isActive,
           templateCategoryId: formData.templateCategoryId,
           taskType: formData.taskType,
@@ -765,6 +771,19 @@ export default function TemplatesAdmin({
               </label>
               <p className="mt-1 text-xs text-slate-500">
                 Controls whether users can access the post-affordance follow-up (Refine the Analysis) UI.
+              </p>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={formData.allowWireframeRenderer}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, allowWireframeRenderer: e.target.checked }))}
+                />
+                Allow Wireframe Renderer
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Controls whether users see the High‑Fidelity → Low‑Fidelity Wireframe tool for this UX objective.
               </p>
             </div>
             <div>

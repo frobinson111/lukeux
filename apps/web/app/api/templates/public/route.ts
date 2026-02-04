@@ -13,6 +13,7 @@ export async function GET() {
         category: true,
         subcategory: true,
         title: true,
+        allowWireframeRenderer: true,
         guidanceUseAiTo: true,
         guidanceExample: true,
         guidanceOutcome: true,

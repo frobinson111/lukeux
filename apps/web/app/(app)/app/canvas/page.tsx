@@ -11,6 +11,7 @@ import UxExtensionsSection from "./components/ux-extensions-section";
 import SearchableCategoryDropdown from "./components/searchable-category-dropdown";
 import FigmaConnectInline from "./components/figma-connect-inline";
 import HistoryItem from "./components/history-item";
+import WireframeRenderer from "./components/wireframe-renderer";
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
@@ -111,6 +112,7 @@ type Template = {
   allowFileUploads?: boolean;
   allowMockupGeneration?: boolean;
   allowRefineAnalysis?: boolean;
+  allowWireframeRenderer?: boolean;
   templateCategory?: { name: string; sortOrder: number } | null;
   taskType?: string | null; // "llm" | "accessibility"
 };
@@ -709,6 +711,9 @@ export default function CanvasPage() {
   // Backward-compatible default: if templates in DB don't have this field yet, treat as enabled.
   const mockupGenerationAllowed = template?.allowMockupGeneration ?? true;
   const refineAnalysisAllowed = template?.allowRefineAnalysis ?? true;
+  const wireframeRendererAllowed = template?.allowWireframeRenderer ?? false;
+  // Product decision: when wireframe renderer is enabled, this objective is wireframe-only.
+  const isWireframeOnlyObjective = wireframeRendererAllowed;
 
   const groupedTemplates = useMemo(() => {
     // Group by Framework (templateCategory.name) first
@@ -1647,87 +1652,89 @@ export default function CanvasPage() {
         </aside>
 
         <main className="flex-1 space-y-6 pt-5">
-          <header className="flex items-center justify-between text-sm text-slate-700">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setModelMenuOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow focus:outline-none focus:ring-2 focus:ring-black/10"
-              >
-                <span className="text-[11px] uppercase text-slate-500">Model / Mode / Detail</span>
-                <span className="text-slate-900">
-                  {model} · {mode} · {detailLevel === "brief" ? "Brief" : detailLevel === "standard" ? "Standard" : "In-depth"}
-                </span>
-              </button>
-              {modelMenuOpen && (
-                <div
-                  className="absolute z-30 mt-2 w-[520px] max-w-[90vw] rounded-lg border border-slate-200 bg-white p-3 shadow-xl"
-                  onMouseLeave={() => setModelMenuOpen(false)}
+          {!isWireframeOnlyObjective && (
+            <header className="flex items-center justify-between text-sm text-slate-700">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setModelMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow focus:outline-none focus:ring-2 focus:ring-black/10"
                 >
-                  <div className="grid grid-cols-3 gap-3 text-xs font-semibold text-slate-700">
-                    <div>
-                      <p className="mb-1 text-[11px] uppercase text-slate-500">Model</p>
-                      <div className="space-y-1">
-                        {models.map((m) => (
-                          <button
-                            key={m}
-                            type="button"
-                            onClick={() => setModel(m)}
-                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
-                              model === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
-                            }`}
-                          >
-                            <span className="w-4 text-slate-900">{model === m ? "✓" : ""}</span>
-                            <span className="whitespace-nowrap">{m}</span>
-                          </button>
-                        ))}
+                  <span className="text-[11px] uppercase text-slate-500">Model / Mode / Detail</span>
+                  <span className="text-slate-900">
+                    {model} · {mode} · {detailLevel === "brief" ? "Brief" : detailLevel === "standard" ? "Standard" : "In-depth"}
+                  </span>
+                </button>
+                {modelMenuOpen && (
+                  <div
+                    className="absolute z-30 mt-2 w-[520px] max-w-[90vw] rounded-lg border border-slate-200 bg-white p-3 shadow-xl"
+                    onMouseLeave={() => setModelMenuOpen(false)}
+                  >
+                    <div className="grid grid-cols-3 gap-3 text-xs font-semibold text-slate-700">
+                      <div>
+                        <p className="mb-1 text-[11px] uppercase text-slate-500">Model</p>
+                        <div className="space-y-1">
+                          {models.map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => setModel(m)}
+                              className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
+                                model === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                              }`}
+                            >
+                              <span className="w-4 text-slate-900">{model === m ? "✓" : ""}</span>
+                              <span className="whitespace-nowrap">{m}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[11px] uppercase text-slate-500">Mode</p>
-                      <div className="space-y-1">
-                        {modes.map((m) => (
-                          <button
-                            key={m}
-                            type="button"
-                            onClick={() => setMode(m)}
-                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
-                              mode === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
-                            }`}
-                          >
-                            <span className="w-4 text-slate-900">{mode === m ? "✓" : ""}</span>
-                            <span className="truncate">
-                              {m === "auto" ? "Auto" : m === "instant" ? "Instant" : "Thinking"}
-                            </span>
-                          </button>
-                        ))}
+                      <div>
+                        <p className="mb-1 text-[11px] uppercase text-slate-500">Mode</p>
+                        <div className="space-y-1">
+                          {modes.map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => setMode(m)}
+                              className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
+                                mode === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                              }`}
+                            >
+                              <span className="w-4 text-slate-900">{mode === m ? "✓" : ""}</span>
+                              <span className="truncate">
+                                {m === "auto" ? "Auto" : m === "instant" ? "Instant" : "Thinking"}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[11px] uppercase text-slate-500">Detail</p>
-                      <div className="space-y-1">
-                        {detailLevels.map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => setDetailLevel(d)}
-                            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
-                              detailLevel === d ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
-                            }`}
-                          >
-                            <span className="w-4 text-slate-900">{detailLevel === d ? "✓" : ""}</span>
-                            <span className="truncate">
-                              {d === "brief" ? "Brief" : d === "standard" ? "Standard" : "In-depth"}
-                            </span>
-                          </button>
-                        ))}
+                      <div>
+                        <p className="mb-1 text-[11px] uppercase text-slate-500">Detail</p>
+                        <div className="space-y-1">
+                          {detailLevels.map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => setDetailLevel(d)}
+                              className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
+                                detailLevel === d ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                              }`}
+                            >
+                              <span className="w-4 text-slate-900">{detailLevel === d ? "✓" : ""}</span>
+                              <span className="truncate">
+                                {d === "brief" ? "Brief" : d === "standard" ? "Standard" : "In-depth"}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </header>
+                )}
+              </div>
+            </header>
+          )}
 
           {!lastResponse && (
             <div className="space-y-2 text-center">
@@ -1869,7 +1876,7 @@ export default function CanvasPage() {
                         aria-expanded={guidanceExpanded.outcome}
                         aria-controls="guidance-outcome"
                       >
-                        <span className="text-[18px] font-semibold text-[#065f46]">How Luke UX helps:</span>
+                        <span className="text-[18px] font-semibold text-[#065f46]">How Luke UX can help:</span>
                         <svg 
                           className={`h-5 w-5 text-slate-600 transition-transform duration-200 flex-shrink-0 ml-2 ${
                             guidanceExpanded.outcome ? 'rotate-180' : ''
@@ -1945,7 +1952,7 @@ export default function CanvasPage() {
                 </button>
               </div>
             )}
-            {loading && (
+            {!isWireframeOnlyObjective && loading && (
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
                 <div
                   className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-slate-900 animate-spin"
@@ -1962,7 +1969,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && !isViewingHistoryItem && (userRole === "ADMIN" || userRole === "SUPERUSER") && template.taskType !== "accessibility" && (
+            {template && !isWireframeOnlyObjective && !inputsCollapsed && !isViewingHistoryItem && (userRole === "ADMIN" || userRole === "SUPERUSER") && template.taskType !== "accessibility" && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase text-amber-700">AI Prompt</p>
@@ -2013,7 +2020,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && !isViewingHistoryItem && template.allowUrlInput && template.taskType !== "accessibility" && (
+            {template && !isWireframeOnlyObjective && !inputsCollapsed && !isViewingHistoryItem && template.allowUrlInput && template.taskType !== "accessibility" && (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
                 <div className="text-left">
                   <p className="text-xs font-semibold text-slate-600">Analyze a website or prototype link:</p>
@@ -2043,7 +2050,7 @@ export default function CanvasPage() {
             )}
 
             {/* Accessibility Audit URL Input */}
-            {template && !inputsCollapsed && !isViewingHistoryItem && template.taskType === "accessibility" && (
+            {template && !isWireframeOnlyObjective && !inputsCollapsed && !isViewingHistoryItem && template.taskType === "accessibility" && (
               <div className="space-y-4 rounded-xl border border-blue-200 bg-blue-50 px-5 py-6 shadow-sm">
                 <div className="text-left">
                   <p className="text-xs font-semibold text-blue-700">Enter URLs to audit for WCAG 2.x AA + Section 508:</p>
@@ -2065,7 +2072,7 @@ export default function CanvasPage() {
               </div>
             )}
 
-            {template && !inputsCollapsed && !isViewingHistoryItem && (
+            {template && !isWireframeOnlyObjective && !inputsCollapsed && !isViewingHistoryItem && (
               <>
                 {/* Upload UI (only when enabled for this template) */}
                 {fileUploadsAllowed && (
@@ -2144,7 +2151,11 @@ export default function CanvasPage() {
                 </div>
               </>
             )}
-{lastResponse && (
+
+            {/* High-fidelity → low-fidelity wireframe renderer (template-controlled) */}
+            {template && wireframeRendererAllowed && !isViewingHistoryItem && <WireframeRenderer />}
+
+{!isWireframeOnlyObjective && lastResponse && (
               <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="relative">
@@ -2630,7 +2641,7 @@ export default function CanvasPage() {
                     </div>
                   )}
                 </div>
-                {refineAnalysisAllowed && (
+                {!isWireframeOnlyObjective && refineAnalysisAllowed && (
                 <form
                   className="mt-4 space-y-3"
                   onSubmit={async (e) => {
@@ -2811,7 +2822,7 @@ export default function CanvasPage() {
                   </div>
                 </form>
                 )}
-                {mockupGenerationAllowed && (
+                {!isWireframeOnlyObjective && mockupGenerationAllowed && (
                   <div ref={mockupSectionRef} className="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-bold text-slate-900">Generate Mockups</p>
@@ -2886,6 +2897,7 @@ export default function CanvasPage() {
                     )}
                   </div>
                 )}
+
               </div>
             )}
 

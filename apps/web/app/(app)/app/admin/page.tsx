@@ -38,6 +38,7 @@ export type TemplateRow = {
   allowFileUploads?: boolean;
   allowMockupGeneration?: boolean;
   allowRefineAnalysis?: boolean;
+  allowWireframeRenderer?: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -138,8 +139,25 @@ export default async function AdminPage() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [users, templates, usage, events, keys, modelOptions, categories, paymentConfig, supportRequests, feedbackRows, initialCount, followupCount, imageCount, userUsageCounts, llmUsageByModel] =
-    await Promise.all([
+  // NOTE: Supabase free-tier databases have low max-connection limits.
+  // Using Promise.all here can temporarily exhaust connections.
+  // Using a single $transaction keeps this page from spiking connections.
+  const [
+    usersRaw,
+    templates,
+    usage,
+    events,
+    keys,
+    categories,
+    paymentConfig,
+    supportRequests,
+    feedbackRows,
+    initialCount,
+    followupCount,
+    imageCount,
+    userUsageCounts,
+    llmUsageByModel
+  ] = await prismaAny.$transaction([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -155,9 +173,6 @@ export default async function AdminPage() {
         createdAt: true,
         deletedAt: true
       }
-    }).then((users: any[]) => {
-      // Temporarily add null lastLoginAt until migration is run
-      return users.map(u => ({ ...u, lastLoginAt: null }));
     }),
     prismaAny.taskTemplate.findMany({
       orderBy: [{ category: "asc" }, { title: "asc" }]
@@ -186,7 +201,6 @@ export default async function AdminPage() {
     prismaAny.apiKey.findMany({
       orderBy: { createdAt: "desc" }
     }),
-    getAvailableModelsFromKeys(),
     prismaAny.templateCategory.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     }),
@@ -214,6 +228,11 @@ export default async function AdminPage() {
       _count: { id: true }
     })
   ]);
+
+  const modelOptions = await getAvailableModelsFromKeys();
+
+  // Temporarily add null lastLoginAt until migration is run
+  const users = (usersRaw as any[]).map((u) => ({ ...u, lastLoginAt: null }));
 
   const secret = process.env.STRIPE_SECRET_KEY || "";
   const webhook = process.env.STRIPE_WEBHOOK_SECRET || "";

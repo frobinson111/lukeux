@@ -233,6 +233,7 @@ model TaskTemplate {
   allowFileUploads      Boolean  @default(true)
   allowMockupGeneration Boolean  @default(true)
   allowRefineAnalysis   Boolean  @default(true)
+  allowWireframeRenderer Boolean @default(false)
   isActive              Boolean  @default(true)
   templateCategoryId    String?
   templateCategory      TemplateCategory? @relation(fields: [templateCategoryId], references: [id], onDelete: SetNull)

@@ -18,6 +18,7 @@ type Template = {
   allowFileUploads?: boolean;
   allowMockupGeneration?: boolean;
   allowRefineAnalysis?: boolean;
+  allowWireframeRenderer?: boolean;
   templateCategory?: { name: string; sortOrder: number } | null;
 };
 
