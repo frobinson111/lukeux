@@ -7,7 +7,7 @@ if (!stripeSecret) {
 }
 
 export const stripe = stripeSecret
-  ? new Stripe(stripeSecret, {
-      apiVersion: "2026-01-28.clover"
-    })
+  // Do not pin apiVersion here; the Stripe SDK's TypeScript types are strict about
+  // allowable versions and can differ between environments depending on resolved SDK version.
+  ? new Stripe(stripeSecret)
   : null;
