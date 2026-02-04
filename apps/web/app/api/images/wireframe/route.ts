@@ -14,7 +14,7 @@ const schema = z
     // Provide either imageDataUrl OR url.
     imageDataUrl: z.string().min(1).optional(),
     url: z.string().min(1).optional(),
-    size: z.enum(["1024x1024", "1024x1792", "1792x1024"]).default("1024x1024"),
+    size: z.enum(["1024x1024", "1024x1536", "1536x1024"]).default("1024x1024"),
     n: z.number().int().min(1).max(2).default(1),
     // Controls the rendering style of the output wireframe.
     style: z.enum(["lofi" /* future: "midfi" */]).default("lofi")
