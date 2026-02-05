@@ -136,15 +136,37 @@ export async function getFigmaUser(accessToken: string): Promise<{
   handle: string;
   img_url: string;
 }> {
+  console.log("[figma] Fetching user info", {
+    endpoint: `${FIGMA_API_BASE}/me`,
+    tokenPreview: accessToken.substring(0, 10) + "...",
+  });
+
   const response = await fetch(`${FIGMA_API_BASE}/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
+  console.log("[figma] User info response", {
+    status: response.status,
+    statusText: response.statusText,
+  });
+
   if (!response.ok) {
-    throw new Error("Failed to fetch Figma user");
+    const text = await response.text();
+    console.error("[figma] Failed to fetch Figma user", {
+      status: response.status,
+      body: text,
+    });
+    throw new Error(`Failed to fetch Figma user (${response.status}): ${text}`);
   }
 
-  return response.json();
+  const userData = await response.json();
+  console.log("[figma] User data received", {
+    hasId: !!userData.id,
+    hasEmail: !!userData.email,
+    hasHandle: !!userData.handle,
+  });
+
+  return userData;
 }
 
 export async function getFigmaFile(accessToken: string, fileKey: string): Promise<any> {
