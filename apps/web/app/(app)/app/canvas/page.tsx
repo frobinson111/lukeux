@@ -941,7 +941,8 @@ export default function CanvasPage() {
     if (!lastResponse) return;
     if (isViewingHistoryItem) return;
 
-    const next = genCount + 1;
+    const currentCount = Number(localStorage.getItem("lx_gen_count") || "0");
+    const next = currentCount + 1;
     setGenCount(next);
     localStorage.setItem("lx_gen_count", String(next));
 
@@ -976,7 +977,7 @@ export default function CanvasPage() {
         localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
       }
     }
-  }, [lastResponse, genCount, isViewingHistoryItem]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lastResponse, isViewingHistoryItem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromoModalClose = () => {
     setShowPromoModal(false);
