@@ -1,10 +1,21 @@
-# Figma OAuth State Error Fix
+# Figma OAuth Integration Fixes
 
-## Problem
+## Problems Fixed
+
+### 1. OAuth State Error (FIXED ✅)
 After Figma approval, the OAuth callback was failing with `figma_error=oauth_state`, indicating that the OAuth state validation was failing.
 
-## Root Cause
-The issue was in the callback handler (`apps/web/app/api/integrations/figma/callback/route.ts`). In Next.js App Router (Next.js 13+), the `cookies()` function returns a Promise that needs to be awaited. The code was calling `cookies().get()` without awaiting it first, which caused the cookie retrieval to fail.
+**Root Cause:** In Next.js App Router (Next.js 13+), the `cookies()` function returns a Promise that needs to be awaited. The code was calling `cookies().get()` without awaiting it first, which caused the cookie retrieval to fail.
+
+### 2. Token Exchange 404 Error (FIXED ✅)
+After fixing the state validation, the token exchange was failing with a 404 error.
+
+**Root Cause:** The token exchange was using the wrong endpoint URL (`https://www.figma.com/api/oauth/token` instead of `https://api.figma.com/v1/oauth/token`).
+
+### 3. Missing OAuth Scope Error (FIXED ✅)
+After fixing the token exchange, fetching user info was failing with a 403 Forbidden error.
+
+**Root Cause:** The OAuth scope only included `file_content:read`, but the `/me` endpoint requires `current_user:read` scope. Updated scopes to: `file_content:read,files:read,file_variables:read,current_user:read`.
 
 ## Fix Applied
 
