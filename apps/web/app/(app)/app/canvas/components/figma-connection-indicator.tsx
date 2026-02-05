@@ -120,7 +120,7 @@ export default function FigmaConnectionIndicator({ collapsed = false }: Props) {
       </button>
 
       {showDetails && isConnected && (
-        <div className="absolute left-full top-0 z-30 ml-2 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
           <div className="mb-3 space-y-1">
             <div className="text-xs font-semibold uppercase text-slate-500">Connected Account</div>
             {status?.handle && (
