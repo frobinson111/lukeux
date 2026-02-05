@@ -132,7 +132,7 @@ const models = [
 const modes = ["auto", "instant", "thinking"] as const;
 const detailLevels = ["brief", "standard", "in-depth"] as const;
 type AssetPayload = { name: string; type: string; content: string };
-const milestones = [3, 10, 20];
+const milestones = [4, 8, 12];
 
 // Custom markdown components for styled output
 const styledMarkdownComponents: Components = {
