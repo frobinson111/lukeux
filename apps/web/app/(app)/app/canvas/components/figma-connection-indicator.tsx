@@ -86,7 +86,7 @@ export default function FigmaConnectionIndicator({ collapsed = false }: Props) {
         className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors hover:bg-slate-100 ${
           isConnected ? "text-slate-800" : "text-slate-500"
         }`}
-        title={isConnected ? `Connected to Figma as ${status?.handle || status?.email}` : "Connect your Figma account"}
+        title={isConnected ? `Connected as ${status?.handle || status?.email}. Click to disconnect or view details.` : "Connect your Figma account"}
       >
         <div className="relative flex-shrink-0 flex items-center gap-1.5">
           {isConnected ? (

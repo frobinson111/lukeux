@@ -106,10 +106,20 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
 
   if (projects.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <div className="text-sm font-medium text-slate-700 mb-2">No Projects Found</div>
-        <div className="text-xs text-slate-600">
-          No Figma projects found in your account. Create a project in Figma or check your permissions.
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="text-sm font-bold text-amber-900 mb-2">📁 No Projects Found</div>
+        <div className="text-xs text-amber-800 space-y-2">
+          <p>Your Figma account doesn&apos;t have any projects yet.</p>
+          <p className="font-semibold">To use this feature:</p>
+          <ol className="list-decimal list-inside space-y-1 ml-2">
+            <li>Open Figma and create a Team (if you don&apos;t have one)</li>
+            <li>Inside the Team, create a Project folder</li>
+            <li>Add design files to that Project</li>
+            <li>Refresh this page to see your files here</li>
+          </ol>
+          <p className="mt-3 pt-2 border-t border-amber-300">
+            <strong>Tip:</strong> You can still analyze Figma files by pasting the URL above!
+          </p>
         </div>
       </div>
     );
