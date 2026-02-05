@@ -947,29 +947,34 @@ export default function CanvasPage() {
 
     console.log('[PromoModal Debug] Task completed. Count:', next);
 
-    // Feedback prompt milestones
-    const promptedRaw = localStorage.getItem("lx_gen_prompted");
-    const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
-    const milestone = milestones.find((m) => m === next && !prompted.includes(m));
-    if (milestone) {
-      setShowFeedbackModal(true);
-      localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
-    }
-
     // Free access promo modal: show after a *new user* completes their first task.
+    // This takes priority over feedback modal.
     const hasCompleted = localStorage.getItem("promo_signup_completed");
     const hasDismissed = localStorage.getItem("promo_modal_dismissed");
     console.log('[PromoModal Debug] hasCompleted:', hasCompleted, 'hasDismissed:', hasDismissed);
     
+    let promoTriggered = false;
     if (next === 1) {
       if (!hasCompleted && !hasDismissed) {
         console.log('[PromoModal Debug] Triggering promo modal!');
         setShowPromoModal(true);
+        promoTriggered = true;
       } else {
         console.log('[PromoModal Debug] Not triggering - already completed or dismissed');
       }
     } else {
       console.log('[PromoModal Debug] Not triggering - count is', next, 'not 1');
+    }
+
+    // Feedback prompt milestones - only check if promo didn't trigger
+    if (!promoTriggered) {
+      const promptedRaw = localStorage.getItem("lx_gen_prompted");
+      const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
+      const milestone = milestones.find((m) => m === next && !prompted.includes(m));
+      if (milestone) {
+        setShowFeedbackModal(true);
+        localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
+      }
     }
   }, [lastResponse, genCount, isViewingHistoryItem]); // eslint-disable-line react-hooks/exhaustive-deps
 
