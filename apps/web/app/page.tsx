@@ -50,6 +50,7 @@ type PanelKey = "about" | "features" | "pricing" | "faq" | "contact" | "terms" |
 
 export default function HomePage() {
   const [mode, setMode] = useState<Mode>("login");
+  const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const [form, setForm] = useState<FormState>(initialState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export default function HomePage() {
       // Email verification messaging disabled
       setMessage(null);
       setForm(initialState);
+      setShowWelcomeBack(true);
       setMode("login");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
@@ -466,7 +468,9 @@ export default function HomePage() {
         <div className="flex items-start justify-center bg-[#f3f4f6] px-6 pt-8 pb-12 lg:pt-10">
           <div className="w-full max-w-lg rounded-[26px] px-8 pb-10 pt-0 min-h-[520px]">
             <div className="space-y-2 text-center">
-              <h1 className="text-2xl font-black text-slate-900">WELCOME TO LUKE UX</h1>
+              <h1 className="text-2xl font-black text-slate-900">
+                {mode === "login" && showWelcomeBack ? "WELCOME BACK" : "WELCOME TO LUKE UX"}
+              </h1>
               <p className="text-sm text-slate-600">Your second brain for UX decisions.</p>
             </div>
 
@@ -482,7 +486,12 @@ export default function HomePage() {
                   <button
                     key={tab.key}
                     type="button"
-                    onClick={() => setMode(tab.key)}
+                    onClick={() => {
+                      setMode(tab.key);
+                      if (tab.key === "signup") {
+                        setShowWelcomeBack(false);
+                      }
+                    }}
                     className={`flex-1 rounded-none px-3 py-2.5 text-sm font-black uppercase tracking-wide transition ${
                       active
                         ? "bg-[#ffd100] text-black"

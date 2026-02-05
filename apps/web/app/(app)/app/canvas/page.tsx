@@ -653,6 +653,8 @@ export default function CanvasPage() {
   const [projectFolders, setProjectFolders] = useState<ProjectFolder[]>([]);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [deleteConfirmProjectId, setDeleteConfirmProjectId] = useState<string | null>(null);
+  const [projectMenuOpen, setProjectMenuOpen] = useState<string | null>(null);
   const [genCount, setGenCount] = useState(0);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("LIKE");
@@ -1207,6 +1209,33 @@ export default function CanvasPage() {
     setProjectName("");
   }
 
+  async function handleDeleteProject(projectId: string) {
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE"
+      });
+      
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setStatus(data?.error || "Failed to delete project.");
+        return;
+      }
+      
+      // Remove project from state
+      setProjectFolders((prev) => prev.filter((p) => p.id !== projectId));
+      
+      // Move any history items from this project back to uncategorized
+      setHistory((prev) =>
+        prev.map((h) => (h.projectId === projectId ? { ...h, projectId: null } : h))
+      );
+      
+      setStatus("Project folder deleted successfully.");
+      setDeleteConfirmProjectId(null);
+    } catch (err) {
+      setStatus("Failed to delete project.");
+    }
+  }
+
   async function addToHistory(content: string) {
     const title = template ? template.title : "Untitled Task";
     try {
@@ -1576,19 +1605,54 @@ export default function CanvasPage() {
                       <div className="space-y-1">
                         {projectFolders.map((folder) => (
                           <div key={folder.id} className="space-y-1 px-2 py-2">
-                            <button
-                              type="button"
-                              className="flex w-full items-center gap-2 px-1 py-1 text-sm font-semibold text-slate-800 transition hover:-translate-y-[1px]"
-                              onClick={() =>
-                                setProjectFolders((prev) =>
-                                  prev.map((f) => (f.id === folder.id ? { ...f, open: !f.open } : f))
-                                )
-                              }
-                            >
-                              <Image src={folder.open ? "/images/open-folder.svg" : "/images/close-folder.svg"} alt="Project Folder" width={20} height={20} className="h-5 w-5 flex-shrink-0" />
-                              <span className="flex-1 text-left">{folder.name}</span>
-                              <span className={`text-xs text-slate-500 transition ${folder.open ? "rotate-90" : ""}`}>⌄</span>
-                            </button>
+                            <div className="group flex w-full items-center gap-1 rounded px-1 transition hover:bg-slate-100">
+                              <button
+                                type="button"
+                                className="flex flex-1 items-center gap-2 py-1 text-sm font-semibold text-slate-800"
+                                onClick={() =>
+                                  setProjectFolders((prev) =>
+                                    prev.map((f) => (f.id === folder.id ? { ...f, open: !f.open } : f))
+                                  )
+                                }
+                              >
+                                <Image src={folder.open ? "/images/open-folder.svg" : "/images/close-folder.svg"} alt="Project Folder" width={20} height={20} className="h-5 w-5 flex-shrink-0" />
+                                <span className="flex-1 text-left">{folder.name}</span>
+                                <span className={`text-xs text-slate-500 transition ${folder.open ? "rotate-90" : ""}`}>⌄</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="hidden h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-200 group-hover:flex"
+                                onClick={() => setProjectMenuOpen(projectMenuOpen === folder.id ? null : folder.id)}
+                                aria-label="Project actions"
+                              >
+                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                </svg>
+                              </button>
+                              {projectMenuOpen === folder.id && (
+                                <div 
+                                  className="absolute z-50 mt-2 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-xl"
+                                  style={{ 
+                                    marginLeft: '140px',
+                                    marginTop: '-10px'
+                                  }}
+                                  onMouseLeave={() => setProjectMenuOpen(null)}
+                                >
+                                  <button
+                                    onClick={() => {
+                                      setDeleteConfirmProjectId(folder.id);
+                                      setProjectMenuOpen(null);
+                                    }}
+                                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                  >
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                             {folder.open && (
                               <div className="space-y-1 pl-7">
                                 {history.filter((h) => h.projectId === folder.id).length === 0 && (
@@ -3007,6 +3071,37 @@ export default function CanvasPage() {
           </section>
         </main>
       </div>
+
+      {/* Delete Project Confirmation Modal */}
+      {deleteConfirmProjectId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-3">
+              <h2 className="text-xl font-bold text-slate-900">Delete Project Folder?</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Are you sure you want to delete this project folder? All UX tasks inside will be moved to your general history.
+              </p>
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmProjectId(null)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:-translate-y-[1px] hover:shadow"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteProject(deleteConfirmProjectId)}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-[0_3px_0_#991b1b] transition hover:-translate-y-[1px] hover:shadow-[0_5px_0_#991b1b]"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Promo Modal */}
       <PromoModal
