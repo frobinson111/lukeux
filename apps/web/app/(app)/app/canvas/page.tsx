@@ -2006,12 +2006,24 @@ export default function CanvasPage() {
 
             <div ref={statusRef} />
             {status && (
-              <div className="flex items-start justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <div className={`flex items-start justify-between rounded-lg border px-3 py-2 text-sm ${
+                status.toLowerCase().includes('success') || status.toLowerCase().includes('completed') || status.toLowerCase().includes('downloaded') || status.toLowerCase().includes('saved to') || status.toLowerCase().includes('moved to')
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : status.toLowerCase().includes('error') || status.toLowerCase().includes('failed')
+                  ? 'border-red-200 bg-red-50 text-red-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-800'
+              }`}>
                 <div className="pr-3">{status}</div>
                 <button
                   type="button"
                   onClick={() => setStatus(null)}
-                  className="ml-auto text-amber-700 hover:text-amber-900 font-bold"
+                  className={`ml-auto font-bold ${
+                    status.toLowerCase().includes('success') || status.toLowerCase().includes('completed') || status.toLowerCase().includes('downloaded') || status.toLowerCase().includes('saved to') || status.toLowerCase().includes('moved to')
+                      ? 'text-green-700 hover:text-green-900'
+                      : status.toLowerCase().includes('error') || status.toLowerCase().includes('failed')
+                      ? 'text-red-700 hover:text-red-900'
+                      : 'text-amber-700 hover:text-amber-900'
+                  }`}
                   aria-label="Dismiss alert"
                 >
                   ×
@@ -2094,7 +2106,7 @@ export default function CanvasPage() {
                 </div>
 
                 {urlError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
                     {urlError}
                   </div>
                 )}
@@ -2893,7 +2905,11 @@ export default function CanvasPage() {
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-bold text-slate-900">Generate Mockups</p>
                       <div className="flex items-center gap-2">
-                        {imageError && <span className="text-xs font-semibold text-red-600">{imageError}</span>}
+                        {imageError && (
+                          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-800">
+                            {imageError}
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => setImageSectionOpen((v) => !v)}
