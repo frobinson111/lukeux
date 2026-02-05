@@ -10,6 +10,7 @@ import { PromoModal } from "../components/promo-modal";
 import UxExtensionsSection from "./components/ux-extensions-section";
 import SearchableCategoryDropdown from "./components/searchable-category-dropdown";
 import FigmaConnectInline from "./components/figma-connect-inline";
+import FigmaFilesList from "./components/figma-files-list";
 import HistoryItem from "./components/history-item";
 import WireframeRenderer from "./components/wireframe-renderer";
 
@@ -2132,6 +2133,7 @@ export default function CanvasPage() {
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
                   />
                   <FigmaConnectInline />
+                  <FigmaFilesList />
                 </div>
               </div>
             )}
