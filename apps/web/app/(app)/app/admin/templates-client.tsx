@@ -646,7 +646,7 @@ export default function TemplatesAdmin({
               />
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600">WHAT LUKEUX WILL CHECK</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">WHAT LUKE UX WILL CHECK</label>
               <textarea
                 value={formData.guidanceUseAiTo}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceUseAiTo: e.target.value }))}
@@ -664,7 +664,7 @@ export default function TemplatesAdmin({
               />
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600">HOW LUKEUX HELPS</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">HOW LUKE UX HELPS</label>
               <textarea
                 value={formData.guidanceOutcome}
                 onChange={(e) => setFormData((prev) => ({ ...prev, guidanceOutcome: e.target.value }))}

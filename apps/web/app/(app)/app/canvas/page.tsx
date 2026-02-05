@@ -935,46 +935,43 @@ export default function CanvasPage() {
     load();
   }, []);
 
+  // Track completed tasks (successful generations) + trigger feedback prompts/promo modal.
+  // NOTE: Guard against loading history entries (which also sets lastResponse).
   useEffect(() => {
     if (!lastResponse) return;
-    const next = genCount + 1;
-    setGenCount(next);
-    localStorage.setItem("lx_gen_count", String(next));
-    const promptedRaw = localStorage.getItem("lx_gen_prompted");
-    const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
-    const milestone = milestones.find((m) => m === next && !prompted.includes(m));
-    if (milestone) {
-      setShowFeedbackModal(true);
-      localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
-    }
-  }, [lastResponse]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (!lastResponse) return;
-    const next = genCount + 1;
-    setGenCount(next);
-    localStorage.setItem("lx_gen_count", String(next));
-    const promptedRaw = localStorage.getItem("lx_gen_prompted");
-    const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
-    const milestone = milestones.find((m) => m === next && !prompted.includes(m));
-    if (milestone) {
-      setShowFeedbackModal(true);
-      localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
-    }
-  }, [lastResponse]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isViewingHistoryItem) return;
 
-  // Promo modal trigger - show after 5 seconds if not already completed/dismissed
-  useEffect(() => {
+    const next = genCount + 1;
+    setGenCount(next);
+    localStorage.setItem("lx_gen_count", String(next));
+
+    console.log('[PromoModal Debug] Task completed. Count:', next);
+
+    // Feedback prompt milestones
+    const promptedRaw = localStorage.getItem("lx_gen_prompted");
+    const prompted = promptedRaw ? promptedRaw.split(",").map((n) => Number(n)) : [];
+    const milestone = milestones.find((m) => m === next && !prompted.includes(m));
+    if (milestone) {
+      setShowFeedbackModal(true);
+      localStorage.setItem("lx_gen_prompted", [...prompted, milestone].join(","));
+    }
+
+    // Free access promo modal: show after a *new user* completes their first task.
     const hasCompleted = localStorage.getItem("promo_signup_completed");
     const hasDismissed = localStorage.getItem("promo_modal_dismissed");
+    console.log('[PromoModal Debug] hasCompleted:', hasCompleted, 'hasDismissed:', hasDismissed);
     
-    if (hasCompleted || hasDismissed) return;
-    
-    const timer = setTimeout(() => {
-      setShowPromoModal(true);
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    if (next === 1) {
+      if (!hasCompleted && !hasDismissed) {
+        console.log('[PromoModal Debug] Triggering promo modal!');
+        setShowPromoModal(true);
+      } else {
+        console.log('[PromoModal Debug] Not triggering - already completed or dismissed');
+      }
+    } else {
+      console.log('[PromoModal Debug] Not triggering - count is', next, 'not 1');
+    }
+  }, [lastResponse, genCount, isViewingHistoryItem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromoModalClose = () => {
     setShowPromoModal(false);

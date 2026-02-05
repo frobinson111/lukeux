@@ -133,7 +133,7 @@ export function PromoModal({ isOpen, onClose, onSuccess }: PromoModalProps) {
                 </h3>
                 <p className="text-gray-600">
                   Check your email for next steps to activate your free 3 months
-                  of LukeUX.
+                  of Luke UX.
                 </p>
               </div>
             ) : (
@@ -146,7 +146,7 @@ export function PromoModal({ isOpen, onClose, onSuccess }: PromoModalProps) {
 
                 {/* Title */}
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  3 months of LukeUX for free
+                  3 months of Luke UX for free
                 </h2>
 
                 {/* Description */}
