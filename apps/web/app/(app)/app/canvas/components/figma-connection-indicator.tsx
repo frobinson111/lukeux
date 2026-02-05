@@ -11,6 +11,18 @@ type FigmaStatus = {
   expiresAt?: string;
 };
 
+type FigmaFile = {
+  key: string;
+  name: string;
+  thumbnail_url?: string;
+  last_modified: string;
+};
+
+type FigmaProject = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   collapsed?: boolean;
 };
@@ -77,7 +89,13 @@ export default function FigmaConnectionIndicator({ collapsed = false }: Props) {
         title={isConnected ? `Connected to Figma as ${status?.handle || status?.email}` : "Connect your Figma account"}
       >
         <div className="relative flex-shrink-0 flex items-center gap-1.5">
-          <Image src="/images/figma-icon-2.svg" alt="Figma" width={20} height={20} className="h-5 w-5" />
+          <Image 
+            src={isConnected ? "/images/Figma-logo.svg.png" : "/images/figma-icon-2.svg"} 
+            alt="Figma" 
+            width={20} 
+            height={20} 
+            className="h-5 w-5" 
+          />
           {isConnected ? (
             <PlugConnectedIcon className="h-4 w-4 text-emerald-500" />
           ) : (
