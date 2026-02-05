@@ -1840,6 +1840,14 @@ export default function CanvasPage() {
                     setImagePrompt("");
                     setResultsCollapsed(false);
                     setIsViewingHistoryItem(false); // Clear history flag when selecting new template
+                    setInputsCollapsed(false); // Auto-expand UX Guidance when selecting new task
+                    // Auto-expand all guidance sections for new task
+                    setGuidanceExpanded({
+                      useAiTo: true,
+                      example: true,
+                      outcome: true,
+                      assets: true
+                    });
                   }}
                   placeholder="Select a Category"
                 />
