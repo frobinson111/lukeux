@@ -61,13 +61,16 @@ export async function exchangeFigmaCode(code: string): Promise<{
     throw new Error("Figma OAuth not configured");
   }
 
+  const tokenUrl = "https://api.figma.com/v1/oauth/token";
+  
   console.log("[figma] Exchanging code for token", {
     clientId,
     redirectUri,
     codeLength: code.length,
+    tokenUrl,
   });
 
-  const response = await fetch("https://www.figma.com/api/oauth/token", {
+  const response = await fetch(tokenUrl, {
     method: "POST",
     headers: { 
       "Content-Type": "application/x-www-form-urlencoded",
