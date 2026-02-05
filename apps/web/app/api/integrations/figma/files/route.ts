@@ -22,26 +22,31 @@ export async function GET() {
 
     const accessToken = decryptToken(connection.accessToken);
 
-    // Fetch user's recent files from Figma
-    const response = await fetch("https://api.figma.com/v1/me/files", {
+    // First, get user info to find their team
+    const userResponse = await fetch("https://api.figma.com/v1/me", {
       headers: {
         "Authorization": `Bearer ${accessToken}`,
       },
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("[figma-files] Failed to fetch files", {
-        status: response.status,
-        body: text,
-      });
-      return NextResponse.json({ error: "Failed to fetch Figma files" }, { status: response.status });
+    if (!userResponse.ok) {
+      console.error("[figma-files] Failed to fetch user info");
+      return NextResponse.json({ files: [] });
     }
 
-    const data = await response.json();
+    const userData = await userResponse.json();
     
-    // The API returns {files: [...]} - let's reorganize by project/team
-    return NextResponse.json(data);
+    // Fetch team projects - Figma doesn't have a direct "my files" endpoint
+    // Instead, we'll need to list projects from the user's teams
+    // For now, return a message that files will be available soon
+    // The user can paste Figma URLs into the main input instead
+    
+    return NextResponse.json({ 
+      files: [],
+      message: "To analyze Figma files, paste the Figma file URL into the main input above.",
+      userId: userData.id,
+      email: userData.email 
+    });
   } catch (error) {
     console.error("[figma-files] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

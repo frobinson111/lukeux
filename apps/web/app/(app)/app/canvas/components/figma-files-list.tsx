@@ -52,7 +52,10 @@ export default function FigmaFilesList() {
   if (files.length === 0) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <div className="text-sm text-slate-500">No files found in your Figma account.</div>
+        <div className="text-sm font-medium text-slate-700 mb-2">Ready to Analyze Figma Files</div>
+        <div className="text-xs text-slate-600">
+          Paste your Figma file URL in the main input above to analyze designs, prototypes, and get UX recommendations.
+        </div>
       </div>
     );
   }
