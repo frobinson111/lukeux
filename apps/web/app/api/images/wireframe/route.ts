@@ -14,7 +14,9 @@ const schema = z
     // Provide either imageDataUrl OR url.
     imageDataUrl: z.string().min(1).optional(),
     url: z.string().min(1).optional(),
-    size: z.enum(["1024x1024", "1024x1536", "1536x1024"]).default("1024x1024"),
+    // Default to landscape to better match the in-app wireframe output viewport (~789x549)
+    // and reduce the likelihood of huge top/bottom whitespace.
+    size: z.enum(["1024x1024", "1024x1536", "1536x1024"]).default("1536x1024"),
     n: z.number().int().min(1).max(2).default(1),
     // Controls the rendering style of the output wireframe.
     style: z.enum(["lofi" /* future: "midfi" */]).default("lofi")
@@ -54,7 +56,13 @@ function buildWireframePrompt(style: "lofi", specText: string) {
         ].join(" ")
       : "";
 
-  return `Create a structurally faithful low-fidelity UX wireframe rendering of the UI described below. ${styleRules}\n\nUI specification:\n${specText}`;
+  const framingRules =
+    "Fill the canvas with the wireframe. " +
+    "Avoid large empty margins; keep ~10px outer margin max. " +
+    "Scale and crop the composition so the UI occupies most of the image area. " +
+    "If the UI is a landscape web page, use a landscape composition; do not center a small wireframe on a huge empty page.";
+
+  return `Create a structurally faithful low-fidelity UX wireframe rendering of the UI described below. ${styleRules} ${framingRules}\n\nUI specification:\n${specText}`;
 }
 
 export async function POST(req: Request) {

@@ -39,6 +39,83 @@ async function downscaleDataUrl(dataUrl: string, maxWidth = 1280): Promise<strin
   });
 }
 
+async function autoCropDataUrl(dataUrl: string, paddingPx = 10): Promise<string> {
+  // Browser-only auto-crop to remove large white margins from generated wireframes.
+  // Keeps a small outer margin so the wireframe doesn’t touch the edge.
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const w = img.width;
+      const h = img.height;
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const { data } = imageData;
+
+      const isInk = (i: number) => {
+        const a = data[i + 3];
+        if (a < 10) return false;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        // consider anything not near-white as content
+        return r < 245 || g < 245 || b < 245;
+      };
+
+      let minX = w;
+      let minY = h;
+      let maxX = -1;
+      let maxY = -1;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          if (!isInk(idx)) continue;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+
+      // If we didn't detect any non-white pixels, don't crop.
+      if (maxX < 0 || maxY < 0) {
+        resolve(dataUrl);
+        return;
+      }
+
+      minX = Math.max(0, minX - paddingPx);
+      minY = Math.max(0, minY - paddingPx);
+      maxX = Math.min(w - 1, maxX + paddingPx);
+      maxY = Math.min(h - 1, maxY + paddingPx);
+
+      const cropW = Math.max(1, maxX - minX + 1);
+      const cropH = Math.max(1, maxY - minY + 1);
+
+      const out = document.createElement("canvas");
+      out.width = cropW;
+      out.height = cropH;
+      const outCtx = out.getContext("2d");
+      if (!outCtx) {
+        resolve(dataUrl);
+        return;
+      }
+
+      outCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+      resolve(out.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("Failed to decode image"));
+    img.src = dataUrl;
+  });
+}
+
 type WireframeResponse = {
   images: string[];
   spec?: string;
@@ -105,7 +182,8 @@ export default function WireframeRenderer() {
 
     try {
       const payload: any = {
-        size: "1024x1536",
+        // Generate landscape by default to match the output viewport and reduce vertical whitespace
+        size: "1536x1024",
         n: 1,
         style: "lofi"
       };
@@ -123,7 +201,18 @@ export default function WireframeRenderer() {
         return;
       }
       const imgs = json?.images || [];
-      setWireframes(imgs);
+      const processed = await Promise.all(
+        imgs.map(async (src) => {
+          if (typeof src !== "string") return src;
+          if (!src.startsWith("data:image/")) return src;
+          try {
+            return await autoCropDataUrl(src, 10);
+          } catch {
+            return src;
+          }
+        })
+      );
+      setWireframes(processed);
       setSpecText(json?.spec || null);
     } catch (e: any) {
       setError(e?.message || "Wireframe generation failed.");
@@ -186,26 +275,30 @@ export default function WireframeRenderer() {
               Clear
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex gap-4 overflow-x-auto pb-2">
             {wireframes.map((src, idx) => (
               <div
                 key={`${src}-${idx}`}
-                className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm"
+                // Target output viewport: 789px × 549px total
+                className="flex-shrink-0 flex h-[549px] w-[789px] max-w-full flex-col overflow-hidden rounded-lg border-2 border-slate-300 bg-white shadow-md"
               >
                 <button
                   type="button"
                   onClick={() => setExpandedSrc(src)}
-                  className="block w-full"
+                  className="block flex-1 p-[10px]"
                   aria-label="Expand wireframe image"
                 >
-                  <Image
-                    src={src}
-                    alt={`Wireframe ${idx + 1}`}
-                    width={1024}
-                    height={1536}
-                    unoptimized
-                    className="h-auto w-full rounded-md object-contain"
-                  />
+                  {/* Image area: fill remaining vertical space, keep a 10px gutter */}
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={src}
+                      alt={`Wireframe ${idx + 1}`}
+                      fill
+                      sizes="789px"
+                      unoptimized
+                      className="object-contain"
+                    />
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -217,9 +310,9 @@ export default function WireframeRenderer() {
                     link.click();
                     document.body.removeChild(link);
                   }}
-                  className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className="h-[48px] w-full border-t-2 border-slate-300 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                 >
-                  Download
+                  Download Wireframe
                 </button>
               </div>
             ))}
@@ -326,25 +419,27 @@ export default function WireframeRenderer() {
 
 
       {expandedSrc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-          <div className="relative w-full max-w-4xl rounded-2xl bg-white p-3 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true">
+          <div className="relative w-full max-w-[95vw] max-h-[95vh] rounded-2xl bg-white p-3 shadow-2xl">
             <button
               type="button"
               onClick={() => setExpandedSrc(null)}
-              className="absolute right-3 top-3 rounded-full bg-slate-900/90 px-3 py-1 text-xs font-bold text-white hover:bg-slate-900"
+              className="absolute right-3 top-3 z-10 rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-red-700 transition-colors"
               aria-label="Close"
             >
-              ×
+              ✕ Close
             </button>
-            <div className="overflow-hidden rounded-xl border border-slate-200">
-              <Image
-                src={expandedSrc}
-                alt="Expanded wireframe"
-                width={1024}
-                height={1536}
-                unoptimized
-                className="h-auto w-full"
-              />
+            <div className="overflow-auto rounded-xl border border-slate-200 max-h-[calc(95vh-6rem)]">
+              <div className="relative min-h-[50vh] w-full">
+                <Image
+                  src={expandedSrc}
+                  alt="Expanded wireframe"
+                  fill
+                  sizes="95vw"
+                  unoptimized
+                  className="object-contain"
+                />
+              </div>
             </div>
           </div>
         </div>

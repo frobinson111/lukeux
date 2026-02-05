@@ -149,3 +149,5 @@ print_warning "Keep MongoDB running for at least 2 weeks as a rollback option"
 echo ""
 echo "Full documentation: ../../MIGRATION_GUIDE.md"
 echo ""
+
+print_success "Migration script completed successfully!"
