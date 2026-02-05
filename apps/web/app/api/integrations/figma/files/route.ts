@@ -5,11 +5,14 @@ import { requireUser } from "../../../../../lib/auth";
 import { prisma } from "../../../../../lib/prisma";
 import { decryptToken } from "../../../../../lib/figma";
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await requireUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get('projectId');
 
   try {
     const connection = await prisma.figmaConnection.findUnique({
@@ -22,30 +25,29 @@ export async function GET() {
 
     const accessToken = decryptToken(connection.accessToken);
 
-    // First, get user info to find their team
-    const userResponse = await fetch("https://api.figma.com/v1/me", {
+    if (!projectId) {
+      return NextResponse.json({ 
+        files: [],
+        message: "Please select a project to view files."
+      });
+    }
+
+    // Fetch files for the specific project
+    const projectFilesResponse = await fetch(`https://api.figma.com/v1/projects/${projectId}/files`, {
       headers: {
         "Authorization": `Bearer ${accessToken}`,
       },
     });
 
-    if (!userResponse.ok) {
-      console.error("[figma-files] Failed to fetch user info");
+    if (!projectFilesResponse.ok) {
+      console.error("[figma-files] Failed to fetch project files");
       return NextResponse.json({ files: [] });
     }
 
-    const userData = await userResponse.json();
-    
-    // Fetch team projects - Figma doesn't have a direct "my files" endpoint
-    // Instead, we'll need to list projects from the user's teams
-    // For now, return a message that files will be available soon
-    // The user can paste Figma URLs into the main input instead
+    const projectFilesData = await projectFilesResponse.json();
     
     return NextResponse.json({ 
-      files: [],
-      message: "To analyze Figma files, paste the Figma file URL into the main input above.",
-      userId: userData.id,
-      email: userData.email 
+      files: projectFilesData.files || []
     });
   } catch (error) {
     console.error("[figma-files] Error:", error);
