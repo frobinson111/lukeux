@@ -31,9 +31,23 @@ export async function GET(req: Request) {
     return NextResponse.redirect(abs(req, "/app/canvas?figma_error=oauth_denied"));
   }
 
-  const expectedState = cookies().get("figma_oauth_state")?.value;
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get("figma_oauth_state")?.value;
+  
+  console.log("[figma-callback] Debug info:", {
+    receivedState: state,
+    expectedState,
+    hasCode: !!code,
+    allCookies: Array.from(cookieStore.getAll()).map(c => c.name),
+  });
+  
   if (!code || !state || !expectedState || state !== expectedState) {
-    console.error("[figma-callback] state mismatch");
+    console.error("[figma-callback] state mismatch", {
+      code: !!code,
+      state: !!state,
+      expectedState: !!expectedState,
+      match: state === expectedState
+    });
     return NextResponse.redirect(abs(req, "/app/canvas?figma_error=oauth_state"));
   }
 
