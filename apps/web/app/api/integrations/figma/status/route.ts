@@ -15,6 +15,7 @@ export async function GET() {
     select: {
       figmaEmail: true,
       figmaHandle: true,
+      figmaTeamId: true,
       expiresAt: true,
       createdAt: true,
     },
@@ -30,6 +31,7 @@ export async function GET() {
     connected: !isExpired,
     email: connection.figmaEmail,
     handle: connection.figmaHandle,
+    hasTeamId: !!connection.figmaTeamId,
     connectedAt: connection.createdAt,
     expiresAt: connection.expiresAt,
   });

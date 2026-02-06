@@ -354,6 +354,7 @@ model FigmaConnection {
   figmaUserId  String
   figmaEmail   String?
   figmaHandle  String?
+  figmaTeamId  String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   User         User      @relation(fields: [userId], references: [id], onDelete: Cascade)

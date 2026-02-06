@@ -14,7 +14,6 @@ type FigmaProject = {
   id: string;
   name: string;
   teamId: string;
-  teamName: string;
 };
 
 type Props = {
@@ -31,6 +30,18 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
 
   useEffect(() => {
     fetchProjects();
+
+    function handleTeamUpdated() {
+      setLoading(true);
+      setError(null);
+      setProjects([]);
+      setExpandedProjects(new Set());
+      setProjectFiles({});
+      fetchProjects();
+    }
+
+    window.addEventListener("figma-team-updated", handleTeamUpdated);
+    return () => window.removeEventListener("figma-team-updated", handleTeamUpdated);
   }, []);
 
   async function fetchProjects() {
@@ -40,6 +51,15 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
         throw new Error("Failed to fetch projects");
       }
       const data = await res.json();
+      if (data.needsTeamId) {
+        // Team ID not configured yet — FigmaConnectInline handles this state
+        setProjects([]);
+        return;
+      }
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
       setProjects(data.projects || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load projects");
@@ -105,24 +125,7 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
   }
 
   if (projects.length === 0) {
-    return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-        <div className="text-sm font-bold text-amber-900 mb-2">📁 No Projects Found</div>
-        <div className="text-xs text-amber-800 space-y-2">
-          <p>Your Figma account doesn&apos;t have any projects yet.</p>
-          <p className="font-semibold">To use this feature:</p>
-          <ol className="list-decimal list-inside space-y-1 ml-2">
-            <li>Open Figma and create a Team (if you don&apos;t have one)</li>
-            <li>Inside the Team, create a Project folder</li>
-            <li>Add design files to that Project</li>
-            <li>Refresh this page to see your files here</li>
-          </ol>
-          <p className="mt-3 pt-2 border-t border-amber-300">
-            <strong>Tip:</strong> You can still analyze Figma files by pasting the URL above!
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -153,7 +156,6 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-slate-800 truncate">{project.name}</div>
-                  <div className="text-xs text-slate-500">{project.teamName}</div>
                 </div>
                 <svg 
                   className={`h-4 w-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
