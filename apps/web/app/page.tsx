@@ -651,6 +651,17 @@ function HomePageInner() {
                 {loading ? "Working..." : heading}
               </button>
 
+              {mode === "login" && (
+                <div className="text-center">
+                  <Link
+                    href="/auth/forgot"
+                    className="text-xs font-semibold text-slate-600 underline-offset-4 hover:text-black hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 text-xs font-semibold uppercase text-slate-600">
                 <span className="flex-1 border-t border-slate-300" aria-hidden="true" />
                 <span>or</span>
