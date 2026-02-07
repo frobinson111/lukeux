@@ -30,7 +30,7 @@ export default function PopularTasksSection({ collapsed = false, templates, onSe
       <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         Popular UX Tasks
       </div>
-      <div className="space-y-0.5 px-1">
+      <div className="space-y-0.5 px-1 pb-3">
         {templates.map((t) => (
           <button
             key={t.idx}
@@ -45,6 +45,7 @@ export default function PopularTasksSection({ collapsed = false, templates, onSe
           </button>
         ))}
       </div>
+      <div className="border-b border-slate-200" />
     </div>
   );
 }

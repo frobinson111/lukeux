@@ -1622,7 +1622,7 @@ export default function CanvasPage() {
                   />
                 )}
                 {proj === "New UX Task" && !railCollapsed && (
-                  <div className="flex-shrink-0 space-y-1">
+                  <div className="flex-shrink-0 space-y-1 pb-3 border-b border-slate-200">
                     <div className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Projects</div>
                     <button
                       type="button"
