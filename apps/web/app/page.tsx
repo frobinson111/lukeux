@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import TemplateTaskList from "./components/template-task-list";
 
 const brand = {
@@ -48,7 +49,8 @@ const EyeOffIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 type PanelKey = "about" | "features" | "pricing" | "faq" | "contact" | "terms" | "privacy";
 
-export default function HomePage() {
+function HomePageInner() {
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const [form, setForm] = useState<FormState>(initialState);
@@ -66,6 +68,16 @@ export default function HomePage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const logoRef = useRef<HTMLDivElement | null>(null);
   const columnRef = useRef<HTMLDivElement | null>(null);
+
+  // Detect post-verification redirect and show Welcome Back login screen
+  useEffect(() => {
+    if (searchParams.get("verified") === "true") {
+      setShowWelcomeBack(true);
+      setMode("login");
+      // Clean up the URL without triggering a reload
+      window.history.replaceState({}, "", "/");
+    }
+  }, [searchParams]);
 
   const heading = useMemo(
     () => (mode === "login" ? "Log in" : "Create your account"),
@@ -968,5 +980,13 @@ export default function HomePage() {
       </div>
     )}
     </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomePageInner />
+    </Suspense>
   );
 }

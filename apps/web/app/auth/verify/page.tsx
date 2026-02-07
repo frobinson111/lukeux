@@ -38,7 +38,7 @@ function OtpVerifyForm({ email }: { email: string }) {
       }
 
       setSuccess("Email verified. You can sign in now.");
-      setTimeout(() => router.push("/"), 1200);
+      setTimeout(() => router.push("/?verified=true"), 1200);
     } catch {
       setError("Verification failed");
       setLoading(false);
@@ -241,7 +241,7 @@ function TokenVerifyForm() {
     }
 
     setSuccess("Email verified. You can sign in now.");
-    setTimeout(() => router.push("/"), 1200);
+    setTimeout(() => router.push("/?verified=true"), 1200);
   }
 
   return (
