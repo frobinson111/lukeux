@@ -27,9 +27,9 @@ export default function ForgotPasswordPage() {
     if (!res.ok) {
       setError(data.error || "Request failed");
     } else {
-      const msg = data.resetToken
-        ? `Reset email sent. Dev token: ${data.resetToken}`
-        : "If the email exists, a reset link was sent.";
+      const msg = data.devPreview
+        ? `Reset email sent. Dev link: ${data.devPreview}`
+        : "If that email exists, a password reset link has been sent. Check your inbox.";
       setMessage(msg);
     }
 

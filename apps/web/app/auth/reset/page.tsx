@@ -9,6 +9,7 @@ function ResetForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialToken = useMemo(() => searchParams.get("token") || "", [searchParams]);
+  const hasTokenFromUrl = !!initialToken;
 
   const [token, setToken] = useState(initialToken);
   const [error, setError] = useState<string | null>(null);
@@ -49,21 +50,27 @@ function ResetForm() {
     <div className="space-y-4">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-slate-900">Set a new password</h1>
-        <p className="text-sm text-slate-600">Paste your reset token and choose a new password.</p>
+        <p className="text-sm text-slate-600">
+          {hasTokenFromUrl
+            ? "Choose a new password for your account."
+            : "Paste your reset token and choose a new password."}
+        </p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="space-y-1 text-sm text-slate-700">
-          <span className="font-medium text-slate-900">Reset token</span>
-          <input
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-            name="token"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            required
-            aria-required="true"
-          />
-        </label>
+        {!hasTokenFromUrl && (
+          <label className="space-y-1 text-sm text-slate-700">
+            <span className="font-medium text-slate-900">Reset token</span>
+            <input
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              name="token"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              required
+              aria-required="true"
+            />
+          </label>
+        )}
 
         <label className="space-y-1 text-sm text-slate-700">
           <span className="font-medium text-slate-900">New password</span>
@@ -113,7 +120,7 @@ function ResetForm() {
       </form>
 
       <p className="text-sm text-slate-600">
-        Back to {" "}
+        Back to{" "}
         <Link className="font-semibold text-primary-700 underline-offset-4 hover:underline" href="/auth/login">
           sign in
         </Link>
