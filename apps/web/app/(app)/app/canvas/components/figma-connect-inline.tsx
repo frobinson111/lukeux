@@ -20,6 +20,13 @@ export default function FigmaConnectInline() {
 
   useEffect(() => {
     fetchStatus();
+
+    function handleDisconnected() {
+      setStatus({ connected: false });
+    }
+
+    window.addEventListener("figma-disconnected", handleDisconnected);
+    return () => window.removeEventListener("figma-disconnected", handleDisconnected);
   }, []);
 
   // Auto-focus the team input when arriving from OAuth callback

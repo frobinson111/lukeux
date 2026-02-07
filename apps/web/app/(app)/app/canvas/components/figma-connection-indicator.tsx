@@ -56,6 +56,8 @@ export default function FigmaConnectionIndicator({ collapsed = false }: Props) {
       await fetch("/api/integrations/figma/disconnect", { method: "POST" });
       setStatus({ connected: false });
       setShowDetails(false);
+      // Notify sibling components (FigmaFilesTree) to clear state
+      window.dispatchEvent(new Event("figma-disconnected"));
     } catch {
       // ignore
     } finally {

@@ -40,8 +40,20 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
       fetchProjects();
     }
 
+    function handleDisconnected() {
+      setLoading(false);
+      setError(null);
+      setProjects([]);
+      setExpandedProjects(new Set());
+      setProjectFiles({});
+    }
+
     window.addEventListener("figma-team-updated", handleTeamUpdated);
-    return () => window.removeEventListener("figma-team-updated", handleTeamUpdated);
+    window.addEventListener("figma-disconnected", handleDisconnected);
+    return () => {
+      window.removeEventListener("figma-team-updated", handleTeamUpdated);
+      window.removeEventListener("figma-disconnected", handleDisconnected);
+    };
   }, []);
 
   async function fetchProjects() {
