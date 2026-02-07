@@ -184,7 +184,8 @@ export default async function AdminPage() {
     llmUsageByModel,
     llmModelsRaw,
     smtpConfigRaw,
-    otpFlagRaw
+    otpFlagRaw,
+    promoFlagRaw
   ] = await prismaAny.$transaction([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
@@ -262,7 +263,9 @@ export default async function AdminPage() {
     // SMTP configuration
     prismaAny.smtpConfig.findFirst(),
     // OTP feature flag
-    prismaAny.featureFlag.findUnique({ where: { key: "email_otp_enabled" } })
+    prismaAny.featureFlag.findUnique({ where: { key: "email_otp_enabled" } }),
+    // Promo signups feature flag
+    prismaAny.featureFlag.findUnique({ where: { key: "promo_signups_enabled" } })
   ]);
 
   const llmModelsData = llmModelsRaw as LlmModelRow[];
@@ -413,6 +416,7 @@ export default async function AdminPage() {
       llmModelStats={llmModelStats}
       smtpConfig={smtpConfigData}
       emailSettings={emailSettings}
+      promoEnabled={(promoFlagRaw as any)?.value?.enabled !== false}
     />
   );
 }

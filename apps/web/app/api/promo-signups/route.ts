@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { isPromoSignupsEnabled } from "../../../lib/feature-flags";
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,6 +10,15 @@ const VALID_EXPERIENCE = ["5-7", "8-10", "11-15", "15+"];
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if promo signups are enabled
+    const enabled = await isPromoSignupsEnabled();
+    if (!enabled) {
+      return NextResponse.json(
+        { error: "Promo signups are currently closed" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { firstName, lastName, email, yearsExperience } = body;
 
@@ -78,11 +88,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint to check if email already exists (for client-side validation)
+// GET endpoint to check if email already exists or if promo is enabled
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
+    const check = searchParams.get("check");
+
+    // Check if promo signups are enabled (for client-side gating)
+    if (check === "enabled") {
+      const enabled = await isPromoSignupsEnabled();
+      return NextResponse.json({ enabled });
+    }
 
     if (!email) {
       return NextResponse.json(

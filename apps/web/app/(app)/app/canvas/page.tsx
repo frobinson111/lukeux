@@ -983,8 +983,21 @@ export default function CanvasPage() {
     let promoTriggered = false;
     if (next === 1) {
       if (!hasCompleted && !hasDismissed) {
-        console.log('[PromoModal Debug] Triggering promo modal!');
-        setShowPromoModal(true);
+        // Check if promo signups are enabled before showing modal
+        fetch("/api/promo-signups?check=enabled")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.enabled) {
+              console.log('[PromoModal Debug] Triggering promo modal!');
+              setShowPromoModal(true);
+            } else {
+              console.log('[PromoModal Debug] Promo signups disabled by admin');
+            }
+          })
+          .catch(() => {
+            // If check fails, don't show the modal
+            console.log('[PromoModal Debug] Failed to check promo status');
+          });
         promoTriggered = true;
       } else {
         console.log('[PromoModal Debug] Not triggering - already completed or dismissed');

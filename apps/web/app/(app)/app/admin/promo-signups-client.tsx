@@ -34,13 +34,18 @@ interface Pagination {
   totalPages: number;
 }
 
-export function PromoSignupsClient() {
+export function PromoSignupsClient({ initialPromoEnabled }: { initialPromoEnabled: boolean }) {
   const [signups, setSignups] = useState<PromoSignup[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // Toggle state
+  const [promoEnabled, setPromoEnabled] = useState(initialPromoEnabled);
+  const [toggling, setToggling] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [experienceFilter, setExperienceFilter] = useState<string>("");
@@ -139,6 +144,31 @@ export function PromoSignupsClient() {
     URL.revokeObjectURL(url);
   };
 
+  const togglePromoSignups = async () => {
+    setToggling(true);
+    setToggleError(null);
+
+    try {
+      const res = await fetch("/api/admin/promo-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !promoEnabled }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setToggleError(data?.error || "Failed to toggle promo signups");
+        return;
+      }
+
+      setPromoEnabled(data.promoEnabled);
+    } catch {
+      setToggleError("Failed to toggle promo signups");
+    } finally {
+      setToggling(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
@@ -162,6 +192,51 @@ export function PromoSignupsClient() {
 
   return (
     <div className="space-y-6">
+      {/* Enable/Disable Toggle */}
+      <div className="bg-white rounded-lg p-4 border border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              Promo Signups
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {promoEnabled
+                ? "The promo signup modal is shown to new users after their first task"
+                : "Promo signups are disabled — the modal will not appear for users"}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              promoEnabled
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-gray-50 text-gray-600 border border-gray-200"
+            }`}>
+              {promoEnabled ? "Enabled" : "Disabled"}
+            </span>
+            <button
+              onClick={togglePromoSignups}
+              disabled={toggling}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                promoEnabled ? "bg-indigo-600" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  promoEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {toggleError && (
+          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {toggleError}
+          </div>
+        )}
+      </div>
+
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

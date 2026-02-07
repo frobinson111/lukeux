@@ -47,7 +47,8 @@ export default function AdminClient({
   userUsageCounts,
   llmModelStats,
   smtpConfig,
-  emailSettings
+  emailSettings,
+  promoEnabled
 }: {
   userRole: string;
   users: UserRow[];
@@ -65,6 +66,7 @@ export default function AdminClient({
   llmModelStats: LlmModelStats[];
   smtpConfig: SmtpConfigRow | null;
   emailSettings: { otpEnabled: boolean; smtpConfigured: boolean; smtpVerified: boolean };
+  promoEnabled: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [page, setPage] = useState(1);
@@ -618,7 +620,7 @@ export default function AdminClient({
               <p className="text-sm text-slate-600">
                 Manage promotional signups for the 3-month free access offer to Senior UX Designers.
               </p>
-              <PromoSignupsClient />
+              <PromoSignupsClient initialPromoEnabled={promoEnabled} />
             </section>
           )}
 
