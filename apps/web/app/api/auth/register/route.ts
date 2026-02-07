@@ -4,7 +4,9 @@ import { z } from "zod";
 import { prisma } from "../../../../lib/prisma";
 import { hashPassword, passwordStrengthError } from "../../../../lib/password";
 import { generateToken } from "../../../../lib/tokens";
-import { sendVerificationEmail } from "../../../../lib/email";
+import { sendVerificationEmail, sendOtpEmail } from "../../../../lib/email";
+import { isOtpEnabled } from "../../../../lib/feature-flags";
+import { generateOtp, OTP_EXPIRY_MINUTES } from "../../../../lib/otp";
 
 const registerSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
@@ -39,35 +41,64 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await hashPassword(password);
-  const verification = generateToken();
-  const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const otpEnabled = await isOtpEnabled();
 
-  await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
+  if (otpEnabled) {
+    // OTP flow: create user + OTP verification record
+    const otp = generateOtp();
+    const verification = generateToken();
+    const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          firstName,
+          lastName,
+          email: normalizedEmail,
+          passwordHash,
+        },
+      });
+
+      await tx.emailVerification.create({
+        data: {
+          userId: user.id,
+          tokenHash: verification.hash,
+          otpHash: otp.hash,
+          type: "OTP",
+          expiresAt: otpExpiresAt,
+        },
+      });
+    });
+
+    const result = await sendOtpEmail(normalizedEmail, otp.otp);
+
+    return NextResponse.json(
+      {
+        message: "Registered. Check your email for a verification code.",
+        verificationType: "otp",
+        email: normalizedEmail,
+        devPreview: process.env.NODE_ENV === "development" ? result.preview : undefined,
+      },
+      { status: 201 }
+    );
+  } else {
+    // No verification: create user as immediately verified
+    await prisma.user.create({
       data: {
         firstName,
         lastName,
         email: normalizedEmail,
-        passwordHash
-      }
+        passwordHash,
+        emailVerifiedAt: new Date(),
+      },
     });
 
-    await tx.emailVerification.create({
-      data: {
-        userId: user.id,
-        tokenHash: verification.hash,
-        expiresAt: verificationExpiresAt
-      }
-    });
-  });
-
-  const { preview } = await sendVerificationEmail(normalizedEmail, verification.token);
-
-  return NextResponse.json(
-    {
-      message: "Registered. Check email for verification link.",
-      devPreview: process.env.NODE_ENV === "development" ? preview : undefined
-    },
-    { status: 201 }
-  );
+    return NextResponse.json(
+      {
+        message: "Registered successfully. You can now log in.",
+        verificationType: "none",
+      },
+      { status: 201 }
+    );
+  }
 }

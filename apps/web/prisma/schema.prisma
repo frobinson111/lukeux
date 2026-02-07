@@ -40,12 +40,16 @@ model EmailVerification {
   id        String    @id @default(cuid())
   userId    String
   tokenHash String    @unique
+  otpHash   String?
+  type      String    @default("LINK") // "LINK" or "OTP"
+  attempts  Int       @default(0)
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
   User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([otpHash])
 }
 
 model FeatureFlag {
@@ -194,6 +198,20 @@ model Session {
 
   @@index([expiresAt])
   @@index([userId])
+}
+
+model SmtpConfig {
+  id                String   @id @default(cuid())
+  host              String
+  port              Int      @default(587)
+  username          String
+  encryptedPassword String
+  encryption        String   @default("STARTTLS") // "NONE" | "STARTTLS" | "SSL_TLS"
+  fromEmail         String
+  fromName          String   @default("Luke UX")
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model SupportRequest {

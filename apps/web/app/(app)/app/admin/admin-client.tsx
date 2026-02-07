@@ -24,9 +24,11 @@ import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
 import RecommendationFeedbackAdmin, { type RecommendationFeedbackRow, type TemplateStat, type FeedbackSummary } from "./recommendation-feedback-client";
 import { PromoSignupsClient } from "./promo-signups-client";
+import EmailSmtpAdmin from "./email-smtp-client";
 import { exportToCSV } from "./export-utils";
+import type { SmtpConfigRow } from "./page";
 
-const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "promo", "usage", "events"] as const;
+const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "promo", "usage", "events", "email"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminClient({
@@ -43,7 +45,9 @@ export default function AdminClient({
   feedback,
   usageTotals,
   userUsageCounts,
-  llmModelStats
+  llmModelStats,
+  smtpConfig,
+  emailSettings
 }: {
   userRole: string;
   users: UserRow[];
@@ -59,6 +63,8 @@ export default function AdminClient({
   usageTotals: UsageTotals;
   userUsageCounts: UserUsageCounts;
   llmModelStats: LlmModelStats[];
+  smtpConfig: SmtpConfigRow | null;
+  emailSettings: { otpEnabled: boolean; smtpConfigured: boolean; smtpVerified: boolean };
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [page, setPage] = useState(1);
@@ -212,7 +218,8 @@ export default function AdminClient({
     { id: "feedback", label: "Feedback & Enquirer" },
     { id: "rec-feedback", label: "Rec Feedback" },
     { id: "promo", label: "Promo Signups" },
-    { id: "usage", label: "Recent Usage" }
+    { id: "usage", label: "Recent Usage" },
+    { id: "email", label: "Email & SMTP" }
   ];
 
   async function togglePlan(userId: string, currentPlan: string) {
@@ -786,6 +793,18 @@ export default function AdminClient({
                   })}
                 </div>
               </div>
+            </section>
+          )}
+
+          {tab === "email" && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-900">Email & SMTP</h2>
+              </div>
+              <EmailSmtpAdmin
+                initialSmtpConfig={smtpConfig}
+                initialEmailSettings={emailSettings}
+              />
             </section>
           )}
 

@@ -107,7 +107,13 @@ export default function HomePage() {
         return;
       }
 
-      // Email verification messaging disabled
+      // Handle registration response based on verification type
+      if (data.verificationType === "otp") {
+        window.location.href = `/auth/verify?mode=otp&email=${encodeURIComponent(payload.email)}`;
+        return;
+      }
+
+      // No verification required - switch to login
       setMessage(null);
       setForm(initialState);
       setShowWelcomeBack(true);

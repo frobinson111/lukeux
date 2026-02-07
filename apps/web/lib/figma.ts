@@ -1,33 +1,15 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { encrypt, decrypt } from "./crypto";
 
 const FIGMA_API_BASE = "https://api.figma.com/v1";
 const FIGMA_OAUTH_BASE = "https://www.figma.com/oauth";
-const ALGORITHM = "aes-256-gcm";
-
-function getEncryptionKey(): Buffer {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) throw new Error("SESSION_SECRET not configured");
-  return scryptSync(secret, "figma-token-salt", 32);
-}
+const FIGMA_SALT = "figma-token-salt";
 
 export function encryptToken(token: string): string {
-  const key = getEncryptionKey();
-  const iv = randomBytes(16);
-  const cipher = createCipheriv(ALGORITHM, key, iv);
-  const encrypted = Buffer.concat([cipher.update(token, "utf8"), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-  return Buffer.concat([iv, authTag, encrypted]).toString("base64");
+  return encrypt(token, FIGMA_SALT);
 }
 
 export function decryptToken(encryptedToken: string): string {
-  const key = getEncryptionKey();
-  const data = Buffer.from(encryptedToken, "base64");
-  const iv = data.subarray(0, 16);
-  const authTag = data.subarray(16, 32);
-  const encrypted = data.subarray(32);
-  const decipher = createDecipheriv(ALGORITHM, key, iv);
-  decipher.setAuthTag(authTag);
-  return decipher.update(encrypted) + decipher.final("utf8");
+  return decrypt(encryptedToken, FIGMA_SALT);
 }
 
 export function buildFigmaAuthUrl(state: string): string {

@@ -35,11 +35,14 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       setError(data.error || "Registration failed");
+    } else if (data.verificationType === "otp") {
+      setSuccess("Registered. Check your email for a verification code.");
+      setTimeout(
+        () => router.push(`/auth/verify?mode=otp&email=${encodeURIComponent(payload.email)}`),
+        1200
+      );
     } else {
-      const message = data.verificationToken
-        ? `Registered. Verify your email. Dev token: ${data.verificationToken}`
-        : "Registered. Check your email for verification.";
-      setSuccess(message);
+      setSuccess("Registered successfully. You can now log in.");
       setTimeout(() => router.push("/auth/login"), 1200);
     }
 

@@ -137,6 +137,18 @@ export type LlmModelStats = {
   requestCount: number;
 };
 
+export type SmtpConfigRow = {
+  id: string;
+  host: string;
+  port: number;
+  username: string;
+  passwordSet: boolean;
+  encryption: string;
+  fromEmail: string;
+  fromName: string;
+  isVerified: boolean;
+};
+
 export default async function AdminPage() {
   const user = await requireUser();
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPERUSER")) {
@@ -170,7 +182,9 @@ export default async function AdminPage() {
     imageCount,
     userUsageCounts,
     llmUsageByModel,
-    llmModelsRaw
+    llmModelsRaw,
+    smtpConfigRaw,
+    otpFlagRaw
   ] = await prismaAny.$transaction([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
@@ -244,7 +258,11 @@ export default async function AdminPage() {
     // LLM models for admin management
     prismaAny.llmModel.findMany({
       orderBy: { sortOrder: "asc" }
-    })
+    }),
+    // SMTP configuration
+    prismaAny.smtpConfig.findFirst(),
+    // OTP feature flag
+    prismaAny.featureFlag.findUnique({ where: { key: "email_otp_enabled" } })
   ]);
 
   const llmModelsData = llmModelsRaw as LlmModelRow[];
@@ -340,6 +358,27 @@ export default async function AdminPage() {
     })
     .sort((a, b) => b.estimatedCost - a.estimatedCost); // Sort by cost descending
 
+  // Build SMTP config and email settings for admin
+  const smtpConfigData: SmtpConfigRow | null = smtpConfigRaw
+    ? {
+        id: (smtpConfigRaw as any).id,
+        host: (smtpConfigRaw as any).host,
+        port: (smtpConfigRaw as any).port,
+        username: (smtpConfigRaw as any).username,
+        passwordSet: true,
+        encryption: (smtpConfigRaw as any).encryption,
+        fromEmail: (smtpConfigRaw as any).fromEmail,
+        fromName: (smtpConfigRaw as any).fromName,
+        isVerified: (smtpConfigRaw as any).isVerified,
+      }
+    : null;
+
+  const emailSettings = {
+    otpEnabled: (otpFlagRaw as any)?.value?.enabled === true,
+    smtpConfigured: !!smtpConfigRaw,
+    smtpVerified: (smtpConfigRaw as any)?.isVerified === true,
+  };
+
   return (
     <AdminClient
       userRole={user.role}
@@ -372,6 +411,8 @@ export default async function AdminPage() {
       usageTotals={usageTotals}
       userUsageCounts={userUsageByEmail}
       llmModelStats={llmModelStats}
+      smtpConfig={smtpConfigData}
+      emailSettings={emailSettings}
     />
   );
 }
