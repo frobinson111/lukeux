@@ -28,6 +28,9 @@ const updateTemplateSchema = z.object({
   accessibilityConfig: z.object({
     maxPages: z.number().min(1).max(10).optional(),
   }).nullable().optional(),
+  defaultModel: z.string().nullable().optional(),
+  defaultMode: z.enum(["auto", "instant", "thinking"]).nullable().optional(),
+  defaultDetailLevel: z.enum(["brief", "standard", "in-depth"]).nullable().optional(),
 });
 
 // GET - Get a single template by ID
@@ -121,6 +124,9 @@ export async function PATCH(
             ? Prisma.JsonNull
             : parsed.data.accessibilityConfig
         }),
+        ...(parsed.data.defaultModel !== undefined && { defaultModel: parsed.data.defaultModel }),
+        ...(parsed.data.defaultMode !== undefined && { defaultMode: parsed.data.defaultMode }),
+        ...(parsed.data.defaultDetailLevel !== undefined && { defaultDetailLevel: parsed.data.defaultDetailLevel }),
       }
     });
 

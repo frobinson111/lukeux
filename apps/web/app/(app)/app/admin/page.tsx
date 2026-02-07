@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { requireUser } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
-import { getAvailableModelsFromKeys } from "../../../../lib/llm/models";
 import { getProviderFromModel, MODEL_PRICING, calculateCost } from "../../../../lib/llm/pricing";
 import AdminClient from "./admin-client";
 
@@ -43,6 +42,20 @@ export type TemplateRow = {
   createdAt: Date;
   updatedAt: Date;
   templateCategoryId: string | null;
+  defaultModel: string | null;
+  defaultMode: string | null;
+  defaultDetailLevel: string | null;
+};
+
+export type LlmModelRow = {
+  id: string;
+  modelId: string;
+  displayName: string;
+  provider: string;
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type UsageRow = {
@@ -156,7 +169,8 @@ export default async function AdminPage() {
     followupCount,
     imageCount,
     userUsageCounts,
-    llmUsageByModel
+    llmUsageByModel,
+    llmModelsRaw
   ] = await prismaAny.$transaction([
     prismaAny.user.findMany({
       orderBy: { createdAt: "asc" },
@@ -226,10 +240,14 @@ export default async function AdminPage() {
       by: ["model"],
       _sum: { tokensIn: true, tokensOut: true, costEstimateUsd: true },
       _count: { id: true }
+    }),
+    // LLM models for admin management
+    prismaAny.llmModel.findMany({
+      orderBy: { sortOrder: "asc" }
     })
   ]);
 
-  const modelOptions = await getAvailableModelsFromKeys();
+  const llmModelsData = llmModelsRaw as LlmModelRow[];
 
   // Temporarily add null lastLoginAt until migration is run
   const users = (usersRaw as any[]).map((u) => ({ ...u, lastLoginAt: null }));
@@ -330,7 +348,7 @@ export default async function AdminPage() {
       usage={usageData}
       events={eventData}
       keys={keyData}
-      availableModels={modelOptions}
+      llmModels={llmModelsData}
       categories={categories as CategoryRow[]}
       payments={{
         pricePro: paymentConfig?.pricePro ?? null,

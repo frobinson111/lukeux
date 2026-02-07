@@ -1,7 +1,7 @@
  "use client";
 
 import { useState, useMemo } from "react";
-import type { CategoryRow, TemplateRow } from "./page";
+import type { CategoryRow, TemplateRow, LlmModelRow } from "./page";
 import { exportToCSV } from "./export-utils";
 
 type TemplateFormData = {
@@ -15,7 +15,6 @@ type TemplateFormData = {
   guidanceOutcome: string;
   assets: string;
   allowedModes: string[];
-  allowedModels: string[];
   allowUrlInput: boolean;
   allowFileUploads: boolean;
   allowMockupGeneration: boolean;
@@ -25,6 +24,9 @@ type TemplateFormData = {
   templateCategoryId: string | null;
   taskType: "llm" | "accessibility";
   accessibilityConfig: { maxPages?: number } | null;
+  defaultModel: string | null;
+  defaultMode: string | null;
+  defaultDetailLevel: string | null;
 };
 
 const emptyForm: TemplateFormData = {
@@ -37,7 +39,6 @@ const emptyForm: TemplateFormData = {
   guidanceOutcome: "",
   assets: "",
   allowedModes: ["auto", "instant", "thinking"],
-  allowedModels: [],
   allowUrlInput: false,
   allowFileUploads: true,
   allowMockupGeneration: true,
@@ -47,15 +48,18 @@ const emptyForm: TemplateFormData = {
   templateCategoryId: null,
   taskType: "llm",
   accessibilityConfig: null,
+  defaultModel: null,
+  defaultMode: null,
+  defaultDetailLevel: null,
 };
 
 export default function TemplatesAdmin({
   initialTemplates,
-  availableModels,
+  llmModels,
   categories: initialCategories
 }: {
   initialTemplates: TemplateRow[];
-  availableModels: string[];
+  llmModels: LlmModelRow[];
   categories: CategoryRow[];
 }) {
   const [templates, setTemplates] = useState(initialTemplates);
@@ -126,7 +130,7 @@ export default function TemplatesAdmin({
     const allowWireframeRenderer = (template as any).allowWireframeRenderer ?? false;
     const taskType = (template as any).taskType || "llm";
     const accessibilityConfig = (template as any).accessibilityConfig || null;
-    setEditingTemplate({
+    const editData: TemplateFormData = {
       id: template.id,
       category: template.category,
       subcategory: template.subcategory || "",
@@ -137,7 +141,6 @@ export default function TemplatesAdmin({
       guidanceOutcome: template.guidanceOutcome || "",
       assets: template.assets || "",
       allowedModes: template.allowedModes || ["auto", "instant", "thinking"],
-      allowedModels: template.allowedModels || [],
       allowUrlInput: (template as any).allowUrlInput || false,
       allowFileUploads: (template as any).allowFileUploads ?? true,
       allowMockupGeneration,
@@ -147,29 +150,12 @@ export default function TemplatesAdmin({
       templateCategoryId: template.templateCategoryId || null,
       taskType,
       accessibilityConfig,
-    });
-    setFormData({
-      id: template.id,
-      category: template.category,
-      subcategory: template.subcategory || "",
-      title: template.title,
-      prompt: template.prompt,
-      guidanceUseAiTo: template.guidanceUseAiTo || "",
-      guidanceExample: template.guidanceExample || "",
-      guidanceOutcome: template.guidanceOutcome || "",
-      assets: template.assets || "",
-      allowedModes: template.allowedModes || ["auto", "instant", "thinking"],
-      allowedModels: template.allowedModels || [],
-      allowUrlInput: (template as any).allowUrlInput || false,
-      allowFileUploads: (template as any).allowFileUploads ?? true,
-      allowMockupGeneration,
-      allowRefineAnalysis,
-      allowWireframeRenderer,
-      isActive: template.isActive,
-      templateCategoryId: template.templateCategoryId || null,
-      taskType,
-      accessibilityConfig,
-    });
+      defaultModel: (template as any).defaultModel || null,
+      defaultMode: (template as any).defaultMode || null,
+      defaultDetailLevel: (template as any).defaultDetailLevel || null,
+    };
+    setEditingTemplate(editData);
+    setFormData(editData);
     setShowForm(true);
     setError(null);
     setCategoryMode("select");
@@ -214,7 +200,6 @@ export default function TemplatesAdmin({
           guidanceOutcome: formData.guidanceOutcome || null,
           assets: formData.assets || null,
           allowedModes: formData.allowedModes,
-          allowedModels: formData.allowedModels,
           allowUrlInput: formData.allowUrlInput,
           allowFileUploads: formData.allowFileUploads,
           allowMockupGeneration: formData.allowMockupGeneration,
@@ -224,6 +209,9 @@ export default function TemplatesAdmin({
           templateCategoryId: formData.templateCategoryId,
           taskType: formData.taskType,
           accessibilityConfig: formData.accessibilityConfig,
+          defaultModel: formData.defaultModel,
+          defaultMode: formData.defaultMode,
+          defaultDetailLevel: formData.defaultDetailLevel,
         }),
       });
 
@@ -269,15 +257,6 @@ export default function TemplatesAdmin({
       allowedModes: prev.allowedModes.includes(mode)
         ? prev.allowedModes.filter((m) => m !== mode)
         : [...prev.allowedModes, mode],
-    }));
-  };
-
-  const handleModelToggle = (model: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      allowedModels: prev.allowedModels.includes(model)
-        ? prev.allowedModels.filter((m) => m !== model)
-        : [...prev.allowedModels, model],
     }));
   };
 
@@ -379,9 +358,6 @@ export default function TemplatesAdmin({
           <span className="font-semibold text-slate-900">Templates</span>
           <span className="rounded-full bg-slate-100 px-2 py-[2px] text-xs text-slate-800">
             {active} active / {total} total
-          </span>
-          <span className="rounded-full bg-slate-100 px-2 py-[2px] text-xs text-slate-800">
-            {availableModels.length} models
           </span>
           <span className="rounded-full bg-slate-100 px-2 py-[2px] text-xs text-slate-800">
             {categories.length} categories
@@ -710,18 +686,50 @@ export default function TemplatesAdmin({
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600">Allowed Models</label>
-              <div className="flex flex-wrap gap-2">
-                {availableModels.map((model) => (
-                  <label key={model} className="flex items-center gap-1 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={formData.allowedModels.includes(model)}
-                      onChange={() => handleModelToggle(model)}
-                    />
-                    {model}
-                  </label>
-                ))}
+              <label className="mb-1 block text-xs font-medium text-slate-600">Task-Optimized Defaults</label>
+              <p className="mb-2 text-xs text-slate-500">
+                Set the default model, mode, and detail level for this task. Users see this as the &ldquo;Task-Optimized&rdquo; preset.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">Default Model</label>
+                  <select
+                    value={formData.defaultModel || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, defaultModel: e.target.value || null }))}
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  >
+                    <option value="">None</option>
+                    {llmModels.filter((m) => m.isEnabled).map((m) => (
+                      <option key={m.modelId} value={m.modelId}>{m.displayName}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">Default Mode</label>
+                  <select
+                    value={formData.defaultMode || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, defaultMode: e.target.value || null }))}
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  >
+                    <option value="">None</option>
+                    <option value="auto">Auto</option>
+                    <option value="instant">Instant</option>
+                    <option value="thinking">Thinking</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">Default Detail Level</label>
+                  <select
+                    value={formData.defaultDetailLevel || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, defaultDetailLevel: e.target.value || null }))}
+                    className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                  >
+                    <option value="">None</option>
+                    <option value="brief">Brief</option>
+                    <option value="standard">Standard</option>
+                    <option value="in-depth">In-depth</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div>

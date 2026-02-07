@@ -116,20 +116,15 @@ type Template = {
   allowWireframeRenderer?: boolean;
   templateCategory?: { name: string; sortOrder: number } | null;
   taskType?: string | null; // "llm" | "accessibility"
+  defaultModel?: string | null;
+  defaultMode?: string | null;
+  defaultDetailLevel?: string | null;
 };
+
+type ModelOption = { modelId: string; displayName: string; provider: string };
 
 const projects = ["New UX Task"];
 
-const models = [
-  "gpt-5.2",
-  "gpt-5.1",
-  "gpt-4.0",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "claude-sonnet-4-20250514",
-  "claude-3-5-sonnet-latest",
-  "claude-3-haiku-20240307"
-] as const;
 const modes = ["auto", "instant", "thinking"] as const;
 const detailLevels = ["brief", "standard", "in-depth"] as const;
 type AssetPayload = { name: string; type: string; content: string };
@@ -626,10 +621,12 @@ export default function CanvasPage() {
   const [loading, setLoading] = useState(false);
   const [loadingElapsedTime, setLoadingElapsedTime] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
-  const [model, setModel] = useState<(typeof models)[number]>(models[0]);
+  const [model, setModel] = useState<string>("gpt-5.2");
   const [templateIndex, setTemplateIndex] = useState<number | null>(null);
   const [mode, setMode] = useState<(typeof modes)[number]>("auto");
   const [detailLevel, setDetailLevel] = useState<(typeof detailLevels)[number]>("standard");
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
+  const [isTaskOptimized, setIsTaskOptimized] = useState(false);
   const [assetPayloads, setAssetPayloads] = useState<AssetPayload[]>([]);
   const [followupFiles, setFollowupFiles] = useState<File[]>([]);
   const [followupAssetPayloads, setFollowupAssetPayloads] = useState<AssetPayload[]>([]);
@@ -870,7 +867,26 @@ export default function CanvasPage() {
         setStatus((prev) => prev || "Failed to load templates.");
       }
     }
+    async function loadModels() {
+      try {
+        const res = await fetch("/api/models", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        const modelList: ModelOption[] = data?.models ?? [];
+        setAvailableModels(modelList);
+        if (modelList.length > 0) {
+          setModel((prev) => {
+            // Keep current model if it's in the list, otherwise use first
+            if (modelList.some((m) => m.modelId === prev)) return prev;
+            return modelList[0].modelId;
+          });
+        }
+      } catch {
+        // Silently fail – user can still manually type
+      }
+    }
     loadTemplates();
+    loadModels();
     const stored = Number(localStorage.getItem("lx_gen_count") || "0");
     setGenCount(Number.isFinite(stored) ? stored : 0);
     // run once on mount
@@ -895,6 +911,15 @@ export default function CanvasPage() {
       const allowed = template.allowedModes && template.allowedModes.length ? template.allowedModes : modes;
       if (!allowed.includes(mode)) {
         setMode((allowed as any)[0] ?? "auto");
+      }
+      // Auto-select Task-Optimized if template has defaults
+      if (template.defaultModel) {
+        setIsTaskOptimized(true);
+        setModel(template.defaultModel);
+        if (template.defaultMode) setMode(template.defaultMode as typeof mode);
+        if (template.defaultDetailLevel) setDetailLevel(template.defaultDetailLevel as typeof detailLevel);
+      } else {
+        setIsTaskOptimized(false);
       }
     } else {
       setEditablePrompt("");
@@ -1729,9 +1754,12 @@ export default function CanvasPage() {
                   className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-[1px] hover:shadow focus:outline-none focus:ring-2 focus:ring-black/10"
                 >
                   <span className="text-[11px] uppercase text-slate-500">Model / Mode / Detail</span>
-                  <span className="text-slate-900">
-                    {model} · {mode} · {detailLevel === "brief" ? "Brief" : detailLevel === "standard" ? "Standard" : "In-depth"}
+                  <span className={isTaskOptimized ? "text-orange-600 font-bold" : "text-slate-900"}>
+                    {isTaskOptimized ? "Task-Optimized" : (availableModels.find((m) => m.modelId === model)?.displayName || model)} · {mode} · {detailLevel === "brief" ? "Brief" : detailLevel === "standard" ? "Standard" : "In-depth"}
                   </span>
+                  {isTaskOptimized && (
+                    <span className="rounded-full bg-orange-100 px-1.5 py-[1px] text-[10px] font-bold text-orange-700 ml-1">Task-Optimized</span>
+                  )}
                 </button>
                 {modelMenuOpen && (
                   <div
@@ -1742,17 +1770,42 @@ export default function CanvasPage() {
                       <div>
                         <p className="mb-1 text-[11px] uppercase text-slate-500">Model</p>
                         <div className="space-y-1">
-                          {models.map((m) => (
+                          {/* Task-Optimized option — only when template has defaults */}
+                          {template?.defaultModel && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsTaskOptimized(true);
+                                  setModel(template.defaultModel!);
+                                  if (template.defaultMode) setMode(template.defaultMode as typeof mode);
+                                  if (template.defaultDetailLevel) setDetailLevel(template.defaultDetailLevel as typeof detailLevel);
+                                }}
+                                className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-orange-50 ${
+                                  isTaskOptimized ? "bg-orange-100 font-bold text-orange-700" : "text-orange-600"
+                                }`}
+                              >
+                                <span className="w-4 text-orange-600">{isTaskOptimized ? "✓" : ""}</span>
+                                <span className="whitespace-nowrap font-semibold">Task-Optimized</span>
+                              </button>
+                              <div className="border-b border-slate-100 my-1" />
+                            </>
+                          )}
+                          {/* Dynamic models from API */}
+                          {availableModels.map((m) => (
                             <button
-                              key={m}
+                              key={m.modelId}
                               type="button"
-                              onClick={() => setModel(m)}
+                              onClick={() => {
+                                setIsTaskOptimized(false);
+                                setModel(m.modelId);
+                              }}
                               className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
-                                model === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
+                                !isTaskOptimized && model === m.modelId ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
                               }`}
                             >
-                              <span className="w-4 text-slate-900">{model === m ? "✓" : ""}</span>
-                              <span className="whitespace-nowrap">{m}</span>
+                              <span className="w-4 text-slate-900">{!isTaskOptimized && model === m.modelId ? "✓" : ""}</span>
+                              <span className="whitespace-nowrap">{m.displayName}</span>
                             </button>
                           ))}
                         </div>
@@ -1764,7 +1817,7 @@ export default function CanvasPage() {
                             <button
                               key={m}
                               type="button"
-                              onClick={() => setMode(m)}
+                              onClick={() => { setIsTaskOptimized(false); setMode(m); }}
                               className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
                                 mode === m ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
                               }`}
@@ -1784,7 +1837,7 @@ export default function CanvasPage() {
                             <button
                               key={d}
                               type="button"
-                              onClick={() => setDetailLevel(d)}
+                              onClick={() => { setIsTaskOptimized(false); setDetailLevel(d); }}
                               className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition hover:bg-slate-50 ${
                                 detailLevel === d ? "bg-slate-100 font-bold text-slate-900" : "text-slate-700"
                               }`}

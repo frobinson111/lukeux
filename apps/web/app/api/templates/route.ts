@@ -28,6 +28,9 @@ const templateSchema = z.object({
   accessibilityConfig: z.object({
     maxPages: z.number().min(1).max(10).optional(),
   }).nullable().optional(),
+  defaultModel: z.string().nullable().optional(),
+  defaultMode: z.enum(["auto", "instant", "thinking"]).nullable().optional(),
+  defaultDetailLevel: z.enum(["brief", "standard", "in-depth"]).nullable().optional(),
 });
 
 export async function GET() {
@@ -96,6 +99,9 @@ export async function POST(request: NextRequest) {
         templateCategoryId: parsed.data.templateCategoryId || null,
         taskType: parsed.data.taskType || "llm",
         accessibilityConfig: parsed.data.accessibilityConfig ?? Prisma.JsonNull,
+        defaultModel: parsed.data.defaultModel ?? null,
+        defaultMode: parsed.data.defaultMode ?? null,
+        defaultDetailLevel: parsed.data.defaultDetailLevel ?? null,
         createdById: user.id,
       }
     });

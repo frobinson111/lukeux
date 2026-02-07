@@ -17,7 +17,8 @@ import type {
   FeedbackRow,
   UsageTotals,
   UserUsageCounts,
-  LlmModelStats
+  LlmModelStats,
+  LlmModelRow
 } from "./page";
 import SupportAdmin from "./support-client";
 import FeedbackAdmin from "./feedback-client";
@@ -35,7 +36,7 @@ export default function AdminClient({
   usage,
   events,
   keys,
-  availableModels,
+  llmModels,
   categories,
   payments,
   support,
@@ -50,7 +51,7 @@ export default function AdminClient({
   usage: UsageRow[];
   events: EventRow[];
   keys: KeyRow[];
-  availableModels: string[];
+  llmModels: LlmModelRow[];
   categories: CategoryRow[];
   payments: PaymentConfigRow;
   support: SupportRow[];
@@ -561,7 +562,7 @@ export default function AdminClient({
                 <Image src="/images/help.svg" alt="UX Objective" width={18} height={18} className="h-5 w-5" />
                 <h2 className="text-lg font-semibold text-slate-900">UX Objective</h2>
               </div>
-              <TemplatesAdmin initialTemplates={templates} availableModels={availableModels} categories={categories} />
+              <TemplatesAdmin initialTemplates={templates} llmModels={llmModels} categories={categories} />
             </section>
           )}
           {tab === "payments" && (
@@ -627,10 +628,10 @@ export default function AdminClient({
           {tab === "keys" && (
             <section className="space-y-6">
               <div className="flex items-center gap-2">
-                <Image src="/images/share.svg" alt="LLM Keys" width={18} height={18} className="h-5 w-5" />
-                <h2 className="text-lg font-semibold text-slate-900">LLM API Keys</h2>
+                <Image src="/images/share.svg" alt="LLM Models" width={18} height={18} className="h-5 w-5" />
+                <h2 className="text-lg font-semibold text-slate-900">LLM Models & Keys</h2>
               </div>
-              <KeysAdmin initialKeys={keys} />
+              <KeysAdmin initialKeys={keys} initialModels={llmModels} />
 
               {/* LLM Usage Stats */}
               <div className="space-y-3">

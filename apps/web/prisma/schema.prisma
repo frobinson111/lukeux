@@ -273,6 +273,9 @@ model TaskTemplate {
   createdById           String?
   taskType              String            @default("llm") // "llm" | "accessibility"
   accessibilityConfig   Json?             // { maxPages: number }
+  defaultModel          String?           // Task-Optimized: default modelId
+  defaultMode           String?           // Task-Optimized: "auto" | "instant" | "thinking"
+  defaultDetailLevel    String?           // Task-Optimized: "brief" | "standard" | "in-depth"
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   Task                  Task[]
@@ -360,6 +363,19 @@ model FigmaConnection {
   User         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model LlmModel {
+  id          String   @id @default(cuid())
+  modelId     String   @unique
+  displayName String
+  provider    String   // "openai" | "anthropic"
+  isEnabled   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isEnabled, sortOrder])
 }
 
 enum FeatureFlagScope {

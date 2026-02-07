@@ -20,6 +20,7 @@ function applyEnvAllowlist(models: string[]): string[] {
   return models.filter((m) => set.has(m));
 }
 
+/** @deprecated Use getEnabledModels() instead – reads from LlmModel table */
 export async function getAvailableModelsFromKeys(): Promise<string[]> {
   // If DB call fails for any reason, fall back to MODEL_MAP keys.
   try {
@@ -35,6 +36,21 @@ export async function getAvailableModelsFromKeys(): Promise<string[]> {
   } catch {
     return applyEnvAllowlist(Object.keys(MODEL_MAP));
   }
+}
+
+/** Get all LLM models from the centralized LlmModel table */
+export async function getAllLlmModels() {
+  return prisma.llmModel.findMany({
+    orderBy: { sortOrder: "asc" }
+  });
+}
+
+/** Get only enabled LLM models (for user-facing dropdowns) */
+export async function getEnabledModels() {
+  return prisma.llmModel.findMany({
+    where: { isEnabled: true },
+    orderBy: { sortOrder: "asc" }
+  });
 }
 
 
