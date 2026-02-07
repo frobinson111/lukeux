@@ -469,9 +469,9 @@ export default function HomePage() {
           <div className="w-full max-w-lg rounded-[26px] px-8 pb-10 pt-0 min-h-[520px]">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-black text-slate-900">
-                {mode === "login" && showWelcomeBack ? "WELCOME BACK" : "WELCOME TO LUKE UX"}
+                {mode === "login" && showWelcomeBack ? "WELCOME BACK" : "JOIN THE UX MOVEMENT"}
               </h1>
-              <p className="text-sm text-slate-600">Your second brain for UX decisions.</p>
+              <p className="text-sm text-slate-600">Design smarter. No credit card required.</p>
             </div>
 
             <div className="mt-6 flex overflow-hidden rounded-full border-[3px] border-black shadow-[0_5px_0_#0a0a0a] bg-[#f7f7f7]">
