@@ -38,16 +38,16 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-slate-900">Reset password</h1>
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-black text-slate-900">RESET PASSWORD</h1>
         <p className="text-sm text-slate-600">We will send a reset link if the email exists.</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="space-y-1 text-sm text-slate-700">
-          <span className="font-medium text-slate-900">Email</span>
+        <label className="block text-xs font-semibold uppercase text-slate-700">
+          <span className="block">Email address</span>
           <input
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
             type="email"
             name="email"
             autoComplete="email"
@@ -70,15 +70,15 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-[18px] bg-[var(--brand-yellow,#ffd526)] px-4 py-3 text-base font-black uppercase text-black shadow-[0_6px_0_#111] transition hover:-translate-y-[1px] hover:shadow-[0_8px_0_#111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Sending..." : "Send reset link"}
         </button>
       </form>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-center text-sm text-slate-600">
         Remembered it?{" "}
-        <Link className="font-semibold text-primary-700 underline-offset-4 hover:underline" href="/auth/login">
+        <Link className="text-xs font-semibold text-slate-600 underline-offset-4 hover:text-black hover:underline" href="/auth/login">
           Back to sign in
         </Link>
       </p>
