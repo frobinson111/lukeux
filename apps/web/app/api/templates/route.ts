@@ -23,6 +23,7 @@ const templateSchema = z.object({
   allowRefineAnalysis: z.boolean().optional(),
   allowWireframeRenderer: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  isPopular: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
   taskType: z.enum(["llm", "accessibility"]).optional(),
   accessibilityConfig: z.object({
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         allowRefineAnalysis: parsed.data.allowRefineAnalysis ?? true,
         allowWireframeRenderer: parsed.data.allowWireframeRenderer ?? false,
         isActive: parsed.data.isActive ?? true,
+        isPopular: parsed.data.isPopular ?? false,
         templateCategoryId: parsed.data.templateCategoryId || null,
         taskType: parsed.data.taskType || "llm",
         accessibilityConfig: parsed.data.accessibilityConfig ?? Prisma.JsonNull,

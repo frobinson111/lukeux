@@ -21,6 +21,7 @@ type TemplateFormData = {
   allowRefineAnalysis: boolean;
   allowWireframeRenderer: boolean;
   isActive: boolean;
+  isPopular: boolean;
   templateCategoryId: string | null;
   taskType: "llm" | "accessibility";
   accessibilityConfig: { maxPages?: number } | null;
@@ -45,6 +46,7 @@ const emptyForm: TemplateFormData = {
   allowRefineAnalysis: true,
   allowWireframeRenderer: false,
   isActive: true,
+  isPopular: false,
   templateCategoryId: null,
   taskType: "llm",
   accessibilityConfig: null,
@@ -147,6 +149,7 @@ export default function TemplatesAdmin({
       allowRefineAnalysis,
       allowWireframeRenderer,
       isActive: template.isActive,
+      isPopular: (template as any).isPopular ?? false,
       templateCategoryId: template.templateCategoryId || null,
       taskType,
       accessibilityConfig,
@@ -206,6 +209,7 @@ export default function TemplatesAdmin({
           allowRefineAnalysis: formData.allowRefineAnalysis,
           allowWireframeRenderer: formData.allowWireframeRenderer,
           isActive: formData.isActive,
+          isPopular: formData.isPopular,
           templateCategoryId: formData.templateCategoryId,
           taskType: formData.taskType,
           accessibilityConfig: formData.accessibilityConfig,
@@ -841,6 +845,19 @@ export default function TemplatesAdmin({
                 />
                 Active
               </label>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={formData.isPopular}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, isPopular: e.target.checked }))}
+                />
+                Popular Task
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Shows this task in the &ldquo;Popular UX Tasks&rdquo; quick-access section in the sidebar.
+              </p>
             </div>
           </div>
 

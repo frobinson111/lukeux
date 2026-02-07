@@ -39,6 +39,7 @@ export type TemplateRow = {
   allowRefineAnalysis?: boolean;
   allowWireframeRenderer?: boolean;
   isActive: boolean;
+  isPopular: boolean;
   createdAt: Date;
   updatedAt: Date;
   templateCategoryId: string | null;

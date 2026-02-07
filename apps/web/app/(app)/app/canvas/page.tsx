@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import dynamic from "next/dynamic";
 import { PromoModal } from "../components/promo-modal";
 import UxExtensionsSection from "./components/ux-extensions-section";
+import PopularTasksSection from "./components/popular-tasks-section";
 import SearchableCategoryDropdown from "./components/searchable-category-dropdown";
 import FigmaConnectInline from "./components/figma-connect-inline";
 import FigmaFilesTree from "./components/figma-files-tree";
@@ -114,6 +115,7 @@ type Template = {
   allowMockupGeneration?: boolean;
   allowRefineAnalysis?: boolean;
   allowWireframeRenderer?: boolean;
+  isPopular?: boolean;
   templateCategory?: { name: string; sortOrder: number } | null;
   taskType?: string | null; // "llm" | "accessibility"
   defaultModel?: string | null;
@@ -759,6 +761,12 @@ export default function CanvasPage() {
             items: cGroup.items.sort((a, b) => a.t.title.localeCompare(b.t.title))
           }))
       }));
+  }, [templateList]);
+
+  const popularTemplates = useMemo(() => {
+    return templateList
+      .map((t, idx) => ({ idx, title: t.title, category: t.category, isPopular: t.isPopular }))
+      .filter((t) => t.isPopular);
   }, [templateList]);
 
   const markdownComponents: Components = {
@@ -1605,6 +1613,13 @@ export default function CanvasPage() {
                 </button>
                 {proj === "New UX Task" && (
                   <UxExtensionsSection collapsed={railCollapsed} />
+                )}
+                {proj === "New UX Task" && (
+                  <PopularTasksSection
+                    collapsed={railCollapsed}
+                    templates={popularTemplates}
+                    onSelect={(idx) => setTemplateIndex(idx)}
+                  />
                 )}
                 {proj === "New UX Task" && !railCollapsed && (
                   <div className="flex-shrink-0 space-y-1">

@@ -23,6 +23,7 @@ const updateTemplateSchema = z.object({
   allowRefineAnalysis: z.boolean().optional(),
   allowWireframeRenderer: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  isPopular: z.boolean().optional(),
   templateCategoryId: z.string().nullable().optional(),
   taskType: z.enum(["llm", "accessibility"]).optional(),
   accessibilityConfig: z.object({
@@ -117,6 +118,7 @@ export async function PATCH(
         ...(parsed.data.allowRefineAnalysis !== undefined && { allowRefineAnalysis: parsed.data.allowRefineAnalysis }),
         ...(parsed.data.allowWireframeRenderer !== undefined && { allowWireframeRenderer: parsed.data.allowWireframeRenderer }),
         ...(parsed.data.isActive !== undefined && { isActive: parsed.data.isActive }),
+        ...(parsed.data.isPopular !== undefined && { isPopular: parsed.data.isPopular }),
         ...(parsed.data.templateCategoryId !== undefined && { templateCategoryId: parsed.data.templateCategoryId }),
         ...(parsed.data.taskType !== undefined && { taskType: parsed.data.taskType }),
         ...(parsed.data.accessibilityConfig !== undefined && {
