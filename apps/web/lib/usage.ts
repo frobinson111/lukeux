@@ -33,7 +33,7 @@ function isValidObjectId(id?: string | null) {
 export async function logUsage(
   userId: string,
   opts: {
-    type: "GENERATION" | "FOLLOWUP" | "IMAGE";
+    type: "GENERATION" | "FOLLOWUP" | "IMAGE" | "VISUALIZATION";
     taskId?: string | null;
     model?: string;
     tokensIn?: number;

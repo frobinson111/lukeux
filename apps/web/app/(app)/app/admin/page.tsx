@@ -246,7 +246,7 @@ export default async function AdminPage() {
     }),
     prismaAny.usageLedger.count({ where: { type: "GENERATION" } }),
     prismaAny.usageLedger.count({ where: { type: "FOLLOWUP" } }),
-    prismaAny.usageLedger.count({ where: { type: "IMAGE" } }),
+    prismaAny.usageLedger.count({ where: { type: { in: ["IMAGE", "VISUALIZATION"] } } }),
     prismaAny.usageLedger.groupBy({
       by: ["userId", "type"],
       _count: { id: true }
@@ -292,7 +292,7 @@ export default async function AdminPage() {
     const counts = userCountsMap.get(userId)!;
     if (row.type === "GENERATION") counts.initial = row._count.id;
     else if (row.type === "FOLLOWUP") counts.followup = row._count.id;
-    else if (row.type === "IMAGE") counts.image = row._count.id;
+    else if (row.type === "IMAGE" || row.type === "VISUALIZATION") counts.image += row._count.id;
   }
 
   const usersData = (users as any[]).filter((u) => !u.deletedAt).map((u) => {

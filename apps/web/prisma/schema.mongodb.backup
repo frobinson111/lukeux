@@ -228,8 +228,8 @@ model TaskTemplate {
   allowedModels       String[]
   allowUrlInput       Boolean  @default(false)
   allowFileUploads    Boolean  @default(true)
-  // Controls whether users can access the post-affordance "Mockup Generation" UI.
-  // Default enabled for backward compatibility.
+  // Controls whether users can access the post-affordance "Visualize" UI.
+  // Default enabled for backward compatibility. Field name kept as allowMockupGeneration for DB compatibility.
   allowMockupGeneration Boolean @default(true)
   // Controls whether users can access the post-affordance "Refine the Analysis" UI.
   // Default enabled for backward compatibility.

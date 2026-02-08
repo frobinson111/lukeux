@@ -766,10 +766,10 @@ export default function TemplatesAdmin({
                   checked={formData.allowMockupGeneration}
                   onChange={(e) => setFormData((prev) => ({ ...prev, allowMockupGeneration: e.target.checked }))}
                 />
-                Allow Mockup Generation
+                Allow Visualization
               </label>
               <p className="mt-1 text-xs text-slate-500">
-                Controls whether users can access the post-affordance mockup/image generation UI.
+                Controls whether users can access the post-affordance visualization UI.
               </p>
             </div>
             <div>

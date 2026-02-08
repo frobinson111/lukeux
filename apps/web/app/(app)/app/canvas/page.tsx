@@ -74,10 +74,10 @@ function ProgressButton({
       >
         {imageLoading ? (
           <>
-            Generating image…
+            Visualizing…
           </>
         ) : (
-          "Generate Visual Example"
+          "Visualize"
         )}
       </button>
       {imageLoading && (
@@ -444,17 +444,17 @@ function StructuredAnalysisOutput({
                             </svg>
                           </button>
                         </div>
-                        {/* Checkbox for mockup selection - Only visible when mockup generation is enabled */}
+                        {/* Checkbox for visualization selection - Only visible when visualization is enabled */}
                         {allowMockupGeneration && (
                           <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
-                            <span className="whitespace-nowrap">Generate mockup</span>
+                            <span className="whitespace-nowrap">Visualize</span>
                             <div className="relative">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => handleCheckboxChange(idx, finding.title, finding.content)}
                                 className="sr-only"
-                                aria-label={`Select ${finding.title} for mockup generation`}
+                                aria-label={`Select ${finding.title} for visualization`}
                               />
                               <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
                                 isSelected 
@@ -489,7 +489,7 @@ function StructuredAnalysisOutput({
           className="rounded-xl border border-[#e5e7eb] bg-white p-6"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
         >
-          {/* Feedback and mockup controls at top of non-structured content */}
+          {/* Feedback and visualization controls at top of non-structured content */}
           <div className="mb-4 flex items-center justify-end gap-3 border-b border-slate-200 pb-3">
             {/* Thumbs up/down feedback buttons */}
             <div className="flex items-center gap-1">
@@ -528,17 +528,17 @@ function StructuredAnalysisOutput({
                 </svg>
               </button>
             </div>
-            {/* Checkbox for mockup selection */}
+            {/* Checkbox for visualization selection */}
             {allowMockupGeneration && (
               <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 hover:text-slate-700">
-                <span className="whitespace-nowrap">Generate mockup</span>
+                <span className="whitespace-nowrap">Visualize</span>
                 <div className="relative">
                   <input
                     type="checkbox"
                     checked={selectedIndex === 0}
                     onChange={() => handleCheckboxChange(0, "Analysis", response.substring(0, 200))}
                     className="sr-only"
-                    aria-label="Select analysis for mockup generation"
+                    aria-label="Select analysis for visualization"
                   />
                   <div className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
                     selectedIndex === 0
@@ -710,6 +710,7 @@ export default function CanvasPage() {
   // Backward-compatible default: if templates in DB don’t have this field yet, treat as enabled.
   const fileUploadsAllowed = template?.allowFileUploads ?? true;
   // Backward-compatible default: if templates in DB don't have this field yet, treat as enabled.
+  // Note: DB field is still `allowMockupGeneration` for backward compatibility; UI uses "Visualize".
   const mockupGenerationAllowed = template?.allowMockupGeneration ?? true;
   const refineAnalysisAllowed = template?.allowRefineAnalysis ?? true;
   const wireframeRendererAllowed = template?.allowWireframeRenderer ?? false;
@@ -2747,8 +2748,8 @@ export default function CanvasPage() {
                             selectedIndex={selectedRecommendation}
                             allowMockupGeneration={mockupGenerationAllowed}
                             onSelectRecommendation={(idx, title, content) => {
-                              // If mockup generation is disabled for this template, do not allow selecting
-                              // recommendations for mockup generation or auto-opening that UI.
+                              // If visualization is disabled for this template, do not allow selecting
+                              // recommendations for visualization or auto-opening that UI.
                               if (!mockupGenerationAllowed) {
                                 setSelectedRecommendation(null);
                                 setImagePrompt("");
@@ -2758,10 +2759,10 @@ export default function CanvasPage() {
                               setSelectedRecommendation(idx);
                               if (idx !== null) {
                                 // Auto-populate the image prompt with the recommendation
-                                setImagePrompt(`Create a UI mockup showing: ${title}. ${content.replace(/\*\*/g, '').substring(0, 200)}`);
-                                // Auto-expand the mockup section
+                                setImagePrompt(`Visualize: ${title}. ${content.replace(/\*\*/g, '').substring(0, 200)}`);
+                                // Auto-expand the visualization section
                                 setImageSectionOpen(true);
-                                // Scroll to mockup section after a brief delay to allow expansion
+                                // Scroll to visualization section after a brief delay to allow expansion
                                 setTimeout(() => {
                                   mockupSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }, 100);
@@ -2780,7 +2781,7 @@ export default function CanvasPage() {
 
                       {!mockupGenerationAllowed && (
                         <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                          Mockup Generation is disabled for this UX objective.
+                          Visualization is disabled for this UX objective.
                         </div>
                       )}
                       {images.length > 0 && (
@@ -2800,7 +2801,7 @@ export default function CanvasPage() {
                                 }}
                                 className="mt-2 w-full rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                               >
-                                Download
+                                Download PNG
                               </button>
                             </div>
                           ))}
@@ -3005,7 +3006,7 @@ export default function CanvasPage() {
                           onClick={() => setImageSectionOpen((v) => !v)}
                           className="flex items-center justify-center h-7 w-7 rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                           aria-expanded={imageSectionOpen}
-                          aria-label={imageSectionOpen ? "Collapse image generation" : "Expand image generation"}
+                          aria-label={imageSectionOpen ? "Collapse visualization" : "Expand visualization"}
                         >
                           <svg 
                             className={`h-5 w-5 transition-transform ${imageSectionOpen ? "rotate-180" : ""}`} 
@@ -3030,7 +3031,7 @@ export default function CanvasPage() {
                             onChange={(e) => setImagePrompt(e.target.value)}
                             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
                             rows={5}
-                            placeholder="Copy any section to generate an image or mockup."
+                            placeholder="Describe what you want to visualize, or select a section above."
                           />
                         </div>
                         <div className="flex justify-center mt-4">
@@ -3045,20 +3046,20 @@ export default function CanvasPage() {
                               setImageError(null);
                               setImageLoading(true);
                               try {
-                                const res = await fetch("/api/images/generate", {
+                                const res = await fetch("/api/visualize", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ prompt: imagePrompt.trim(), size: "1024x1024", n: 1 })
                                 });
                                 const json = await res.json().catch(() => null);
                                 if (!res.ok) {
-                                  setImageError(json?.error || "Image generation failed.");
+                                  setImageError(json?.error || "Visualization failed.");
                                   return;
                                 }
                                 setImages(json.images || []);
                                 setResultsCollapsed(false);
                               } catch (err) {
-                                setImageError("Image generation failed.");
+                                setImageError("Visualization failed.");
                               } finally {
                                 setImageLoading(false);
                               }

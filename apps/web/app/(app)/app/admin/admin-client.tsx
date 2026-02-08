@@ -316,7 +316,7 @@ export default function AdminClient({
                 <StatCard label="LLM Keys" value={stats.apiKeysTotal} helper={`${stats.apiKeysActive} active`} />
                 <StatCard label="Initial Responses" value={stats.initialResponses} helper="Total generated" />
                 <StatCard label="Follow-up Responses" value={stats.followupResponses} helper="Total refinements" />
-                <StatCard label="Images/Mockups" value={stats.imagesGenerated} helper="Total generated" />
+                <StatCard label="Visualizations" value={stats.imagesGenerated} helper="Total generated" />
                 <StatCard label="Recent Usage" value={stats.recentUsageCount} helper="last 200" />
                 <CostCard label="Claude Est. Cost" value={stats.claudeEstCost} helper="All Anthropic models" />
                 <StatCard label="Claude Requests" value={stats.claudeRequests} helper="All Anthropic models" />

@@ -247,8 +247,9 @@ model Task {
   Project         Project?      @relation(fields: [projectId], references: [id])
   TaskTemplate    TaskTemplate? @relation(fields: [templateId], references: [id])
   User            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  TaskAsset       TaskAsset[]
-  UsageLedger     UsageLedger[]
+  TaskAsset              TaskAsset[]
+  UsageLedger            UsageLedger[]
+  VisualizationArtifact  VisualizationArtifact[]
 
   @@index([projectId])
   @@index([status, createdAt])
@@ -398,6 +399,30 @@ model WireframeExport {
   @@index([userId])
 }
 
+model VisualizationArtifact {
+  id               String   @id @default(cuid())
+  taskId           String
+  sectionId        String?  // identifies the section within the task output
+  sectionType      String?  // e.g. assumption_inventory, risk_summary, mitigation_plan
+  enforcementLevel String   @default("ALLOWED") // ALLOWED | FORCED | CONDITIONAL
+  templateId       String?  // e.g. heatmap_v1, matrix_v1, exec_card_v1
+  format           String   @default("png")
+  width            Int?
+  height           Int?
+  storageUrl       String?  @db.Text
+  imageData        String?  @db.Text // base64-encoded PNG for inline storage
+  inputHash        String?  // hash of section JSON; used for cache
+  status           String   @default("rendered") // queued | rendered | failed
+  createdByModel   String?  // model used to generate if AI-assisted
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  Task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([inputHash])
+  @@index([status])
+}
+
 model LlmModel {
   id          String   @id @default(cuid())
   modelId     String   @unique
@@ -439,6 +464,7 @@ enum UsageType {
   GENERATION
   FOLLOWUP
   IMAGE
+  VISUALIZATION
 }
 
 enum UserRole {

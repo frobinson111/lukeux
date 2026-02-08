@@ -36,6 +36,7 @@ enum UsageType {
   GENERATION
   FOLLOWUP
   IMAGE
+  VISUALIZATION
 }
 
 enum FeatureFlagScope {
@@ -283,8 +284,9 @@ model Task {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  assets        TaskAsset[]
-  ledgerEntries UsageLedger[]
+  assets                 TaskAsset[]
+  ledgerEntries          UsageLedger[]
+  visualizationArtifacts VisualizationArtifact[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
@@ -303,6 +305,30 @@ model TaskAsset {
   createdAt   DateTime @default(now())
 
   @@index([taskId])
+}
+
+model VisualizationArtifact {
+  id               String   @id @default(cuid())
+  taskId           String
+  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sectionId        String?  // identifies the section within the task output
+  sectionType      String?  // e.g. assumption_inventory, risk_summary, mitigation_plan
+  enforcementLevel String   @default("ALLOWED") // ALLOWED | FORCED | CONDITIONAL
+  templateId       String?  // e.g. heatmap_v1, matrix_v1, exec_card_v1
+  format           String   @default("png")
+  width            Int?
+  height           Int?
+  storageUrl       String?  @db.Text
+  imageData        String?  @db.Text // base64-encoded PNG for inline storage
+  inputHash        String?  // hash of section JSON; used for cache
+  status           String   @default("rendered") // queued | rendered | failed
+  createdByModel   String?  // model used to generate if AI-assisted
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([inputHash])
+  @@index([status])
 }
 
 model UsageLedger {
