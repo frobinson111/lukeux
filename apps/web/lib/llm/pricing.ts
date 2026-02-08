@@ -1,11 +1,14 @@
 /**
  * LLM Model Pricing Configuration
  * Prices are in USD per 1 million tokens
- * Updated: January 2025
+ * Updated: February 2026
  */
 
 export const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
   // OpenAI Models
+  "gpt-5.2": { inputPer1M: 1.75, outputPer1M: 14.00 },
+  "gpt-5.1": { inputPer1M: 1.25, outputPer1M: 10.00 },
+  "gpt-4.0": { inputPer1M: 2.50, outputPer1M: 10.00 },
   "gpt-4o": { inputPer1M: 2.50, outputPer1M: 10.00 },
   "gpt-4o-mini": { inputPer1M: 0.15, outputPer1M: 0.60 },
 
@@ -13,6 +16,11 @@ export const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: nu
   "claude-sonnet-4-20250514": { inputPer1M: 3.00, outputPer1M: 15.00 },
   "claude-3-5-sonnet-latest": { inputPer1M: 3.00, outputPer1M: 15.00 },
   "claude-3-haiku-20240307": { inputPer1M: 0.25, outputPer1M: 1.25 },
+};
+
+/** Flat per-request cost for non-token-based models (e.g. image generation) */
+const FLAT_COST_MODELS: Record<string, number> = {
+  "gpt-image-1": 0.04, // ~medium quality square image
 };
 
 /**
@@ -23,7 +31,14 @@ export function calculateCost(
   tokensIn: number | null | undefined,
   tokensOut: number | null | undefined
 ): number | null {
-  if (!model || tokensIn == null || tokensOut == null) {
+  if (!model) return null;
+
+  // Flat-rate models (image generation etc.) don't use token counts
+  if (FLAT_COST_MODELS[model] != null) {
+    return FLAT_COST_MODELS[model];
+  }
+
+  if (tokensIn == null || tokensOut == null) {
     return null;
   }
 
