@@ -640,7 +640,7 @@ export default function CanvasPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [lastResponse, setLastResponse] = useState<string | null>(null);
   const [lastRecommendation, setLastRecommendation] = useState<string | null>(null);
-  const [inputsCollapsed, setInputsCollapsed] = useState(false);
+  const [inputsCollapsed, setInputsCollapsed] = useState(true);
   const [promptEditing, setPromptEditing] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -1597,7 +1597,7 @@ export default function CanvasPage() {
                       setLastResponse(null);
                       setLastRecommendation(null);
                       setStatus(null);
-                      setInputsCollapsed(false);
+                      setInputsCollapsed(true);
                       setFiles([]);
                       setTaskId(null);
                       setThreadId(null);
@@ -1922,13 +1922,13 @@ export default function CanvasPage() {
                     setImagePrompt("");
                     setResultsCollapsed(false);
                     setIsViewingHistoryItem(false); // Clear history flag when selecting new template
-                    setInputsCollapsed(false); // Auto-expand UX Guidance when selecting new task
-                    // Auto-expand all guidance sections for new task
+                    setInputsCollapsed(true); // Keep UX Guidance collapsed when selecting new task
+                    // Keep guidance sections collapsed for new task
                     setGuidanceExpanded({
-                      useAiTo: true,
-                      example: true,
-                      outcome: true,
-                      assets: true
+                      useAiTo: false,
+                      example: false,
+                      outcome: false,
+                      assets: false
                     });
                   }}
                   placeholder="Select a Category"
