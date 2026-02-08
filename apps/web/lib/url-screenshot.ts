@@ -5,7 +5,7 @@
  * or falls back to local Playwright.
  */
 
-const DEFAULT_VIEWPORT = { width: 1280, height: 720 };
+const DEFAULT_VIEWPORT = { width: 1440, height: 900 };
 
 function getBrowserlessEndpoint(): string {
   const apiKey = process.env.BROWSERLESS_API_KEY;
@@ -39,14 +39,18 @@ async function connectBrowser() {
   });
 }
 
-export async function captureUrlScreenshot(url: string, opts?: { fullPage?: boolean }) {
+export async function captureUrlScreenshot(
+  url: string,
+  opts?: { fullPage?: boolean; viewport?: { width: number; height: number } }
+) {
   let browser: any = null;
   const fullPage = opts?.fullPage ?? false;
+  const viewport = opts?.viewport ?? DEFAULT_VIEWPORT;
 
   try {
     browser = await connectBrowser();
     const context = await browser.newContext({
-      viewport: DEFAULT_VIEWPORT,
+      viewport,
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 LukeUX-Wireframe/1.0"
     });
@@ -65,7 +69,7 @@ export async function captureUrlScreenshot(url: string, opts?: { fullPage?: bool
     return {
       mimeType: "image/png" as const,
       base64Data: Buffer.from(buffer).toString("base64"),
-      viewport: DEFAULT_VIEWPORT,
+      viewport,
       method: shouldUseBrowserless() ? ("browserless" as const) : ("local" as const)
     };
   } finally {

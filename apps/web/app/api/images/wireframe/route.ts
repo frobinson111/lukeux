@@ -19,7 +19,11 @@ const schema = z
     size: z.enum(["1024x1024", "1024x1536", "1536x1024"]).default("1536x1024"),
     n: z.number().int().min(1).max(2).default(1),
     // Controls the rendering style of the output wireframe.
-    style: z.enum(["lofi" /* future: "midfi" */]).default("lofi")
+    style: z.enum(["lofi" /* future: "midfi" */]).default("lofi"),
+    // When true, capture the full scrollable page instead of just the viewport.
+    fullPage: z.boolean().default(false),
+    // Viewport preset for URL screenshots.
+    viewport: z.enum(["desktop", "tablet", "mobile"]).default("desktop")
   })
   .refine((v) => !!v.imageDataUrl || !!v.url, {
     message: "Provide imageDataUrl or url"
@@ -41,7 +45,13 @@ function normalizeMimeType(mimeType: string): "image/png" | "image/jpeg" | "imag
   return "image/png";
 }
 
-function buildWireframePrompt(style: "lofi", specText: string) {
+const VIEWPORT_PRESETS: Record<string, { width: number; height: number }> = {
+  desktop: { width: 1440, height: 900 },
+  tablet: { width: 768, height: 1024 },
+  mobile: { width: 375, height: 812 }
+};
+
+function buildWireframeEditPrompt(style: "lofi", specText: string) {
   const styleRules =
     style === "lofi"
       ? [
@@ -49,20 +59,26 @@ function buildWireframePrompt(style: "lofi", specText: string) {
           "Use only grayscale/black strokes.",
           "Use simple rectangles, lines, and placeholder text blocks.",
           "No colors, gradients, photos, shadows, or decorative UI styling.",
-          "Preserve layout hierarchy and spacing faithfully.",
+          "Preserve the exact layout, proportions, spacing, and hierarchy from the source image.",
           "Use generic labels (e.g., 'Button', 'Heading', 'Card') instead of brand names.",
           "If there are icons, represent them as simple outlined placeholders.",
-          "Do not add new UI that isn't present in the source."
+          "Do not add new UI that isn't present in the source.",
+          "Every element visible in the source image must appear in the wireframe at the same position and size."
         ].join(" ")
       : "";
 
   const framingRules =
-    "Fill the canvas with the wireframe. " +
-    "Avoid large empty margins; keep ~10px outer margin max. " +
-    "Scale and crop the composition so the UI occupies most of the image area. " +
-    "If the UI is a landscape web page, use a landscape composition; do not center a small wireframe on a huge empty page.";
+    "Fill the canvas with the wireframe — match the source image dimensions exactly. " +
+    "Do NOT add margins, padding, or whitespace that isn't in the source. " +
+    "The wireframe must cover the full canvas, edge to edge, matching the source composition.";
 
-  return `Create a structurally faithful low-fidelity UX wireframe rendering of the UI described below. ${styleRules} ${framingRules}\n\nUI specification:\n${specText}`;
+  return `Convert this UI screenshot into a structurally faithful low-fidelity UX wireframe. ${styleRules} ${framingRules}\n\nStructural reference from analysis:\n${specText}`;
+}
+
+function base64ToFile(base64Data: string, mimeType: string, filename: string): File {
+  const buffer = Buffer.from(base64Data, "base64");
+  const blob = new Blob([buffer], { type: mimeType });
+  return new File([blob], filename, { type: mimeType });
 }
 
 export async function POST(req: Request) {
@@ -75,7 +91,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const { imageDataUrl, url, size, n, style } = parsed.data;
+  const { imageDataUrl, url, size, n, style, fullPage, viewport } = parsed.data;
 
   const apiKey = process.env.OPENAI_API_KEY;
   // For wireframe generation we may use either an env key OR a DB key (same pattern as LLM providers)
@@ -107,7 +123,8 @@ export async function POST(req: Request) {
       } catch {
         return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
       }
-      const shot = await captureUrlScreenshot(url, { fullPage: false });
+      const vp = VIEWPORT_PRESETS[viewport] || VIEWPORT_PRESETS.desktop;
+      const shot = await captureUrlScreenshot(url, { fullPage, viewport: vp });
       source = {
         mimeType: shot.mimeType,
         base64Data: shot.base64Data,
@@ -127,11 +144,12 @@ export async function POST(req: Request) {
     const specPrompt =
       "You are a high-fidelity to low-fidelity UX wireframe rendering engine. " +
       "Analyze the UI screenshot and output a structurally faithful wireframe specification. " +
+      "Be extremely precise about positions, sizes, and proportions relative to the viewport. " +
       "Focus on layout and hierarchy only. Ignore colors, images, and branding. " +
       "Return plain text with sections:\n" +
       "- SCREEN: (device + approximate viewport)\n" +
-      "- LAYOUT: (major regions and grid)\n" +
-      "- COMPONENTS: (ordered top-to-bottom with rough sizes/relationships)\n" +
+      "- LAYOUT: (major regions with approximate percentage-based positions and sizes)\n" +
+      "- COMPONENTS: (ordered top-to-bottom with precise relative sizes and positions)\n" +
       "- INTERACTIONS: (primary actions/CTAs inferred from controls)\n" +
       "Keep it concise but complete. Do NOT include advice or critique.";
 
@@ -153,16 +171,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  // 3) Render a lo-fi wireframe image using the image model
+  // 3) Render a lo-fi wireframe using images.edit with the source image as visual reference
   const client = new OpenAI({ apiKey: resolvedKey });
   try {
-    const prompt = buildWireframePrompt(style, specText);
+    const prompt = buildWireframeEditPrompt(style, specText);
 
-    const response = await client.images.generate({
+    // Determine the file extension from the source mime type
+    const ext = source.mimeType === "image/webp" ? "webp" : source.mimeType === "image/jpeg" ? "jpg" : "png";
+    const sourceFile = base64ToFile(source.base64Data, source.mimeType, `source.${ext}`);
+
+    const response = await client.images.edit({
       model: "gpt-image-1",
+      image: sourceFile,
       prompt,
       size,
-      n
+      n,
+      quality: "high",
+      input_fidelity: "high"
     });
 
     const images =

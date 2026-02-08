@@ -122,6 +122,8 @@ type WireframeResponse = {
   source?: { kind?: string; url?: string | null };
 };
 
+type ViewportPreset = "desktop" | "tablet" | "mobile";
+
 export default function WireframeRenderer() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [sourceUrl, setSourceUrl] = useState("");
@@ -134,6 +136,8 @@ export default function WireframeRenderer() {
   const [expandedSrc, setExpandedSrc] = useState<string | null>(null);
   const [specOpen, setSpecOpen] = useState(false);
   const [specText, setSpecText] = useState<string | null>(null);
+  const [fullPage, setFullPage] = useState(false);
+  const [viewport, setViewport] = useState<ViewportPreset>("desktop");
 
   useEffect(() => {
     if (!loading) {
@@ -183,9 +187,11 @@ export default function WireframeRenderer() {
     try {
       const payload: any = {
         // Generate landscape by default to match the output viewport and reduce vertical whitespace
-        size: "1536x1024",
+        size: viewport === "mobile" ? "1024x1536" : "1536x1024",
         n: 1,
-        style: "lofi"
+        style: "lofi",
+        fullPage,
+        viewport
       };
       if (sourceImageDataUrl) payload.imageDataUrl = sourceImageDataUrl;
       else payload.url = sourceUrl.trim();
@@ -380,7 +386,7 @@ export default function WireframeRenderer() {
         {/* Source: URL */}
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-semibold text-slate-700">Option B — Paste a live URL</p>
-          <p className="mt-1 text-[11px] text-slate-500">We’ll screenshot the page and render a wireframe.</p>
+          <p className="mt-1 text-[11px] text-slate-500">We&apos;ll screenshot the page and render a wireframe.</p>
           <input
             type="url"
             value={sourceUrl}
@@ -396,6 +402,36 @@ export default function WireframeRenderer() {
             placeholder="https://example.com"
             className="mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
           />
+
+          {/* Viewport & Full-page controls */}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-slate-600">Viewport:</span>
+              {(["desktop", "tablet", "mobile"] as ViewportPreset[]).map((vp) => (
+                <button
+                  key={vp}
+                  type="button"
+                  onClick={() => setViewport(vp)}
+                  className={`rounded-md border px-2.5 py-1 text-[11px] font-bold capitalize transition ${
+                    viewport === vp
+                      ? "border-black bg-black text-white"
+                      : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"
+                  }`}
+                >
+                  {vp}
+                </button>
+              ))}
+            </div>
+            <label className="flex cursor-pointer items-center gap-1.5">
+              <input
+                type="checkbox"
+                checked={fullPage}
+                onChange={(e) => setFullPage(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-slate-300 text-black focus:ring-black"
+              />
+              <span className="text-[11px] font-semibold text-slate-600">Full page</span>
+            </label>
+          </div>
         </div>
       </div>
 
