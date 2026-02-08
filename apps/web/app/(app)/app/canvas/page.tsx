@@ -639,7 +639,7 @@ export default function CanvasPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [lastResponse, setLastResponse] = useState<string | null>(null);
   const [lastRecommendation, setLastRecommendation] = useState<string | null>(null);
-  const [inputsCollapsed, setInputsCollapsed] = useState(true);
+  const [inputsCollapsed, setInputsCollapsed] = useState(false);
   const [promptEditing, setPromptEditing] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -1596,7 +1596,7 @@ export default function CanvasPage() {
                       setLastResponse(null);
                       setLastRecommendation(null);
                       setStatus(null);
-                      setInputsCollapsed(true);
+                      setInputsCollapsed(false);
                       setFiles([]);
                       setTaskId(null);
                       setThreadId(null);
@@ -1921,8 +1921,8 @@ export default function CanvasPage() {
                     setImagePrompt("");
                     setResultsCollapsed(false);
                     setIsViewingHistoryItem(false); // Clear history flag when selecting new template
-                    setInputsCollapsed(true); // Keep UX Guidance collapsed when selecting new task
-                    // Keep guidance sections collapsed for new task
+                    setInputsCollapsed(false); // Expand UX Guidance container when selecting new task
+                    // Keep guidance subsections collapsed for new task
                     setGuidanceExpanded({
                       useAiTo: false,
                       example: false,
