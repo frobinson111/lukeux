@@ -365,6 +365,7 @@ model User {
   Task                   Task[]
   TaskTemplate           TaskTemplate[]
   UsageLedger            UsageLedger[]
+  WireframeExport        WireframeExport[]
 }
 
 model FigmaConnection {
@@ -380,6 +381,19 @@ model FigmaConnection {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   User         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WireframeExport {
+  id        String   @id @default(cuid())
+  userId    String
+  imageData String   @db.Text // base64-encoded PNG
+  mimeType  String   @default("image/png")
+  fileName  String?
+  sourceUrl String?
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
