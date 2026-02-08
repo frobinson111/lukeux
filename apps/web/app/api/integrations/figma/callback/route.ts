@@ -80,7 +80,7 @@ export async function GET(req: Request) {
       },
     });
 
-    const res = NextResponse.redirect(abs(req, "/app/canvas?figma_connected=true&figma_setup=team"));
+    const res = NextResponse.redirect(abs(req, "/app/canvas?figma_connected=true"));
     res.cookies.delete("figma_oauth_state");
     return res;
   } catch (err) {

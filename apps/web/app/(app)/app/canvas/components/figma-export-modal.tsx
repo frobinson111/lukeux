@@ -10,7 +10,6 @@ type FigmaStatus = {
   hasTeamId?: boolean;
 };
 
-type FigmaProject = { id: string; name: string };
 type FigmaFile = { key: string; name: string };
 type FigmaNode = { id: string; name: string; type: string; depth: number };
 
@@ -19,27 +18,20 @@ type Props = {
   onClose: () => void;
 };
 
-type Step = "connect" | "link-team" | "pick-file" | "pick-node" | "exporting" | "done" | "error";
+type Step = "connect" | "pick-file" | "pick-node" | "exporting" | "done" | "error";
 
 export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
   const [step, setStep] = useState<Step>("connect");
   const [status, setStatus] = useState<FigmaStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Team linking state
-  const [teamUrlInput, setTeamUrlInput] = useState("");
-  const [savingTeam, setSavingTeam] = useState(false);
-  const [teamError, setTeamError] = useState<string | null>(null);
-  const teamInputRef = useRef<HTMLInputElement>(null);
-
   // File picker state
-  const [projects, setProjects] = useState<FigmaProject[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [projectsError, setProjectsError] = useState<string | null>(null);
-  const [expandedProject, setExpandedProject] = useState<string | null>(null);
-  const [projectFiles, setProjectFiles] = useState<Record<string, FigmaFile[]>>({});
-  const [loadingFiles, setLoadingFiles] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<FigmaFile | null>(null);
+
+  // Direct file URL state
+  const [directFileUrl, setDirectFileUrl] = useState("");
+  const [directFileError, setDirectFileError] = useState<string | null>(null);
+  const directFileInputRef = useRef<HTMLInputElement>(null);
 
   // Node picker state
   const [nodes, setNodes] = useState<FigmaNode[]>([]);
@@ -47,14 +39,8 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
   const [selectedNode, setSelectedNode] = useState<FigmaNode | null>(null);
   const [resourceName, setResourceName] = useState("LukeUX Wireframe");
 
-  // Direct file URL fallback state
-  const [directFileUrl, setDirectFileUrl] = useState("");
-  const [directFileError, setDirectFileError] = useState<string | null>(null);
-  const directFileInputRef = useRef<HTMLInputElement>(null);
-
   // Export state
   const [exportError, setExportError] = useState<string | null>(null);
-  const [needsReconnect, setNeedsReconnect] = useState(false);
 
   useEffect(() => {
     fetchStatus();
@@ -65,12 +51,9 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
       const res = await fetch("/api/integrations/figma/status");
       const data = await res.json();
       setStatus(data);
-      if (data.connected && data.hasTeamId) {
+      if (data.connected) {
         setStep("pick-file");
-        fetchProjects();
-      } else if (data.connected) {
-        setStep("link-team");
-        setTimeout(() => teamInputRef.current?.focus(), 200);
+        setTimeout(() => directFileInputRef.current?.focus(), 200);
       } else {
         setStep("connect");
       }
@@ -82,47 +65,6 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
     }
   }
 
-  async function fetchProjects() {
-    setLoadingProjects(true);
-    setProjectsError(null);
-    setNeedsReconnect(false);
-    try {
-      const res = await fetch("/api/integrations/figma/projects");
-      const data = await res.json();
-      if (data.needsTeamId) {
-        setStep("link-team");
-        setTimeout(() => teamInputRef.current?.focus(), 200);
-        return;
-      }
-      if (data.needsReconnect) {
-        setNeedsReconnect(true);
-        setProjectsError(data.error || "Please reconnect Figma to grant required permissions.");
-        setProjects([]);
-        return;
-      }
-      if (data.error) {
-        setProjectsError(data.error);
-        setProjects([]);
-        return;
-      }
-      setProjects(data.projects || []);
-      if ((data.projects || []).length === 0) {
-        setProjectsError("No projects found in this team. Check that the team ID is correct and contains projects.");
-      }
-    } catch {
-      setProjectsError("Failed to load Figma projects.");
-    } finally {
-      setLoadingProjects(false);
-    }
-  }
-
-  function extractTeamId(input: string): string | null {
-    const trimmed = input.trim();
-    if (/^\d+$/.test(trimmed)) return trimmed;
-    const match = trimmed.match(/figma\.com\/files\/team\/(\d+)/i);
-    return match ? match[1] : null;
-  }
-
   function extractFileKeyFromUrl(input: string): { fileKey: string; fileName: string } | null {
     const trimmed = input.trim();
     // Match: figma.com/design/:fileKey/:fileName or figma.com/file/:fileKey/:fileName
@@ -130,7 +72,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
     if (match) {
       return { fileKey: match[1], fileName: match[2] ? decodeURIComponent(match[2]).replace(/-/g, " ") : match[1] };
     }
-    // If it looks like just a file key (alphanumeric, 15+ chars)
+    // If it looks like just a file key (alphanumeric, 10+ chars)
     if (/^[A-Za-z0-9]{10,}$/.test(trimmed)) {
       return { fileKey: trimmed, fileName: trimmed };
     }
@@ -146,61 +88,6 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
     setDirectFileError(null);
     const file: FigmaFile = { key: result.fileKey, name: result.fileName };
     handleFileSelect(file);
-  }
-
-  async function handleSaveTeam() {
-    const teamId = extractTeamId(teamUrlInput);
-    if (!teamId) {
-      setTeamError("Paste your Figma team page URL or enter a numeric team ID.");
-      return;
-    }
-    setSavingTeam(true);
-    setTeamError(null);
-    try {
-      const res = await fetch("/api/integrations/figma/team", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId })
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setTeamError(data.error || "Failed to save team ID");
-        return;
-      }
-      setStatus((prev) => (prev ? { ...prev, hasTeamId: true } : prev));
-      setTeamUrlInput("");
-      // Notify sibling components
-      window.dispatchEvent(new Event("figma-team-updated"));
-      // Proceed to file picker
-      setStep("pick-file");
-      fetchProjects();
-    } catch {
-      setTeamError("Failed to save team ID");
-    } finally {
-      setSavingTeam(false);
-    }
-  }
-
-  async function toggleProject(projectId: string) {
-    if (expandedProject === projectId) {
-      setExpandedProject(null);
-      return;
-    }
-    setExpandedProject(projectId);
-    if (!projectFiles[projectId]) {
-      setLoadingFiles(projectId);
-      try {
-        const res = await fetch(`/api/integrations/figma/files?projectId=${projectId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProjectFiles((prev) => ({ ...prev, [projectId]: data.files || [] }));
-        }
-      } catch {
-        // ignore
-      } finally {
-        setLoadingFiles(null);
-      }
-    }
   }
 
   async function handleFileSelect(file: FigmaFile) {
@@ -269,11 +156,11 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
   }
 
   function nodeIcon(type: string) {
-    if (type === "CANVAS") return "📄";
-    if (type === "FRAME") return "🔲";
-    if (type === "COMPONENT") return "◆";
-    if (type === "SECTION") return "📁";
-    return "·";
+    if (type === "CANVAS") return "\u{1F4C4}";
+    if (type === "FRAME") return "\u{1F532}";
+    if (type === "COMPONENT") return "\u25C6";
+    if (type === "SECTION") return "\u{1F4C1}";
+    return "\u00B7";
   }
 
   if (loading) {
@@ -298,7 +185,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
             onClick={onClose}
             className="text-sm font-semibold text-slate-500 hover:text-slate-800"
           >
-            ✕
+            &#x2715;
           </button>
         </div>
       </div>
@@ -322,17 +209,17 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
         </div>
       )}
 
-      {/* Step: Link Team */}
-      {step === "link-team" && (
-        <div className="px-5 py-5 space-y-3">
+      {/* Step: Pick File */}
+      {step === "pick-file" && (
+        <div className="px-5 py-4 space-y-3">
           <div>
-            <p className="text-xs font-semibold text-slate-700">Link your Figma team</p>
+            <p className="text-xs font-semibold text-slate-700">1. Paste a Figma file URL</p>
             <p className="text-[11px] text-slate-500 mt-0.5">
               Connected as{" "}
               <span className="font-medium text-slate-700">
                 @{status?.handle || status?.email || "unknown"}
               </span>
-              . Now paste your team page URL so we can load your projects.
+              . Paste the URL of the Figma file where you want to attach the wireframe.
             </p>
           </div>
 
@@ -341,208 +228,30 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>
-              Find it at: <code className="bg-slate-100 px-1 py-0.5 rounded text-[10px]">figma.com/files/team/123.../Team-Name</code>
+              Open your file in Figma, then copy the URL from your browser address bar.
             </span>
           </div>
 
           <div className="flex gap-2">
             <input
-              ref={teamInputRef}
+              ref={directFileInputRef}
               type="text"
-              value={teamUrlInput}
-              onChange={(e) => {
-                setTeamUrlInput(e.target.value);
-                setTeamError(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && teamUrlInput.trim()) handleSaveTeam();
-              }}
-              placeholder="https://www.figma.com/files/team/1234567890/..."
+              value={directFileUrl}
+              onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
+              placeholder="https://www.figma.com/design/abc123/File-Name"
               className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
             />
             <button
               type="button"
-              onClick={handleSaveTeam}
-              disabled={savingTeam || !teamUrlInput.trim()}
+              onClick={handleDirectFileUrl}
+              disabled={!directFileUrl.trim()}
               className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
             >
-              {savingTeam ? "Linking..." : "Link Team"}
+              Next
             </button>
           </div>
-          {teamError && <p className="text-xs text-red-600">{teamError}</p>}
-        </div>
-      )}
-
-      {/* Step: Pick File */}
-      {step === "pick-file" && (
-        <div className="px-5 py-4 space-y-3">
-          <div>
-            <p className="text-xs font-semibold text-slate-700">1. Select a Figma file</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Choose the file where you want to attach the wireframe.</p>
-          </div>
-
-          {loadingProjects ? (
-            <div className="py-6 text-center text-xs text-slate-500">Loading Figma projects...</div>
-          ) : projectsError && projects.length === 0 ? (
-            <div className="space-y-3">
-              <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50 px-4 py-4 text-center text-xs text-amber-700">
-                {projectsError}
-              </div>
-              {needsReconnect && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.href = "/api/integrations/figma/connect";
-                  }}
-                  className="w-full rounded-lg bg-black px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
-                >
-                  Reconnect Figma
-                </button>
-              )}
-              {/* Direct file URL fallback */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-                <div className="relative flex justify-center text-[10px]"><span className="bg-white px-2 text-slate-400 uppercase tracking-wider">or paste a file URL</span></div>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  ref={directFileInputRef}
-                  type="text"
-                  value={directFileUrl}
-                  onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
-                  placeholder="https://www.figma.com/design/abc123/File-Name"
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                />
-                <button
-                  type="button"
-                  onClick={handleDirectFileUrl}
-                  disabled={!directFileUrl.trim()}
-                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
-                >
-                  Go
-                </button>
-              </div>
-              {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
-              {!needsReconnect && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep("link-team");
-                    setProjectsError(null);
-                    setTimeout(() => teamInputRef.current?.focus(), 200);
-                  }}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-                >
-                  Change Team
-                </button>
-              )}
-            </div>
-          ) : projects.length > 0 ? (
-            <>
-              <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200">
-                {projects.map((project) => {
-                  const isExpanded = expandedProject === project.id;
-                  const files = projectFiles[project.id] || [];
-                  const isLoading = loadingFiles === project.id;
-                  return (
-                    <div key={project.id} className="border-b border-slate-100 last:border-0">
-                      <button
-                        type="button"
-                        onClick={() => toggleProject(project.id)}
-                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50 transition"
-                      >
-                        <span className="text-xs">{isExpanded ? "📂" : "📁"}</span>
-                        <span className="text-sm font-medium text-slate-800 truncate flex-1">{project.name}</span>
-                        <svg
-                          className={`h-3.5 w-3.5 text-slate-400 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                      {isExpanded && (
-                        <div className="bg-slate-50 pl-7 pr-3 pb-1">
-                          {isLoading && <div className="py-2 text-[11px] text-slate-500">Loading files...</div>}
-                          {!isLoading && files.length === 0 && (
-                            <div className="py-2 text-[11px] text-slate-500">No files in this project</div>
-                          )}
-                          {!isLoading &&
-                            files.map((file) => (
-                              <button
-                                key={file.key}
-                                type="button"
-                                onClick={() => handleFileSelect(file)}
-                                className="flex w-full items-center gap-2 rounded py-1.5 px-1 text-left hover:bg-slate-100 transition"
-                              >
-                                <svg className="h-4 w-4 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
-                                <span className="text-sm text-slate-700 truncate">{file.name}</span>
-                              </button>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("link-team");
-                  setProjectsError(null);
-                  setTimeout(() => teamInputRef.current?.focus(), 200);
-                }}
-                className="w-full text-center text-[11px] font-semibold text-slate-500 hover:text-slate-700 transition"
-              >
-                Switch team
-              </button>
-            </>
-          ) : (
-            <div className="space-y-3">
-              <div className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center text-xs text-slate-500">
-                No projects found. Link your Figma team to load projects, or paste a file URL directly.
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("link-team");
-                  setTimeout(() => teamInputRef.current?.focus(), 200);
-                }}
-                className="w-full rounded-lg bg-black px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
-              >
-                Link Figma Team
-              </button>
-              {/* Direct file URL fallback */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-                <div className="relative flex justify-center text-[10px]"><span className="bg-white px-2 text-slate-400 uppercase tracking-wider">or paste a file URL</span></div>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={directFileUrl}
-                  onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
-                  placeholder="https://www.figma.com/design/abc123/File-Name"
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                />
-                <button
-                  type="button"
-                  onClick={handleDirectFileUrl}
-                  disabled={!directFileUrl.trim()}
-                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
-                >
-                  Go
-                </button>
-              </div>
-              {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
-            </div>
-          )}
+          {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
         </div>
       )}
 
@@ -637,7 +346,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
       {/* Step: Done */}
       {step === "done" && (
         <div className="px-5 py-8 text-center space-y-4">
-          <div className="text-3xl">✅</div>
+          <div className="text-3xl">{"\u2705"}</div>
           <div>
             <p className="text-sm font-bold text-slate-900">Exported to Figma!</p>
             <p className="mt-1 text-xs text-slate-600">
@@ -672,7 +381,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
       {/* Step: Error */}
       {step === "error" && (
         <div className="px-5 py-8 text-center space-y-4">
-          <div className="text-3xl">⚠️</div>
+          <div className="text-3xl">{"\u26A0\uFE0F"}</div>
           <div>
             <p className="text-sm font-bold text-red-700">Export Failed</p>
             <p className="mt-1 text-xs text-slate-600">{exportError}</p>
