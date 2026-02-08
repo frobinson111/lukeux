@@ -49,6 +49,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
 
   // Export state
   const [exportError, setExportError] = useState<string | null>(null);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
 
   useEffect(() => {
     fetchStatus();
@@ -79,12 +80,19 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
   async function fetchProjects() {
     setLoadingProjects(true);
     setProjectsError(null);
+    setNeedsReconnect(false);
     try {
       const res = await fetch("/api/integrations/figma/projects");
       const data = await res.json();
       if (data.needsTeamId) {
         setStep("link-team");
         setTimeout(() => teamInputRef.current?.focus(), 200);
+        return;
+      }
+      if (data.needsReconnect) {
+        setNeedsReconnect(true);
+        setProjectsError(data.error || "Please reconnect Figma to grant required permissions.");
+        setProjects([]);
         return;
       }
       if (data.error) {
@@ -350,17 +358,29 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
               <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50 px-4 py-4 text-center text-xs text-amber-700">
                 {projectsError}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("link-team");
-                  setProjectsError(null);
-                  setTimeout(() => teamInputRef.current?.focus(), 200);
-                }}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-              >
-                Change Team
-              </button>
+              {needsReconnect ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/api/integrations/figma/connect";
+                  }}
+                  className="w-full rounded-lg bg-black px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  Reconnect Figma
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("link-team");
+                    setProjectsError(null);
+                    setTimeout(() => teamInputRef.current?.focus(), 200);
+                  }}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Change Team
+                </button>
+              )}
             </div>
           ) : projects.length > 0 ? (
             <>

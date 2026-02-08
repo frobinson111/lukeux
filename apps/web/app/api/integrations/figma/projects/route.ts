@@ -30,54 +30,66 @@ export async function GET() {
     // Fetch projects for the configured team
     const projects: any[] = [];
 
-    try {
-      console.log(`[figma-projects] Fetching projects for team: ${teamId}`);
+    console.log(`[figma-projects] Fetching projects for team: ${teamId}`);
 
-      const teamProjectsResponse = await fetch(`https://api.figma.com/v1/teams/${teamId}/projects`, {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-        },
+    const teamProjectsResponse = await fetch(`https://api.figma.com/v1/teams/${teamId}/projects`, {
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log(`[figma-projects] Team ${teamId} response:`, {
+      status: teamProjectsResponse.status,
+      ok: teamProjectsResponse.ok,
+    });
+
+    if (teamProjectsResponse.ok) {
+      const teamProjectsData = await teamProjectsResponse.json();
+      console.log(`[figma-projects] Team ${teamId} projects:`, {
+        projectsCount: teamProjectsData.projects?.length || 0,
+        projectNames: teamProjectsData.projects?.map((p: any) => p.name) || [],
       });
 
-      console.log(`[figma-projects] Team ${teamId} response:`, {
-        status: teamProjectsResponse.status,
-        ok: teamProjectsResponse.ok,
-      });
-
-      if (teamProjectsResponse.ok) {
-        const teamProjectsData = await teamProjectsResponse.json();
-        console.log(`[figma-projects] Team ${teamId} projects:`, {
-          projectsCount: teamProjectsData.projects?.length || 0,
-          projectNames: teamProjectsData.projects?.map((p: any) => p.name) || [],
+      for (const project of teamProjectsData.projects || []) {
+        projects.push({
+          id: project.id,
+          name: project.name,
+          teamId: teamId,
         });
-
-        for (const project of teamProjectsData.projects || []) {
-          projects.push({
-            id: project.id,
-            name: project.name,
-            teamId: teamId,
-          });
-        }
-      } else {
-        const errorText = await teamProjectsResponse.text();
-        console.error(`[figma-projects] Team ${teamId} error:`, {
-          status: teamProjectsResponse.status,
-          error: errorText,
-        });
-        if (teamProjectsResponse.status === 403) {
-          return NextResponse.json({
-            projects: [],
-            error: "Cannot access this team. Make sure you have permission and the team ID is correct.",
-          });
-        }
       }
-    } catch (err) {
-      console.error(`[figma-projects] Failed to fetch projects for team ${teamId}:`, err);
+
+      console.log(`[figma-projects] Total projects found: ${projects.length}`);
+      return NextResponse.json({ projects });
     }
 
-    console.log(`[figma-projects] Total projects found: ${projects.length}`);
+    // Handle Figma API errors
+    const errorText = await teamProjectsResponse.text();
+    console.error(`[figma-projects] Team ${teamId} error:`, {
+      status: teamProjectsResponse.status,
+      error: errorText,
+    });
 
-    return NextResponse.json({ projects });
+    if (teamProjectsResponse.status === 401) {
+      return NextResponse.json({
+        projects: [],
+        error: "Figma token is invalid or expired. Please reconnect Figma.",
+        needsReconnect: true,
+      });
+    }
+
+    if (teamProjectsResponse.status === 403) {
+      return NextResponse.json({
+        projects: [],
+        error: "Cannot access this team. Please reconnect Figma to grant the required permissions, or check that the team ID is correct.",
+        needsReconnect: true,
+      });
+    }
+
+    return NextResponse.json({
+      projects: [],
+      error: `Figma API error (${teamProjectsResponse.status}). Try reconnecting Figma.`,
+      needsReconnect: true,
+    });
   } catch (error) {
     console.error("[figma-projects] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
