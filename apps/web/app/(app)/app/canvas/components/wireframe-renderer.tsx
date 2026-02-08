@@ -133,6 +133,7 @@ export default function WireframeRenderer() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [wireframes, setWireframes] = useState<string[]>([]);
+  const [rawWireframes, setRawWireframes] = useState<string[]>([]);
   const [expandedSrc, setExpandedSrc] = useState<string | null>(null);
   const [specOpen, setSpecOpen] = useState(false);
   const [specText, setSpecText] = useState<string | null>(null);
@@ -181,6 +182,7 @@ export default function WireframeRenderer() {
     setLoading(true);
     setError(null);
     setWireframes([]);
+    setRawWireframes([]);
     setSpecText(null);
     setSpecOpen(false);
 
@@ -207,6 +209,7 @@ export default function WireframeRenderer() {
         return;
       }
       const imgs = json?.images || [];
+      setRawWireframes(imgs);
       const processed = await Promise.all(
         imgs.map(async (src) => {
           if (typeof src !== "string") return src;
@@ -245,6 +248,7 @@ export default function WireframeRenderer() {
               setSourceImageDataUrl(null);
               setSourceUrl("");
               setWireframes([]);
+              setRawWireframes([]);
               setSpecText(null);
               setSpecOpen(false);
               setError(null);
@@ -290,7 +294,7 @@ export default function WireframeRenderer() {
               >
                 <button
                   type="button"
-                  onClick={() => setExpandedSrc(src)}
+                  onClick={() => setExpandedSrc(rawWireframes[idx] || src)}
                   className="block flex-1 p-[10px]"
                   aria-label="Expand wireframe image"
                 >
@@ -310,7 +314,7 @@ export default function WireframeRenderer() {
                   type="button"
                   onClick={() => {
                     const link = document.createElement("a");
-                    link.href = src;
+                    link.href = rawWireframes[idx] || src;
                     link.download = `wireframe-${idx + 1}.png`;
                     document.body.appendChild(link);
                     link.click();
@@ -455,27 +459,44 @@ export default function WireframeRenderer() {
 
 
       {expandedSrc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true">
-          <div className="relative w-full max-w-[95vw] max-h-[95vh] rounded-2xl bg-white p-3 shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setExpandedSrc(null)}
-              className="absolute right-3 top-3 z-10 rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-red-700 transition-colors"
-              aria-label="Close"
-            >
-              ✕ Close
-            </button>
-            <div className="overflow-auto rounded-xl border border-slate-200 max-h-[calc(95vh-6rem)]">
-              <div className="relative min-h-[50vh] w-full">
-                <Image
-                  src={expandedSrc}
-                  alt="Expanded wireframe"
-                  fill
-                  sizes="95vw"
-                  unoptimized
-                  className="object-contain"
-                />
-              </div>
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => { if (e.target === e.currentTarget) setExpandedSrc(null); }}
+        >
+          <div className="relative my-4 w-full max-w-[95vw] rounded-2xl bg-white p-3 shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-end gap-2 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = expandedSrc;
+                  link.download = "wireframe-full.png";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="rounded-full bg-black px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-slate-800 transition-colors"
+              >
+                Download Full Size
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpandedSrc(null)}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-red-700 transition-colors"
+                aria-label="Close"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="overflow-auto rounded-xl border border-slate-200">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={expandedSrc}
+                alt="Expanded wireframe"
+                className="block w-full h-auto"
+              />
             </div>
           </div>
         </div>
