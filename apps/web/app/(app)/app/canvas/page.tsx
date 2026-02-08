@@ -2785,10 +2785,10 @@ export default function CanvasPage() {
                         </div>
                       )}
                       {images.length > 0 && (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3" style={{ margin: "10px" }}>
                           {images.map((src, idx) => (
-                            <div key={idx} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm">
-                              <Image src={src} alt={`Generated ${idx + 1}`} width={512} height={512} className="h-auto w-full rounded-md object-cover" />
+                            <div key={idx} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-2 shadow-sm w-full">
+                              <Image src={src} alt={`Generated ${idx + 1}`} width={1024} height={1024} className="w-full rounded-md" style={{ height: "auto", maxHeight: "none", objectFit: "contain" }} />
                               <button
                                 type="button"
                                 onClick={() => {
