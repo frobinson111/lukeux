@@ -47,6 +47,11 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
   const [selectedNode, setSelectedNode] = useState<FigmaNode | null>(null);
   const [resourceName, setResourceName] = useState("LukeUX Wireframe");
 
+  // Direct file URL fallback state
+  const [directFileUrl, setDirectFileUrl] = useState("");
+  const [directFileError, setDirectFileError] = useState<string | null>(null);
+  const directFileInputRef = useRef<HTMLInputElement>(null);
+
   // Export state
   const [exportError, setExportError] = useState<string | null>(null);
   const [needsReconnect, setNeedsReconnect] = useState(false);
@@ -116,6 +121,31 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
     if (/^\d+$/.test(trimmed)) return trimmed;
     const match = trimmed.match(/figma\.com\/files\/team\/(\d+)/i);
     return match ? match[1] : null;
+  }
+
+  function extractFileKeyFromUrl(input: string): { fileKey: string; fileName: string } | null {
+    const trimmed = input.trim();
+    // Match: figma.com/design/:fileKey/:fileName or figma.com/file/:fileKey/:fileName
+    const match = trimmed.match(/figma\.com\/(?:design|file)\/([A-Za-z0-9]+)(?:\/([^?/]*))?/i);
+    if (match) {
+      return { fileKey: match[1], fileName: match[2] ? decodeURIComponent(match[2]).replace(/-/g, " ") : match[1] };
+    }
+    // If it looks like just a file key (alphanumeric, 15+ chars)
+    if (/^[A-Za-z0-9]{10,}$/.test(trimmed)) {
+      return { fileKey: trimmed, fileName: trimmed };
+    }
+    return null;
+  }
+
+  async function handleDirectFileUrl() {
+    const result = extractFileKeyFromUrl(directFileUrl);
+    if (!result) {
+      setDirectFileError("Please paste a valid Figma file URL (e.g. figma.com/design/abc123/File-Name)");
+      return;
+    }
+    setDirectFileError(null);
+    const file: FigmaFile = { key: result.fileKey, name: result.fileName };
+    handleFileSelect(file);
   }
 
   async function handleSaveTeam() {
@@ -358,7 +388,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
               <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50 px-4 py-4 text-center text-xs text-amber-700">
                 {projectsError}
               </div>
-              {needsReconnect ? (
+              {needsReconnect && (
                 <button
                   type="button"
                   onClick={() => {
@@ -368,7 +398,33 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
                 >
                   Reconnect Figma
                 </button>
-              ) : (
+              )}
+              {/* Direct file URL fallback */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+                <div className="relative flex justify-center text-[10px]"><span className="bg-white px-2 text-slate-400 uppercase tracking-wider">or paste a file URL</span></div>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  ref={directFileInputRef}
+                  type="text"
+                  value={directFileUrl}
+                  onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
+                  placeholder="https://www.figma.com/design/abc123/File-Name"
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+                <button
+                  type="button"
+                  onClick={handleDirectFileUrl}
+                  disabled={!directFileUrl.trim()}
+                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                >
+                  Go
+                </button>
+              </div>
+              {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
+              {!needsReconnect && (
                 <button
                   type="button"
                   onClick={() => {
@@ -449,7 +505,7 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
           ) : (
             <div className="space-y-3">
               <div className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center text-xs text-slate-500">
-                No projects found. Link your Figma team to load projects.
+                No projects found. Link your Figma team to load projects, or paste a file URL directly.
               </div>
               <button
                 type="button"
@@ -461,6 +517,30 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
               >
                 Link Figma Team
               </button>
+              {/* Direct file URL fallback */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+                <div className="relative flex justify-center text-[10px]"><span className="bg-white px-2 text-slate-400 uppercase tracking-wider">or paste a file URL</span></div>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={directFileUrl}
+                  onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
+                  placeholder="https://www.figma.com/design/abc123/File-Name"
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+                <button
+                  type="button"
+                  onClick={handleDirectFileUrl}
+                  disabled={!directFileUrl.trim()}
+                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                >
+                  Go
+                </button>
+              </div>
+              {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
             </div>
           )}
         </div>

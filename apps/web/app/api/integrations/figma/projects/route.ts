@@ -85,6 +85,14 @@ export async function GET() {
       });
     }
 
+    if (teamProjectsResponse.status === 404) {
+      return NextResponse.json({
+        projects: [],
+        error: "Could not load projects. This usually means the Figma token is missing the projects:read permission. Please reconnect Figma to update permissions, or use a direct file URL instead.",
+        needsReconnect: true,
+      });
+    }
+
     return NextResponse.json({
       projects: [],
       error: `Figma API error (${teamProjectsResponse.status}). Try reconnecting Figma.`,
