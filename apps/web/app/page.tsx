@@ -427,7 +427,7 @@ function HomePageInner() {
               <Image src="/images/lukeux-logo.svg" alt="Luke UX" width={200} height={48} className="h-12 w-auto" priority />
             </div>
             <p className="max-w-xl text-lg leading-relaxed text-slate-800">
-              <b>Before work ships.</b> Luke UX makes your thinking clearer, your blind spots louder, and your standards impossible to ignore.
+              <strong>Luke UX is the guard dog for design quality.</strong> It catches bad assumptions, unclear flows, and production risks before work ships, making blind spots visible and standards impossible to ignore.
             </p>
             <div className="relative mt-8 flex justify-center">
               <div className="relative h-96 w-80">
@@ -440,9 +440,6 @@ function HomePageInner() {
                   priority
                 />
               </div>
-            </div>
-            <div className="mt-6">
-              <p className="text-lg text-slate-700 leading-relaxed"><strong>Luke is a guard dog for design quality.</strong> He protects UX designers from bad assumptions, unclear flows, and production issues.</p>
             </div>
             <TemplateTaskList />
           </div>
