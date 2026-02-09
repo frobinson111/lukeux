@@ -347,7 +347,10 @@ export default function AdminClient({
                     {pagedUsers.map((u) => (
                       <div key={u.id} className="grid grid-cols-7 items-center px-4 py-3 text-sm">
                         <div className="col-span-2">
-                          <div className="font-semibold text-slate-900">{u.email}</div>
+                          <div className="font-semibold text-slate-900">
+                            {u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email}
+                          </div>
+                          <div className="text-[11px] text-slate-500">{u.email}</div>
                           <div className="text-[11px] text-slate-500">
                             Stripe: {u.stripeCustomerId ? u.stripeCustomerId : "—"}
                           </div>
@@ -514,7 +517,10 @@ export default function AdminClient({
                   {pagedUsers.map((u) => (
                     <div key={u.id} className="grid grid-cols-9 items-center px-4 py-3 text-sm">
                       <div className="col-span-2">
-                        <div className="font-semibold text-slate-900">{u.email}</div>
+                        <div className="font-semibold text-slate-900">
+                          {u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : u.email}
+                        </div>
+                        <div className="text-[11px] text-slate-500">{u.email}</div>
                         <div className="text-[11px] text-slate-500">
                           Stripe: {u.stripeCustomerId ? u.stripeCustomerId : "—"}
                         </div>

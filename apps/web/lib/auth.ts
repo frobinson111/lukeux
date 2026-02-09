@@ -40,6 +40,14 @@ export async function getCurrentUser() {
     return null;
   }
 
+  // Update last login timestamp (fire-and-forget to avoid blocking the request)
+  prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() }
+  }).catch((err) => {
+    console.error("[auth] failed to update lastLoginAt", { userId: user.id, error: err });
+  });
+
   console.info("[auth] user authenticated", { userId: user.id, role: user.role, plan: user.plan });
   return user;
 }

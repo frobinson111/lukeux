@@ -7,6 +7,8 @@ import AdminClient from "./admin-client";
 
 export type UserRow = {
   id: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
   plan: string;
@@ -192,14 +194,15 @@ export default async function AdminPage() {
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
         plan: true,
         planStatus: true,
         generationLimit: true,
         stripeCustomerId: true,
-        // Uncomment after running migration: npx prisma db push
-        // lastLoginAt: true,
+        lastLoginAt: true,
         createdAt: true,
         deletedAt: true
       }
@@ -271,9 +274,6 @@ export default async function AdminPage() {
 
   const llmModelsData = llmModelsRaw as LlmModelRow[];
 
-  // Temporarily add null lastLoginAt until migration is run
-  const users = (usersRaw as any[]).map((u) => ({ ...u, lastLoginAt: null }));
-
   const secret = process.env.STRIPE_SECRET_KEY || "";
   const webhook = process.env.STRIPE_WEBHOOK_SECRET || "";
   const mode: PaymentConfigRow["mode"] = secret.startsWith("sk_live")
@@ -295,7 +295,7 @@ export default async function AdminPage() {
     else if (row.type === "IMAGE" || row.type === "VISUALIZATION") counts.image += row._count.id;
   }
 
-  const usersData = (users as any[]).filter((u) => !u.deletedAt).map((u) => {
+  const usersData = (usersRaw as any[]).filter((u) => !u.deletedAt).map((u) => {
     const counts = userCountsMap.get(u.id) || { initial: 0, followup: 0, image: 0 };
     return {
       ...u,
