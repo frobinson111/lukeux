@@ -1897,7 +1897,7 @@ export default function CanvasPage() {
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-200 px-5 py-3">
                 <div className="mb-2 text-sm font-semibold text-slate-900">
-                  {template ? (template.templateCategory?.name || template.category) : "Define Your UX Objective"}
+                  {template ? (template.templateCategory?.name || template.category) : "Choose Your UX Task"}
                 </div>
                 <SearchableCategoryDropdown
                   templateList={templateList}
