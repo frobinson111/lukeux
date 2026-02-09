@@ -882,26 +882,91 @@ function HomePageInner() {
                     <div className="space-y-2">
                       <h4 className="text-lg font-bold text-slate-900">Pro</h4>
                       <p className="text-sm text-slate-600">
-                        Unlimited use for designers doing serious work under real constraints.
+                        For designers doing serious work under real constraints
                       </p>
                       <div className="flex items-baseline gap-2 text-slate-900">
-                        <span className="text-4xl font-black">$48</span>
+                        <span className="text-4xl font-black">$49</span>
                         <span className="text-sm font-semibold text-slate-700">/ month</span>
                       </div>
                     </div>
-                    <div className="mt-4 space-y-2 text-sm text-slate-800">
-                      {[
-                        "Unlimited task responses",
-                        "No daily caps or total limits",
-                        "Same high-signal critique, without restriction",
-                        "Built for deep, continuous design work",
-                        "Best for daily use, client work, and shipping with confidence."
-                      ].map((item) => (
-                        <div key={item} className="flex items-start gap-2">
-                          <span className="mt-[2px] text-emerald-600">✓</span>
-                          <span>{item}</span>
+
+                    <div className="mt-5 space-y-5 text-sm text-slate-800">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-700">What you get</p>
+                        <div className="mt-2 space-y-3">
+                          {[
+                            {
+                              title: "Unlimited UX Tasks",
+                              body: "Run unlimited task-based UX evaluations with no daily caps or throttling."
+                            },
+                            {
+                              title: "Full Structured Analysis Engine",
+                              body: "Same high-signal critique used across all tiers. No watered-down logic."
+                            },
+                            {
+                              title: "Insight Card™ Visualize Access (Individual Mode)",
+                              body: "Turn key findings into clear, single-artifact visuals for faster personal understanding."
+                            },
+                            {
+                              title: "Saved Outputs & Decision History",
+                              body: "All analysis is retained so your thinking compounds instead of disappearing."
+                            },
+                            {
+                              title: "Model Intelligence Selector",
+                              body: "Choose the best reasoning model for the type of UX problem you’re solving."
+                            },
+                            {
+                              title: "Built for Real Work",
+                              body: "Designed for continuous use across client projects, product cycles, and daily design decisions."
+                            }
+                          ].map((item) => (
+                            <div key={item.title} className="flex items-start gap-2">
+                              <span className="mt-[2px] text-emerald-600">✓</span>
+                              <div className="space-y-0.5">
+                                <div className="font-semibold text-slate-900">{item.title}</div>
+                                <div className="text-slate-700">{item.body}</div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-700">What’s intentionally not included</p>
+                        <div className="mt-2 space-y-1 text-slate-700">
+                          {[
+                            "Team sharing & collaboration",
+                            "Exportable visual assets (PNG / PDF)",
+                            "Risk Map™, Decision Frame™, Readiness Snapshot™",
+                            "Cross-project or historical Visualize views"
+                          ].map((item) => (
+                            <div key={item} className="flex items-start gap-2">
+                              <span className="mt-[2px] text-slate-500">–</span>
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 text-sm text-slate-700">
+                          Those unlock at the Team tier, where alignment and communication matter.
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Best for</p>
+                        <div className="mt-2 space-y-1 text-slate-700">
+                          {[
+                            "Senior UX Designers",
+                            "Product Designers",
+                            "Consultants working solo",
+                            "Designers who ship frequently and need defensible decisions"
+                          ].map((item) => (
+                            <div key={item} className="flex items-start gap-2">
+                              <span className="mt-[2px] text-slate-500">•</span>
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
