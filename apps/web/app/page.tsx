@@ -843,38 +843,57 @@ function HomePageInner() {
               </div>
             ) : activePanel === "pricing" ? (
               <div className="mt-6 space-y-6">
-                <div className="space-y-2 text-center">
+                <div className="space-y-2 text-left">
                   <h3 className="text-3xl font-black text-slate-900">Two plans. One real difference.</h3>
                   <p className="text-sm text-slate-600">
                     Same standards. Same intelligence. The only thing that changes is how much you can use it.
                   </p>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-4">
                   <div className="rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm">
                     <div className="space-y-2">
                       <h4 className="text-lg font-bold text-slate-900">Free</h4>
                       <p className="text-sm text-slate-600">
-                        A limited way to experience Luke UX and understand how it sharpens your thinking.
+                        A focused introduction to how Luke UX sharpens your thinking
                       </p>
                       <div className="flex items-baseline gap-2 text-slate-900">
                         <span className="text-4xl font-black">$0</span>
-                        <span className="text-sm font-semibold text-slate-700">forever</span>
                       </div>
                     </div>
-                    <div className="mt-4 space-y-2 text-sm text-slate-800">
-                      {[
-                        "2 task responses per day",
-                        "10 total task responses maximum",
-                        "Full critique quality and reasoning",
-                        "Accessibility-first analysis included",
-                        "Best for evaluating the workflow and depth before committing."
-                      ].map((item) => (
-                        <div key={item} className="flex items-start gap-2">
-                          <span className="mt-[2px] text-emerald-600">✓</span>
-                          <span>{item}</span>
+
+                    <div className="mt-5 space-y-5 text-sm text-slate-800">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wide text-slate-700">What you get</p>
+                        <div className="mt-2 space-y-3">
+                          {[
+                            {
+                              title: "Access to Luke UX’s core analysis engine",
+                              body: "Experience the same high-signal UX critique used across all plans."
+                            },
+                            {
+                              title: "2 UX task responses per day",
+                              body: "Enough to explore real scenarios without enabling full workflows."
+                            },
+                            {
+                              title: "10 total task responses (lifetime)",
+                              body: "Designed for evaluation, not ongoing use."
+                            },
+                            {
+                              title: "Structured, decision-focused outputs",
+                              body: "Clear findings, risks, and recommendations grounded in UX fundamentals."
+                            }
+                          ].map((item) => (
+                            <div key={item.title} className="flex items-start gap-2">
+                              <span className="mt-[2px] text-emerald-600">✓</span>
+                              <div className="space-y-0.5">
+                                <div className="font-semibold text-slate-900">{item.title}</div>
+                                <div className="text-slate-700">{item.body}</div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
 
@@ -971,7 +990,7 @@ function HomePageInner() {
                   </div>
                 </div>
 
-                <div className="text-center text-sm text-slate-700">
+                <div className="text-left text-sm text-slate-700">
                   <span className="font-semibold">Only difference:</span> Free has limits. Pro removes them. Everything else stays uncompromised.
                 </div>
               </div>
