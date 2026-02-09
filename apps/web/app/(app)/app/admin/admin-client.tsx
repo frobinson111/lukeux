@@ -25,10 +25,11 @@ import FeedbackAdmin from "./feedback-client";
 import RecommendationFeedbackAdmin, { type RecommendationFeedbackRow, type TemplateStat, type FeedbackSummary } from "./recommendation-feedback-client";
 import { PromoSignupsClient } from "./promo-signups-client";
 import EmailSmtpAdmin from "./email-smtp-client";
+import PlaybookAdmin from "./playbook-client";
 import { exportToCSV } from "./export-utils";
 import type { SmtpConfigRow } from "./page";
 
-const TABS = ["overview", "users", "limits", "templates", "keys", "payments", "feedback", "rec-feedback", "promo", "usage", "events", "email"] as const;
+const TABS = ["overview", "users", "limits", "templates", "playbook", "keys", "payments", "feedback", "rec-feedback", "promo", "usage", "events", "email"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminClient({
@@ -215,6 +216,7 @@ export default function AdminClient({
     { id: "users", label: "Users & Usage" },
     { id: "limits", label: "Plan Limits" },
     { id: "templates", label: "UX Objectives" },
+    { id: "playbook", label: "Playbook" },
     { id: "keys", label: "LLM Models" },
     { id: "payments", label: "Payment Gateways" },
     { id: "feedback", label: "Feedback & Enquirer" },
@@ -572,6 +574,18 @@ export default function AdminClient({
                 <h2 className="text-lg font-semibold text-slate-900">UX Objective</h2>
               </div>
               <TemplatesAdmin initialTemplates={templates} llmModels={llmModels} categories={categories} />
+            </section>
+          )}
+          {tab === "playbook" && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📖</span>
+                <h2 className="text-lg font-semibold text-slate-900">Playbook</h2>
+              </div>
+              <p className="text-sm text-slate-600">
+                Manage playbook items shown on the homepage. Each item can include an audio overview, how-to video, and/or downloadable guide.
+              </p>
+              <PlaybookAdmin />
             </section>
           )}
           {tab === "payments" && (

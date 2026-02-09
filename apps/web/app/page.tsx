@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { EyeIcon, EyeOffIcon } from "./components/icons";
 import TemplateTaskList from "./components/template-task-list";
+import PlaybookScroller from "./components/playbook-scroller";
 
 const brand = {
   blue: "#0c3c80",
@@ -441,6 +442,7 @@ function HomePageInner() {
                 />
               </div>
             </div>
+            <PlaybookScroller />
             <TemplateTaskList />
           </div>
           <div className="hidden w-full flex-wrap items-center justify-between gap-4 text-xs text-slate-600 lg:flex mt-[50px]">

@@ -423,6 +423,30 @@ model VisualizationArtifact {
   @@index([status])
 }
 
+model PlaybookItem {
+  id              String   @id @default(cuid())
+  title           String
+  audioUrl        String?  // URL or file path for audio overview
+  videoUrl        String?  // YouTube link or direct video URL
+  documentUrl     String?  // URL for downloadable document
+  showAudio       Boolean  @default(false)
+  showVideo       Boolean  @default(false)
+  showDocument    Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model PlaybookConfig {
+  id              String   @id @default(cuid())
+  visibleCount    Int      @default(3) // How many items visible before scrolling
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model LlmModel {
   id          String   @id @default(cuid())
   modelId     String   @unique
