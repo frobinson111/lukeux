@@ -92,7 +92,7 @@ export default function PlaybookScroller() {
         </div>
 
         {/* Table rows */}
-        <div className="overflow-hidden rounded-[16px] border-[2px] border-black shadow-[0_4px_0_#0a0a0a]">
+        <div className="overflow-hidden rounded-[16px] border-2 border-slate-200 shadow-[0_6px_0_#eaebf1]">
           {displayedItems.map((item, index) => {
             const hasAudio = item.showAudio && item.audioUrl;
             const hasVideo = item.showVideo && item.videoUrl;
