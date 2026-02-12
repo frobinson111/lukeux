@@ -3,7 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Luke UX | AI-Augmented UX Design Copilot",
+  title: "Luke UX | Decision-Ready UX Analysis",
   description:
     "Desktop-first UX design copilot with structured prompts, LLM selection, and admin-controlled models.",
   icons: {

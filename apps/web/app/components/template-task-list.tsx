@@ -53,7 +53,10 @@ export default function TemplateTaskList() {
 
   return (
     <div className="mt-6 mb-8 space-y-3">
-      <h3 className="text-[20px] font-bold tracking-wide text-black">What Luke UX can help you do</h3>
+      <div className="space-y-1">
+        <h3 className="text-[20px] font-bold tracking-wide text-black">What Luke UX Enables</h3>
+        <p className="text-sm text-slate-600">Reduced risk before work ships.</p>
+      </div>
       
       {error && (
         <div className="py-6 text-center text-sm text-slate-600">{error}</div>
