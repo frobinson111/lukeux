@@ -421,8 +421,8 @@ function HomePageInner() {
   return (
     <>
     <div className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 lg:grid-cols-2">
-        <div className="relative flex flex-col justify-between bg-white px-8 py-10 lg:px-14" ref={columnRef}>
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+        <div className="relative flex flex-col justify-between bg-white px-8 py-10 lg:px-14 mx-auto max-w-3xl w-full" ref={columnRef}>
           <div className="space-y-6">
             <div className="flex items-center" ref={logoRef}>
               <Image src="/images/lukeux-logo.svg" alt="Luke UX" width={200} height={48} className="h-12 w-auto" priority />
