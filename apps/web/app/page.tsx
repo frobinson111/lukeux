@@ -433,11 +433,11 @@ function HomePageInner() {
             <div className="relative mt-8 flex justify-center">
               <div className="relative h-96 w-80">
                 <Image
-                  src="/images/luke-main.png"
+                  src="/images/luke-standing-hero-1.jpg"
                   alt="Luke UX superhero dog illustration"
                   fill
                   sizes="320px"
-                  className="object-contain drop-shadow-lg"
+                  className="object-contain"
                   priority
                 />
               </div>
