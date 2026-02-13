@@ -47,9 +47,17 @@ export async function POST(req: Request) {
     }
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  // Check env first, then fall back to DB-stored key (same pattern as provider-registry)
+  let apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "Visualization not configured" }, { status: 500 });
+    const dbKey = await prisma.apiKey.findFirst({
+      where: { provider: "openai", isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+    apiKey = dbKey?.key ?? undefined;
+  }
+  if (!apiKey) {
+    return NextResponse.json({ error: "Visualization not configured. Add an OpenAI API key in Admin → API Keys." }, { status: 500 });
   }
 
   const client = new OpenAI({ apiKey });

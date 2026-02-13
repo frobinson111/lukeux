@@ -13,6 +13,7 @@ import SearchableCategoryDropdown from "./components/searchable-category-dropdow
 import FigmaConnectInline from "./components/figma-connect-inline";
 import HistoryItem from "./components/history-item";
 import WireframeRenderer from "./components/wireframe-renderer";
+import BlueprintRenderer, { containsBlueprint } from "./components/blueprint-renderer";
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
@@ -688,6 +689,7 @@ export default function CanvasPage() {
   const [urlFetching, setUrlFetching] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
   const [imageSectionOpen, setImageSectionOpen] = useState(false);
+  const [blueprintVisualizeIdx, setBlueprintVisualizeIdx] = useState<number | null>(null);
   const [inlineWarnings, setInlineWarnings] = useState<string[]>([]);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<number | null>(null);
@@ -2305,9 +2307,9 @@ export default function CanvasPage() {
                   </div>
                 )}
 
-                {/* Run button (always visible when template selected) */}
+                {/* Run buttons */}
                 <div className="rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm">
-                  <div className="flex flex-col items-center gap-4">
+                  <div className="flex flex-col items-center gap-3">
                     <button
                       type="button"
                       onClick={handleGenerate}
@@ -2742,40 +2744,60 @@ export default function CanvasPage() {
                     <div className="space-y-4">
                       {lastResponse && (
                         <div ref={responseRef} className="ai-response max-w-none">
-                          <StructuredAnalysisOutput
-                            response={lastResponse}
-                            recommendation={lastRecommendation}
-                            selectedIndex={selectedRecommendation}
-                            allowMockupGeneration={mockupGenerationAllowed}
-                            onSelectRecommendation={(idx, title, content) => {
-                              // If visualization is disabled for this template, do not allow selecting
-                              // recommendations for visualization or auto-opening that UI.
-                              if (!mockupGenerationAllowed) {
-                                setSelectedRecommendation(null);
-                                setImagePrompt("");
-                                return;
-                              }
+                          {containsBlueprint(lastResponse) ? (
+                            <BlueprintRenderer
+                              response={lastResponse}
+                              selectedIndex={blueprintVisualizeIdx}
+                              allowVisualize={mockupGenerationAllowed}
+                              onSelectConcept={(idx, name, description) => {
+                                setBlueprintVisualizeIdx(idx);
+                                if (idx !== null && mockupGenerationAllowed) {
+                                  setImagePrompt(`Visualize: ${name}. ${description}`);
+                                  setImageSectionOpen(true);
+                                  setTimeout(() => {
+                                    mockupSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                  }, 100);
+                                } else {
+                                  setImagePrompt("");
+                                }
+                              }}
+                            />
+                          ) : (
+                            <StructuredAnalysisOutput
+                              response={lastResponse}
+                              recommendation={lastRecommendation}
+                              selectedIndex={selectedRecommendation}
+                              allowMockupGeneration={mockupGenerationAllowed}
+                              onSelectRecommendation={(idx, title, content) => {
+                                // If visualization is disabled for this template, do not allow selecting
+                                // recommendations for visualization or auto-opening that UI.
+                                if (!mockupGenerationAllowed) {
+                                  setSelectedRecommendation(null);
+                                  setImagePrompt("");
+                                  return;
+                                }
 
-                              setSelectedRecommendation(idx);
-                              if (idx !== null) {
-                                // Auto-populate the image prompt with the recommendation
-                                setImagePrompt(`Visualize: ${title}. ${content.replace(/\*\*/g, '').substring(0, 200)}`);
-                                // Auto-expand the visualization section
-                                setImageSectionOpen(true);
-                                // Scroll to visualization section after a brief delay to allow expansion
-                                setTimeout(() => {
-                                  mockupSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }, 100);
-                              } else {
-                                setImagePrompt('');
-                              }
-                            }}
-                            historyEntryId={currentHistoryEntryId}
-                            templateId={template?.id || null}
-                            templateTitle={template?.title || null}
-                            feedbacks={recommendationFeedbacks}
-                            onFeedbackChange={handleRecommendationFeedback}
-                          />
+                                setSelectedRecommendation(idx);
+                                if (idx !== null) {
+                                  // Auto-populate the image prompt with the recommendation
+                                  setImagePrompt(`Visualize: ${title}. ${content.replace(/\*\*/g, '').substring(0, 200)}`);
+                                  // Auto-expand the visualization section
+                                  setImageSectionOpen(true);
+                                  // Scroll to visualization section after a brief delay to allow expansion
+                                  setTimeout(() => {
+                                    mockupSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }, 100);
+                                } else {
+                                  setImagePrompt('');
+                                }
+                              }}
+                              historyEntryId={currentHistoryEntryId}
+                              templateId={template?.id || null}
+                              templateTitle={template?.title || null}
+                              feedbacks={recommendationFeedbacks}
+                              onFeedbackChange={handleRecommendationFeedback}
+                            />
+                          )}
                         </div>
                       )}
 
@@ -3220,6 +3242,7 @@ export default function CanvasPage() {
           // Modal will close automatically after success message
         }}
       />
+
     </div>
   );
 }
