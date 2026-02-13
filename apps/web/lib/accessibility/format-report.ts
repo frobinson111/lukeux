@@ -59,9 +59,22 @@ function formatSection1_FindingsSummary(report: AccessibilityReport): string {
         ? 'Only moderate or minor issues found. Manual review recommended.'
         : 'Critical or serious accessibility barriers detected. Immediate action required.';
 
+  // Format URLs list prominently
+  const urlsList = urls.map((url, idx) => {
+    const isFailed = failedScans.includes(url);
+    const status = isFailed ? '❌ Failed' : '✅ Scanned';
+    return `${idx + 1}. ${url} — ${status}`;
+  }).join('\n');
+
   return `### Concept 1 — Findings Summary
 
 **A) Concept Summary**
+
+**🔍 URLs Being Analyzed:**
+
+${urlsList}
+
+---
 
 ${statusEmoji} **Overall Status: ${overallStatus}**
 
