@@ -509,8 +509,8 @@ function HomePageInner() {
                 <GuardDogAccordions />
               </div>
             </div>
-            <PlaybookScroller />
             <TemplateTaskList />
+            <PlaybookScroller />
           </div>
           <div className="hidden w-full flex-wrap items-center justify-between gap-4 text-xs text-slate-600 lg:flex mt-[50px]">
             {[
