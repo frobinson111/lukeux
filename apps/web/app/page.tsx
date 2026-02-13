@@ -35,6 +35,62 @@ const initialState: FormState = {
 
 type PanelKey = "about" | "features" | "pricing" | "faq" | "contact" | "terms" | "privacy";
 
+function GuardDogAccordions() {
+  const [openAccordion, setOpenAccordion] = useState<number | null>(null);
+
+  const accordions = [
+    {
+      title: "Guard Dog + Structured Output",
+      content: "Luke UX protects design quality.\nHe catches bad assumptions, unclear flows, reporting blind spots, and production risks before work ships — then turns them into structured, stakeholder-ready insights you can defend."
+    },
+    {
+      title: "Guard Dog + Time Savings",
+      content: "Luke UX protects design quality.\nHe hunts down bad assumptions, spreadsheet chaos, unclear flows, and production risks — replacing manual reporting with structured analysis before work ships."
+    },
+    {
+      title: "Guard Dog + Compliance Awareness",
+      content: "Luke UX protects design quality.\nHe exposes hidden assumptions, accessibility gaps, unclear flows, and production risks before they reach stakeholders — making blind spots visible and standards impossible to ignore."
+    },
+    {
+      title: "Guard Dog, But Grown Up",
+      content: "Luke UX guards serious design.\nHe catches bad assumptions, unclear flows, compliance gaps, and production risks early — transforming them into structured, defensible outputs before work ships."
+    }
+  ];
+
+  return (
+    <div className="space-y-3">
+      {accordions.map((accordion, idx) => {
+        const isOpen = openAccordion === idx;
+        const lines = accordion.content.split('\n');
+        const firstLine = lines[0];
+        const restOfContent = lines.slice(1).join('\n');
+        
+        return (
+          <div key={idx} className="rounded-[16px] border-2 border-slate-200 bg-white p-4 shadow-[0_6px_0_#eaebf1] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setOpenAccordion(isOpen ? null : idx)}
+              aria-expanded={isOpen}
+              aria-controls={`accordion-${idx}`}
+              className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-900 hover:opacity-70 transition-opacity"
+            >
+              <span className="pr-2">{accordion.title}</span>
+              <span className="text-slate-500 text-lg flex-shrink-0">{isOpen ? "−" : "+"}</span>
+            </button>
+            {isOpen && (
+              <div id={`accordion-${idx}`} className="mt-3 text-sm text-slate-700 leading-relaxed">
+                <strong>{firstLine}</strong>
+                <br />
+                {restOfContent}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function HomePageInner() {
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
@@ -427,11 +483,11 @@ function HomePageInner() {
             <div className="flex items-center" ref={logoRef}>
               <Image src="/images/lukeux-logo.svg" alt="Luke UX" width={200} height={48} className="h-12 w-auto" priority />
             </div>
-            <p className="max-w-xl text-lg leading-relaxed text-slate-800">
+            <p className="text-lg leading-relaxed text-slate-800">
               <strong>Luke UX is the guard dog for design quality.</strong> He catches bad assumptions, unclear flows, and production risks before work ships, making blind spots visible and standards impossible to ignore.
             </p>
-            <div className="relative mt-8 flex justify-center">
-              <div className="relative h-96 w-80">
+            <div className="relative mt-8 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
+              <div className="relative h-96 w-80 mx-auto lg:mx-0">
                 <Image
                   src="/images/luke-standing-hero-1.jpg"
                   alt="Luke UX superhero dog illustration"
@@ -440,6 +496,17 @@ function HomePageInner() {
                   className="object-contain"
                   priority
                 />
+              </div>
+              <div className="space-y-4">
+                <div className="mb-4">
+                  <h3 className="text-[20px] font-bold tracking-wide text-black">
+                    Detection to Decision
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-0.5">
+                    Turning blind spots into action.
+                  </p>
+                </div>
+                <GuardDogAccordions />
               </div>
             </div>
             <PlaybookScroller />
