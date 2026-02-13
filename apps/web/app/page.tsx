@@ -736,35 +736,41 @@ function HomePageInner() {
       </div>
     </div>
     {panelContent && (
-      <div
-        className="fixed bottom-0 z-30"
-        style={{ left: panelLeft, right: panelRight, maxHeight: panelMaxHeight }}
-      >
+      <>
         <div
-          className="w-full rounded-[18px] border border-slate-200 bg-white shadow-2xl"
-          style={{
-            maxHeight: panelMaxHeight,
-            minHeight: "820px",
-            overflow: "hidden",
-            transform: "translateY(0)",
-            transition: "transform 200ms ease-in-out"
-          }}
-          role="dialog"
-          aria-modal="true"
-          aria-label={panelContent?.title}
+          className="fixed inset-0 bg-black/20 z-20"
+          onClick={closePanel}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed bottom-0 z-30"
+          style={{ left: panelLeft, right: panelRight, maxHeight: panelMaxHeight }}
         >
           <div
-            className="relative px-6 py-5"
-            style={{ maxHeight: panelMaxHeight, overflowY: "auto", paddingTop: 16, paddingBottom: 16 }}
+            className="w-full rounded-[18px] border border-slate-200 bg-white shadow-2xl relative"
+            style={{
+              maxHeight: panelMaxHeight,
+              minHeight: "820px",
+              overflow: "hidden",
+              transform: "translateY(0)",
+              transition: "transform 200ms ease-in-out"
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={panelContent?.title}
           >
-            <button
-              type="button"
-              onClick={closePanel}
-              className="absolute right-4 top-4 text-lg font-bold text-slate-700 hover:text-slate-900"
-              aria-label="Close panel"
-            >
-              ×
-            </button>
+          <button
+            type="button"
+            onClick={closePanel}
+            className="absolute right-4 top-4 z-20 text-lg font-bold text-slate-700 hover:text-slate-900 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border border-slate-200"
+            aria-label="Close panel"
+          >
+            ×
+          </button>
+          <div
+            className="relative px-6 py-5"
+            style={{ maxHeight: panelMaxHeight, overflowY: "auto", paddingTop: 16, paddingBottom: 16, paddingRight: "3.5rem" }}
+          >
             <h2 className="text-xl font-black text-slate-900">{panelContent?.title}</h2>
 
             {activePanel === "faq" ? (
@@ -1121,9 +1127,10 @@ function HomePageInner() {
                 )}
               </>
             )}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     )}
     </>
   );
