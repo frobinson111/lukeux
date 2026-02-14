@@ -29,6 +29,7 @@ export default function FigmaFilesTree({ onFileSelect, compact = false }: Props)
   const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [needsReconnect, setNeedsReconnect] = useState(false);
+  const [scopeLimited, setScopeLimited] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -73,6 +74,11 @@ export default function FigmaFilesTree({ onFileSelect, compact = false }: Props)
       if (data.needsReconnect) {
         setNeedsReconnect(true);
         setError(data.error || "Figma session expired.");
+        return;
+      }
+      if (data.scopeLimited) {
+        setScopeLimited(true);
+        setError(data.error || "Project browsing is not available yet.");
         return;
       }
       if (data.error) {
@@ -138,7 +144,7 @@ export default function FigmaFilesTree({ onFileSelect, compact = false }: Props)
   if (error) {
     return (
       <div className={compact ? "px-4 py-3 text-center" : "rounded-lg border border-slate-200 bg-white p-4"}>
-        <div className="text-sm text-rose-600">{error}</div>
+        <div className={scopeLimited ? "text-sm text-slate-500" : "text-sm text-rose-600"}>{error}</div>
         {needsReconnect && (
           <button
             type="button"
