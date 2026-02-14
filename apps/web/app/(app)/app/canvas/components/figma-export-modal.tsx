@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import FigmaFilesTree from "./figma-files-tree";
 
 type FigmaStatus = {
   connected: boolean;
@@ -16,14 +17,15 @@ type FigmaNode = { id: string; name: string; type: string; depth: number };
 type Props = {
   imageDataUrl: string;
   onClose: () => void;
+  initialStatus?: FigmaStatus | null;
 };
 
 type Step = "connect" | "pick-file" | "pick-node" | "exporting" | "done" | "error";
 
-export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
-  const [step, setStep] = useState<Step>("connect");
-  const [status, setStatus] = useState<FigmaStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function FigmaExportModal({ imageDataUrl, onClose, initialStatus }: Props) {
+  const [step, setStep] = useState<Step>(initialStatus?.connected ? "pick-file" : "connect");
+  const [status, setStatus] = useState<FigmaStatus | null>(initialStatus || null);
+  const [loading, setLoading] = useState(!initialStatus);
 
   // File picker state
   const [selectedFile, setSelectedFile] = useState<FigmaFile | null>(null);
@@ -39,11 +41,18 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
   const [selectedNode, setSelectedNode] = useState<FigmaNode | null>(null);
   const [resourceName, setResourceName] = useState("LukeUX Wireframe");
 
+  // File pick mode: browse project tree vs paste URL
+  const [filePickMode, setFilePickMode] = useState<"tree" | "url">(
+    initialStatus?.hasTeamId ? "tree" : "url"
+  );
+
   // Export state
   const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchStatus();
+    if (!initialStatus) {
+      fetchStatus();
+    }
   }, []);
 
   async function fetchStatus() {
@@ -213,45 +222,102 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
       {step === "pick-file" && (
         <div className="px-5 py-4 space-y-3">
           <div>
-            <p className="text-xs font-semibold text-slate-700">1. Paste a Figma file URL</p>
+            <p className="text-xs font-semibold text-slate-700">1. Select a Figma file</p>
             <p className="text-[11px] text-slate-500 mt-0.5">
               Connected as{" "}
               <span className="font-medium text-slate-700">
                 @{status?.handle || status?.email || "unknown"}
               </span>
-              . Paste the URL of the Figma file where you want to attach the wireframe.
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-            <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>
-              Open your file in Figma, then copy the URL from your browser address bar.
-            </span>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              ref={directFileInputRef}
-              type="text"
-              value={directFileUrl}
-              onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
-              onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
-              placeholder="https://www.figma.com/design/abc123/File-Name"
-              className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-            />
+          {/* Mode toggle tabs */}
+          <div className="flex border-b border-slate-200">
             <button
               type="button"
-              onClick={handleDirectFileUrl}
-              disabled={!directFileUrl.trim()}
-              className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+              onClick={() => setFilePickMode("tree")}
+              className={`px-3 py-1.5 text-xs font-semibold border-b-2 transition ${
+                filePickMode === "tree"
+                  ? "border-black text-black"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
             >
-              Next
+              Browse Projects
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilePickMode("url")}
+              className={`px-3 py-1.5 text-xs font-semibold border-b-2 transition ${
+                filePickMode === "url"
+                  ? "border-black text-black"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Paste URL
             </button>
           </div>
-          {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
+
+          {/* Tree mode */}
+          {filePickMode === "tree" && (
+            status?.hasTeamId ? (
+              <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200">
+                <FigmaFilesTree
+                  compact
+                  onFileSelect={(fileUrl) => {
+                    const result = extractFileKeyFromUrl(fileUrl);
+                    if (result) {
+                      handleFileSelect({ key: result.fileKey, name: result.fileName });
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-xs text-slate-500">No Figma team configured. Use a direct URL instead.</p>
+                <button
+                  type="button"
+                  onClick={() => setFilePickMode("url")}
+                  className="mt-2 text-xs font-semibold text-black underline"
+                >
+                  Switch to URL input
+                </button>
+              </div>
+            )
+          )}
+
+          {/* URL mode */}
+          {filePickMode === "url" && (
+            <>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>
+                  Open your file in Figma, copy the URL from the browser address bar.
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  ref={directFileInputRef}
+                  type="text"
+                  value={directFileUrl}
+                  onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
+                  placeholder="https://www.figma.com/design/abc123/File-Name"
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+                <button
+                  type="button"
+                  onClick={handleDirectFileUrl}
+                  disabled={!directFileUrl.trim()}
+                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+              {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
+            </>
+          )}
         </div>
       )}
 
@@ -348,14 +414,14 @@ export default function FigmaExportModal({ imageDataUrl, onClose }: Props) {
         <div className="px-5 py-8 text-center space-y-4">
           <div className="text-3xl">{"\u2705"}</div>
           <div>
-            <p className="text-sm font-bold text-slate-900">Exported to Figma!</p>
+            <p className="text-sm font-bold text-slate-900">Linked to Figma!</p>
             <p className="mt-1 text-xs text-slate-600">
-              The wireframe has been attached as a Dev Resource to{" "}
+              The wireframe has been linked as a Dev Resource to{" "}
               <span className="font-medium">{selectedNode?.name}</span> in{" "}
               <span className="font-medium">{selectedFile?.name}</span>.
             </p>
             <p className="mt-2 text-[11px] text-slate-500">
-              Open the file in Figma Dev Mode to see it in the Dev Resources panel.
+              Open the file in Figma and switch to Dev Mode to view it in the Dev Resources panel for the selected frame.
             </p>
           </div>
           <div className="flex justify-center gap-2">

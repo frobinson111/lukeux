@@ -18,15 +18,17 @@ type FigmaProject = {
 
 type Props = {
   onFileSelect?: (fileUrl: string) => void;
+  compact?: boolean;
 };
 
-export default function FigmaFilesTree({ onFileSelect }: Props) {
+export default function FigmaFilesTree({ onFileSelect, compact = false }: Props) {
   const [projects, setProjects] = useState<FigmaProject[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [projectFiles, setProjectFiles] = useState<Record<string, FigmaFile[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -66,6 +68,11 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
       if (data.needsTeamId) {
         // Team ID not configured yet — FigmaConnectInline handles this state
         setProjects([]);
+        return;
+      }
+      if (data.needsReconnect) {
+        setNeedsReconnect(true);
+        setError(data.error || "Figma session expired.");
         return;
       }
       if (data.error) {
@@ -122,7 +129,7 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className={compact ? "py-3 text-center" : "rounded-lg border border-slate-200 bg-white p-4"}>
         <div className="text-sm text-slate-500">Loading Figma projects...</div>
       </div>
     );
@@ -130,8 +137,17 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <div className="text-sm text-rose-600">Error: {error}</div>
+      <div className={compact ? "px-4 py-3 text-center" : "rounded-lg border border-slate-200 bg-white p-4"}>
+        <div className="text-sm text-rose-600">{error}</div>
+        {needsReconnect && (
+          <button
+            type="button"
+            onClick={() => { window.location.href = "/api/integrations/figma/connect"; }}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+          >
+            Reconnect Figma
+          </button>
+        )}
       </div>
     );
   }
@@ -141,12 +157,14 @@ export default function FigmaFilesTree({ onFileSelect }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-4 py-3">
-        <h3 className="text-sm font-semibold text-slate-700">Your Figma Files</h3>
-        <p className="text-xs text-slate-500 mt-0.5">Click a project to see files, then click a file to analyze</p>
-      </div>
-      <div className="max-h-96 overflow-y-auto">
+    <div className={compact ? "" : "rounded-lg border border-slate-200 bg-white"}>
+      {!compact && (
+        <div className="border-b border-slate-200 px-4 py-3">
+          <h3 className="text-sm font-semibold text-slate-700">Your Figma Files</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Click a project to see files, then click a file to analyze</p>
+        </div>
+      )}
+      <div className={compact ? "max-h-64 overflow-y-auto" : "max-h-96 overflow-y-auto"}>
         {projects.map((project) => {
           const isExpanded = expandedProjects.has(project.id);
           const files = projectFiles[project.id] || [];

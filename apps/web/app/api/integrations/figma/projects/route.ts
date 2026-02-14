@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { requireUser } from "../../../../../lib/auth";
 import { prisma } from "../../../../../lib/prisma";
-import { decryptToken } from "../../../../../lib/figma";
+import { decryptToken, encryptToken, refreshFigmaToken } from "../../../../../lib/figma";
 
 export async function GET() {
   const user = await requireUser();
@@ -24,7 +24,52 @@ export async function GET() {
       return NextResponse.json({ projects: [], needsTeamId: true });
     }
 
-    const accessToken = decryptToken(connection.accessToken);
+    // Decrypt access token — if decryption fails, try refreshing with the refresh token
+    let accessToken: string;
+    try {
+      accessToken = decryptToken(connection.accessToken);
+    } catch (decryptErr) {
+      console.warn("[figma-projects] Failed to decrypt access token, attempting refresh...", decryptErr);
+
+      // Try to refresh with the refresh token
+      if (connection.refreshToken) {
+        try {
+          const refreshedRefreshToken = decryptToken(connection.refreshToken);
+          const tokenData = await refreshFigmaToken(refreshedRefreshToken);
+          accessToken = tokenData.access_token;
+
+          // Update stored tokens
+          const updateData: Record<string, any> = {
+            accessToken: encryptToken(tokenData.access_token),
+          };
+          if (tokenData.refresh_token) {
+            updateData.refreshToken = encryptToken(tokenData.refresh_token);
+          }
+          if (tokenData.expires_in) {
+            updateData.expiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
+          }
+          await prisma.figmaConnection.update({
+            where: { userId: user.id },
+            data: updateData,
+          });
+          console.log("[figma-projects] Token refreshed successfully");
+        } catch (refreshErr) {
+          console.error("[figma-projects] Token refresh also failed:", refreshErr);
+          return NextResponse.json({
+            projects: [],
+            error: "Figma session expired. Please reconnect Figma.",
+            needsReconnect: true,
+          });
+        }
+      } else {
+        return NextResponse.json({
+          projects: [],
+          error: "Figma session expired. Please reconnect Figma.",
+          needsReconnect: true,
+        });
+      }
+    }
+
     const teamId = connection.figmaTeamId;
 
     // Fetch projects for the configured team
@@ -100,6 +145,15 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[figma-projects] Error:", error);
+    const message = error instanceof Error ? error.message : "Internal server error";
+    // If this is a decryption/auth error, guide the user to reconnect
+    if (message.includes("authenticate data") || message.includes("decrypt")) {
+      return NextResponse.json({
+        projects: [],
+        error: "Figma session expired. Please reconnect Figma.",
+        needsReconnect: true,
+      });
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import FigmaFilesTree from "./figma-files-tree";
 
 type FigmaStatus = {
   connected: boolean;
@@ -10,12 +11,17 @@ type FigmaStatus = {
   hasTeamId?: boolean;
 };
 
-export default function FigmaConnectInline() {
+type Props = {
+  onFileSelect?: (fileUrl: string) => void;
+};
+
+export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
   const [status, setStatus] = useState<FigmaStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [teamUrlInput, setTeamUrlInput] = useState("");
   const [savingTeam, setSavingTeam] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
+  const [showTree, setShowTree] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -119,15 +125,71 @@ export default function FigmaConnectInline() {
 
   const isConnected = status?.connected;
 
-  // Connected (team linking is no longer required - export uses direct file URLs)
+  // Connected — show indicator with collapsible project tree dropdown
   if (isConnected) {
     return (
-      <div className="flex items-center gap-2 text-slate-600">
-        <Image src="/images/figma-icon-2.svg" alt="Figma" width={16} height={16} className="h-4 w-4" />
-        <span className="text-xs">
-          Connected as <span className="font-medium">@{status?.handle || status?.email}</span>
-        </span>
-        <PlugConnectedIcon className="h-3.5 w-3.5 text-emerald-500" />
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setShowTree(!showTree)}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors"
+        >
+          <Image src="/images/figma-icon-2.svg" alt="Figma" width={16} height={16} className="h-4 w-4" />
+          <span className="text-xs">
+            Connected as <span className="font-medium">@{status?.handle || status?.email}</span>
+          </span>
+          <PlugConnectedIcon className="h-3.5 w-3.5 text-emerald-500" />
+          <svg
+            className={`h-3 w-3 text-slate-400 transition-transform ${showTree ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showTree && (
+          <div className="rounded-lg border border-slate-200 overflow-hidden">
+            {status?.hasTeamId ? (
+              <FigmaFilesTree
+                compact
+                onFileSelect={(fileUrl) => {
+                  if (onFileSelect) {
+                    onFileSelect(fileUrl);
+                  }
+                  setShowTree(false);
+                }}
+              />
+            ) : (
+              <div className="px-4 py-4 space-y-3">
+                <p className="text-xs text-slate-600">
+                  Link your Figma team to browse projects and files. Paste your team page URL below.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={teamUrlInput}
+                    onChange={(e) => { setTeamUrlInput(e.target.value); setTeamError(null); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" && teamUrlInput.trim()) handleSaveTeam(); }}
+                    placeholder="https://www.figma.com/files/team/123456/Team-Name"
+                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveTeam}
+                    disabled={!teamUrlInput.trim() || savingTeam}
+                    className="rounded-lg bg-black px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                  >
+                    {savingTeam ? "Saving..." : "Link"}
+                  </button>
+                </div>
+                {teamError && <p className="text-xs text-red-600">{teamError}</p>}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }

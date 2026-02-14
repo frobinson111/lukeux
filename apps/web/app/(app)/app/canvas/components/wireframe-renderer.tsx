@@ -141,6 +141,14 @@ export default function WireframeRenderer() {
   const [fullPage, setFullPage] = useState(false);
   const [viewport, setViewport] = useState<ViewportPreset>("desktop");
   const [figmaExportSrc, setFigmaExportSrc] = useState<string | null>(null);
+  const [figmaStatus, setFigmaStatus] = useState<{ connected: boolean; email?: string; handle?: string; hasTeamId?: boolean } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/integrations/figma/status")
+      .then((r) => r.json())
+      .then((data) => setFigmaStatus(data))
+      .catch(() => setFigmaStatus({ connected: false }));
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -481,6 +489,7 @@ export default function WireframeRenderer() {
         <FigmaExportModal
           imageDataUrl={figmaExportSrc}
           onClose={() => setFigmaExportSrc(null)}
+          initialStatus={figmaStatus}
         />
       )}
 
