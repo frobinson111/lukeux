@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import FigmaFilesTree from "./figma-files-tree";
 
 type FigmaStatus = {
   connected: boolean;
@@ -41,11 +40,6 @@ export default function FigmaExportModal({ imageDataUrl, onClose, initialStatus 
   const [selectedNode, setSelectedNode] = useState<FigmaNode | null>(null);
   const [resourceName, setResourceName] = useState("LukeUX Wireframe");
 
-  // File pick mode: browse project tree vs paste URL
-  const [filePickMode, setFilePickMode] = useState<"tree" | "url">(
-    initialStatus?.hasTeamId ? "tree" : "url"
-  );
-
   // Export state
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -55,6 +49,13 @@ export default function FigmaExportModal({ imageDataUrl, onClose, initialStatus 
     }
   }, []);
 
+  // Auto-focus URL input when arriving at pick-file step
+  useEffect(() => {
+    if (step === "pick-file") {
+      setTimeout(() => directFileInputRef.current?.focus(), 200);
+    }
+  }, [step]);
+
   async function fetchStatus() {
     try {
       const res = await fetch("/api/integrations/figma/status");
@@ -62,7 +63,6 @@ export default function FigmaExportModal({ imageDataUrl, onClose, initialStatus 
       setStatus(data);
       if (data.connected) {
         setStep("pick-file");
-        setTimeout(() => directFileInputRef.current?.focus(), 200);
       } else {
         setStep("connect");
       }
@@ -218,11 +218,11 @@ export default function FigmaExportModal({ imageDataUrl, onClose, initialStatus 
         </div>
       )}
 
-      {/* Step: Pick File */}
+      {/* Step: Pick File — paste Figma URL */}
       {step === "pick-file" && (
         <div className="px-5 py-4 space-y-3">
           <div>
-            <p className="text-xs font-semibold text-slate-700">1. Select a Figma file</p>
+            <p className="text-xs font-semibold text-slate-700">1. Paste a Figma file URL</p>
             <p className="text-[11px] text-slate-500 mt-0.5">
               Connected as{" "}
               <span className="font-medium text-slate-700">
@@ -231,93 +231,34 @@ export default function FigmaExportModal({ imageDataUrl, onClose, initialStatus 
             </p>
           </div>
 
-          {/* Mode toggle tabs */}
-          <div className="flex border-b border-slate-200">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              Open your file in Figma, copy the URL from the browser address bar.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <input
+              ref={directFileInputRef}
+              type="text"
+              value={directFileUrl}
+              onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
+              placeholder="https://www.figma.com/design/abc123/File-Name"
+              className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+            />
             <button
               type="button"
-              onClick={() => setFilePickMode("tree")}
-              className={`px-3 py-1.5 text-xs font-semibold border-b-2 transition ${
-                filePickMode === "tree"
-                  ? "border-black text-black"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
-              }`}
+              onClick={handleDirectFileUrl}
+              disabled={!directFileUrl.trim()}
+              className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
             >
-              Browse Projects
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilePickMode("url")}
-              className={`px-3 py-1.5 text-xs font-semibold border-b-2 transition ${
-                filePickMode === "url"
-                  ? "border-black text-black"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Paste URL
+              Next
             </button>
           </div>
-
-          {/* Tree mode */}
-          {filePickMode === "tree" && (
-            status?.hasTeamId ? (
-              <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200">
-                <FigmaFilesTree
-                  compact
-                  onFileSelect={(fileUrl) => {
-                    const result = extractFileKeyFromUrl(fileUrl);
-                    if (result) {
-                      handleFileSelect({ key: result.fileKey, name: result.fileName });
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-xs text-slate-500">No Figma team configured. Use a direct URL instead.</p>
-                <button
-                  type="button"
-                  onClick={() => setFilePickMode("url")}
-                  className="mt-2 text-xs font-semibold text-black underline"
-                >
-                  Switch to URL input
-                </button>
-              </div>
-            )
-          )}
-
-          {/* URL mode */}
-          {filePickMode === "url" && (
-            <>
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>
-                  Open your file in Figma, copy the URL from the browser address bar.
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  ref={directFileInputRef}
-                  type="text"
-                  value={directFileUrl}
-                  onChange={(e) => { setDirectFileUrl(e.target.value); setDirectFileError(null); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && directFileUrl.trim()) handleDirectFileUrl(); }}
-                  placeholder="https://www.figma.com/design/abc123/File-Name"
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                />
-                <button
-                  type="button"
-                  onClick={handleDirectFileUrl}
-                  disabled={!directFileUrl.trim()}
-                  className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
-                >
-                  Next
-                </button>
-              </div>
-              {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
-            </>
-          )}
+          {directFileError && <p className="text-xs text-red-600">{directFileError}</p>}
         </div>
       )}
 

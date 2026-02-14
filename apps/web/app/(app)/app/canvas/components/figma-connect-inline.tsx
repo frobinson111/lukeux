@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import FigmaFilesTree from "./figma-files-tree";
 
 type FigmaStatus = {
   connected: boolean;
@@ -18,10 +17,9 @@ type Props = {
 export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
   const [status, setStatus] = useState<FigmaStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [teamUrlInput, setTeamUrlInput] = useState("");
-  const [savingTeam, setSavingTeam] = useState(false);
-  const [teamError, setTeamError] = useState<string | null>(null);
-  const [showTree, setShowTree] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [figmaUrlInput, setFigmaUrlInput] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,15 +33,12 @@ export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
     return () => window.removeEventListener("figma-disconnected", handleDisconnected);
   }, []);
 
-  // Auto-focus the team input when arriving from OAuth callback
+  // Auto-focus the input when dropdown opens
   useEffect(() => {
-    if (status?.connected && !status?.hasTeamId) {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("figma_setup") === "team") {
-        setTimeout(() => inputRef.current?.focus(), 300);
-      }
+    if (showDropdown) {
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [status]);
+  }, [showDropdown]);
 
   async function fetchStatus() {
     try {
@@ -61,57 +56,32 @@ export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
     window.location.href = "/api/integrations/figma/connect";
   }
 
-  function extractTeamId(input: string): string | null {
+  function extractFileUrl(input: string): string | null {
     const trimmed = input.trim();
-    // Direct numeric ID
-    if (/^\d+$/.test(trimmed)) {
+    // Match: figma.com/design/:fileKey/... or figma.com/file/:fileKey/...
+    const match = trimmed.match(/figma\.com\/(?:design|file)\/([A-Za-z0-9]+)/i);
+    if (match) {
       return trimmed;
     }
-    // URL like https://www.figma.com/files/team/1234567890/...
-    const match = trimmed.match(/figma\.com\/files\/team\/(\d+)/i);
-    if (match) {
-      return match[1];
+    // If it looks like just a file key (alphanumeric, 10+ chars), build a URL
+    if (/^[A-Za-z0-9]{10,}$/.test(trimmed)) {
+      return `https://www.figma.com/file/${trimmed}`;
     }
     return null;
   }
 
-  async function handleSaveTeam() {
-    const teamId = extractTeamId(teamUrlInput);
-    if (!teamId) {
-      setTeamError("Paste your Figma team page URL or enter a numeric team ID.");
+  function handleSubmitUrl() {
+    const url = extractFileUrl(figmaUrlInput);
+    if (!url) {
+      setUrlError("Paste a Figma file URL (e.g. figma.com/design/abc123/File-Name)");
       return;
     }
-
-    setSavingTeam(true);
-    setTeamError(null);
-
-    try {
-      const res = await fetch("/api/integrations/figma/team", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setTeamError(data.error || "Failed to save team ID");
-        return;
-      }
-
-      setStatus((prev) => prev ? { ...prev, hasTeamId: true } : prev);
-      setTeamUrlInput("");
-      // Notify sibling components (FigmaFilesTree) to refetch projects
-      window.dispatchEvent(new Event("figma-team-updated"));
-
-      // Clean up the setup query param from URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("figma_setup");
-      window.history.replaceState({}, "", url.toString());
-    } catch {
-      setTeamError("Failed to save team ID");
-    } finally {
-      setSavingTeam(false);
+    setUrlError(null);
+    if (onFileSelect) {
+      onFileSelect(url);
     }
+    setFigmaUrlInput("");
+    setShowDropdown(false);
   }
 
   if (loading) {
@@ -125,13 +95,13 @@ export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
 
   const isConnected = status?.connected;
 
-  // Connected — show indicator with collapsible project tree dropdown
+  // Connected — show indicator with collapsible Figma URL input dropdown
   if (isConnected) {
     return (
       <div className="space-y-2">
         <button
           type="button"
-          onClick={() => setShowTree(!showTree)}
+          onClick={() => setShowDropdown(!showDropdown)}
           className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors"
         >
           <Image src="/images/figma-icon-2.svg" alt="Figma" width={16} height={16} className="h-4 w-4" />
@@ -140,7 +110,7 @@ export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
           </span>
           <PlugConnectedIcon className="h-3.5 w-3.5 text-emerald-500" />
           <svg
-            className={`h-3 w-3 text-slate-400 transition-transform ${showTree ? "rotate-180" : ""}`}
+            className={`h-3 w-3 text-slate-400 transition-transform ${showDropdown ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -149,45 +119,33 @@ export default function FigmaConnectInline({ onFileSelect }: Props = {}) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        {showTree && (
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            {status?.hasTeamId ? (
-              <FigmaFilesTree
-                compact
-                onFileSelect={(fileUrl) => {
-                  if (onFileSelect) {
-                    onFileSelect(fileUrl);
-                  }
-                  setShowTree(false);
-                }}
-              />
-            ) : (
-              <div className="px-4 py-4 space-y-3">
-                <p className="text-xs text-slate-600">
-                  Link your Figma team to browse projects and files. Paste your team page URL below.
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={teamUrlInput}
-                    onChange={(e) => { setTeamUrlInput(e.target.value); setTeamError(null); }}
-                    onKeyDown={(e) => { if (e.key === "Enter" && teamUrlInput.trim()) handleSaveTeam(); }}
-                    placeholder="https://www.figma.com/files/team/123456/Team-Name"
-                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSaveTeam}
-                    disabled={!teamUrlInput.trim() || savingTeam}
-                    className="rounded-lg bg-black px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
-                  >
-                    {savingTeam ? "Saving..." : "Link"}
-                  </button>
-                </div>
-                {teamError && <p className="text-xs text-red-600">{teamError}</p>}
+        {showDropdown && (
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div className="px-4 py-3 space-y-2.5">
+              <p className="text-[11px] text-slate-500">
+                Paste a Figma file URL to analyze its design.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={figmaUrlInput}
+                  onChange={(e) => { setFigmaUrlInput(e.target.value); setUrlError(null); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && figmaUrlInput.trim()) handleSubmitUrl(); }}
+                  placeholder="https://www.figma.com/design/abc123/File-Name"
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10"
+                />
+                <button
+                  type="button"
+                  onClick={handleSubmitUrl}
+                  disabled={!figmaUrlInput.trim()}
+                  className="rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                >
+                  Go
+                </button>
               </div>
-            )}
+              {urlError && <p className="text-[11px] text-red-600">{urlError}</p>}
+            </div>
           </div>
         )}
       </div>

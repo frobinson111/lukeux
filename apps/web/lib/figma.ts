@@ -23,9 +23,10 @@ export function buildFigmaAuthUrl(state: string): string {
   const url = new URL(FIGMA_OAUTH_BASE);
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirectUri);
-  // NOTE: To enable projects:read, first add it in Figma Developer App settings
-  // (https://www.figma.com/developers/apps) under Scopes, then uncomment below.
-  // Without it, the project tree browser falls back to URL paste mode.
+  // NOTE: The projects:read scope is NOT available for public OAuth apps on Figma's
+  // developer platform. The projects endpoints (/v1/teams/:id/projects, /v1/projects/:id/files)
+  // cannot be used with public OAuth apps — this is a Figma platform restriction.
+  // File selection uses direct URL paste instead of project tree browsing.
   url.searchParams.set("scope", "current_user:read,file_content:read,file_variables:read,file_dev_resources:read,file_dev_resources:write");
   url.searchParams.set("state", state);
   url.searchParams.set("response_type", "code");
