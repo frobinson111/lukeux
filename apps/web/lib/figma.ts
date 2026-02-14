@@ -23,7 +23,7 @@ export function buildFigmaAuthUrl(state: string): string {
   const url = new URL(FIGMA_OAUTH_BASE);
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirectUri);
-  url.searchParams.set("scope", "current_user:read,file_content:read,file_variables:read,file_dev_resources:read,file_dev_resources:write");
+  url.searchParams.set("scope", "current_user:read,file_content:read,file_variables:read,file_dev_resources:read,file_dev_resources:write,projects:read");
   url.searchParams.set("state", state);
   url.searchParams.set("response_type", "code");
 
