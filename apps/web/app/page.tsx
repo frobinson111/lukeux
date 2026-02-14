@@ -945,12 +945,8 @@ function HomePageInner() {
                               body: "Experience the same high-signal UX critique used across all plans."
                             },
                             {
-                              title: "2 UX task responses per day",
+                              title: "2 UX task responses",
                               body: "Enough to explore real scenarios without enabling full workflows."
-                            },
-                            {
-                              title: "10 total task responses (lifetime)",
-                              body: "Designed for evaluation, not ongoing use."
                             },
                             {
                               title: "Structured, decision-focused outputs",
